@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
+	"net"
 	"os"
 	"os/exec"
 	"syscall"
@@ -58,8 +60,12 @@ type Kernel struct {
 
 // QemuSystem describe qemu parameters and runned process
 type QemuSystem struct {
-	arch   arch
-	kernel Kernel
+	arch      arch
+	kernel    Kernel
+	drivePath string
+
+	Cpus   int
+	Memory int
 
 	// accessible while qemu is runned
 	cmd  *exec.Cmd
@@ -76,7 +82,7 @@ type QemuSystem struct {
 }
 
 // NewQemuSystem constructor
-func NewQemuSystem(arch arch, kernel Kernel) (q QemuSystem, err error) {
+func NewQemuSystem(arch arch, kernel Kernel, drivePath string) (q QemuSystem, err error) {
 	if _, err = exec.LookPath("qemu-system-" + string(arch)); err != nil {
 		return
 	}
@@ -87,15 +93,63 @@ func NewQemuSystem(arch arch, kernel Kernel) (q QemuSystem, err error) {
 	}
 	q.kernel = kernel
 
+	if _, err = os.Stat(drivePath); err != nil {
+		return
+	}
+	q.drivePath = drivePath
+
+	// Default values
+	q.Cpus = 2
+	q.Memory = 512 // megabytes
+
 	return
+}
+
+func getRandomAddrPort() (addr string) {
+	// 127.1-255.0-255.0-255:10000-50000
+	ip := fmt.Sprintf("127.%d.%d.%d",
+		rand.Int()%254+1, rand.Int()%255, rand.Int()%254)
+	port := rand.Int()%40000 + 10000
+	return fmt.Sprintf("%s:%d", ip, port)
+}
+
+func getFreeAddrPort() (addrPort string) {
+	for {
+		addrPort = getRandomAddrPort()
+		ln, err := net.Listen("tcp", addrPort)
+		if err == nil {
+			ln.Close()
+			return
+		}
+	}
+}
+
+func kvmExists() bool {
+	if _, err := os.Stat("/dev/kvm"); err != nil {
+		return false
+	}
+	return true
 }
 
 // Start qemu process
 func (q *QemuSystem) Start() (err error) {
-	q.cmd = exec.Command("qemu-system-"+string(q.arch),
-		// TODO
-		"-snapshot",
-		"-nographic")
+	rand.Seed(time.Now().UnixNano()) // Are you sure?
+	hostfwd := fmt.Sprintf("hostfwd=tcp:%s-:22", getFreeAddrPort())
+	qemuArgs := []string{"-snapshot", "-nographic",
+		"-hda", q.drivePath,
+		"-kernel", q.kernel.Path,
+		"-append", "root=/dev/sda console=ttyS0 rw",
+		"-smp", fmt.Sprintf("%d", q.Cpus),
+		"-m", fmt.Sprintf("%d", q.Memory),
+		"-device", "e1000,netdev=n1",
+		"-netdev", "user,id=n1," + hostfwd,
+	}
+
+	if (q.arch == X86_64 || q.arch == I386) && kvmExists() {
+		qemuArgs = append(qemuArgs, "-enable-kvm")
+	}
+
+	q.cmd = exec.Command("qemu-system-"+string(q.arch), qemuArgs...)
 
 	if q.pipe.stdin, err = q.cmd.StdinPipe(); err != nil {
 		return
