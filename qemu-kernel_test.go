@@ -6,6 +6,7 @@ package qemukernel
 
 import (
 	"net"
+	"strings"
 	"testing"
 )
 
@@ -62,4 +63,40 @@ func TestGetFreeAddrPort(t *testing.T) {
 		t.Fatal(err)
 	}
 	ln.Close()
+}
+
+func TestQemuSystemCommand(t *testing.T) {
+	// FIXME hardcoded kernel path
+	kernel := Kernel{Name: "Host kernel", Path: "/boot/vmlinuz-4.18.8"}
+	// FIXME hardcoded qcow2 path
+	qemu, err := NewQemuSystem(X86_64, kernel, "/home/user/qemu/sid.img")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = qemu.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer qemu.Stop()
+
+	output, err := qemu.Command("root", "cat /etc/shadow")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output, "root::") {
+		t.Fatal("Wrong output from `cat /etc/shadow` by root")
+	}
+
+	output, err = qemu.Command("user", "cat /etc/passwd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output, "root:x:0:0:root:/root:/bin/bash") {
+		t.Fatal("Wrong output from `cat /etc/passwd` by user")
+	}
+
+	output, err = qemu.Command("user", "cat /etc/shadow")
+	if err == nil { // unsucessful is good because user must not read /etc/shadow
+		t.Fatal("User have rights for /etc/shadow. WAT?!")
+	}
 }

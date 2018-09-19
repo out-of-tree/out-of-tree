@@ -14,6 +14,8 @@ import (
 	"os/exec"
 	"syscall"
 	"time"
+
+	"golang.org/x/crypto/ssh"
 )
 
 func readBytesUntilEOF(pipe io.ReadCloser) (buf []byte, err error) {
@@ -74,8 +76,8 @@ type QemuSystem struct {
 		stderr io.ReadCloser
 		stdout io.ReadCloser
 	}
-	died       bool
-	sshHostFwd string
+	died        bool
+	sshAddrPort string
 
 	// accessible after qemu is closed
 	Stdout, Stderr string
@@ -135,15 +137,16 @@ func kvmExists() bool {
 // Start qemu process
 func (q *QemuSystem) Start() (err error) {
 	rand.Seed(time.Now().UnixNano()) // Are you sure?
-	q.sshHostFwd = fmt.Sprintf("hostfwd=tcp:%s-:22", getFreeAddrPort())
+	q.sshAddrPort = getFreeAddrPort()
+	hostfwd := fmt.Sprintf("hostfwd=tcp:%s-:22", q.sshAddrPort)
 	qemuArgs := []string{"-snapshot", "-nographic",
 		"-hda", q.drivePath,
 		"-kernel", q.kernel.Path,
-		"-append", "root=/dev/sda console=ttyS0 rw",
+		"-append", "root=/dev/sda ignore_loglevel console=ttyS0 rw",
 		"-smp", fmt.Sprintf("%d", q.Cpus),
 		"-m", fmt.Sprintf("%d", q.Memory),
 		"-device", "e1000,netdev=n1",
-		"-netdev", "user,id=n1," + q.sshHostFwd,
+		"-netdev", "user,id=n1," + hostfwd,
 	}
 
 	if (q.arch == X86_64 || q.arch == I386) && kvmExists() {
@@ -196,4 +199,27 @@ func (q *QemuSystem) Stop() {
 		time.Sleep(time.Second / 10)
 		q.cmd.Process.Signal(syscall.SIGKILL)
 	}
+}
+
+// Command executes shell commands on qemu system
+func (q *QemuSystem) Command(user, cmd string) (output string, err error) {
+	cfg := &ssh.ClientConfig{
+		User: user,
+	}
+	cfg.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+
+	client, err := ssh.Dial("tcp", q.sshAddrPort, cfg)
+	if err != nil {
+		return
+	}
+	defer client.Close()
+
+	session, err := client.NewSession()
+	if err != nil {
+		return
+	}
+
+	bytesOutput, err := session.CombinedOutput(cmd)
+	output = string(bytesOutput)
+	return
 }
