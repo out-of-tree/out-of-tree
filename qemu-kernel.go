@@ -74,7 +74,8 @@ type QemuSystem struct {
 		stderr io.ReadCloser
 		stdout io.ReadCloser
 	}
-	died bool
+	died       bool
+	sshHostFwd string
 
 	// accessible after qemu is closed
 	Stdout, Stderr string
@@ -134,7 +135,7 @@ func kvmExists() bool {
 // Start qemu process
 func (q *QemuSystem) Start() (err error) {
 	rand.Seed(time.Now().UnixNano()) // Are you sure?
-	hostfwd := fmt.Sprintf("hostfwd=tcp:%s-:22", getFreeAddrPort())
+	q.sshHostFwd = fmt.Sprintf("hostfwd=tcp:%s-:22", getFreeAddrPort())
 	qemuArgs := []string{"-snapshot", "-nographic",
 		"-hda", q.drivePath,
 		"-kernel", q.kernel.Path,
@@ -142,7 +143,7 @@ func (q *QemuSystem) Start() (err error) {
 		"-smp", fmt.Sprintf("%d", q.Cpus),
 		"-m", fmt.Sprintf("%d", q.Memory),
 		"-device", "e1000,netdev=n1",
-		"-netdev", "user,id=n1," + hostfwd,
+		"-netdev", "user,id=n1," + q.sshHostFwd,
 	}
 
 	if (q.arch == X86_64 || q.arch == I386) && kvmExists() {
