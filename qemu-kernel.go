@@ -85,10 +85,11 @@ type QemuSystem struct {
 }
 
 // NewQemuSystem constructor
-func NewQemuSystem(arch arch, kernel Kernel, drivePath string) (q QemuSystem, err error) {
+func NewQemuSystem(arch arch, kernel Kernel, drivePath string) (q *QemuSystem, err error) {
 	if _, err = exec.LookPath("qemu-system-" + string(arch)); err != nil {
 		return
 	}
+	q = &QemuSystem{}
 	q.arch = arch
 
 	if _, err = os.Stat(kernel.Path); err != nil {
