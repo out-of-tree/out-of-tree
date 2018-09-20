@@ -12,6 +12,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -117,13 +118,28 @@ func getRandomAddrPort() (addr string) {
 	return fmt.Sprintf("%s:%d", ip, port)
 }
 
+func getRandomPort(ip string) (addr string) {
+	// ip:1024-65535
+	port := rand.Int()%(65535-1024) + 1024
+	return fmt.Sprintf("%s:%d", ip, port)
+}
+
 func getFreeAddrPort() (addrPort string) {
+	timeout := time.Now().Add(time.Second)
 	for {
-		addrPort = getRandomAddrPort()
+		if runtime.GOOS == "linux" {
+			addrPort = getRandomAddrPort()
+		} else {
+			addrPort = getRandomPort("127.0.0.1")
+		}
 		ln, err := net.Listen("tcp", addrPort)
 		if err == nil {
 			ln.Close()
 			return
+		}
+
+		if time.Now().After(timeout) {
+			panic("Can't found free address:port on localhost")
 		}
 	}
 }
