@@ -1,0 +1,17 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/bionic64"
+
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update
+    apt-get install -y debootstrap qemu golang
+    mkdir qemu-debian-img && cd qemu-debian-img
+    cp /vagrant/main.go ./
+    GOBIN=/usr/bin go get ./
+    qemu-debian-img generate --repository="http://archive.ubuntu.com/ubuntu" --release="bionic" bionic.img
+    cp bionic.img /vagrant/
+    cp /boot/vmlinuz-* /vagrant/vmlinuz-bionic
+  SHELL
+end
