@@ -42,8 +42,7 @@ func TestQemuSystemNew(t *testing.T) {
 }
 
 func TestQemuSystemStart(t *testing.T) {
-	// TODO check kernel path on other distros than gentoo
-	kernel := Kernel{Name: "Host kernel", Path: "/boot/vmlinuz-4.18.8"}
+	kernel := Kernel{Name: "Host kernel", Path: testConfigVmlinuz}
 	qemu, err := NewQemuSystem(X86_64, kernel, "/bin/sh")
 	if err != nil {
 		t.Fatal(err)
@@ -66,10 +65,8 @@ func TestGetFreeAddrPort(t *testing.T) {
 }
 
 func startTestQemu() (q *QemuSystem, err error) {
-	// FIXME hardcoded kernel path
-	kernel := Kernel{Name: "Host kernel", Path: "/boot/vmlinuz-4.18.8"}
-	// FIXME hardcoded qcow2 path
-	q, err = NewQemuSystem(X86_64, kernel, "/home/user/qemu/sid.img")
+	kernel := Kernel{Name: "Host kernel", Path: testConfigVmlinuz}
+	q, err = NewQemuSystem(X86_64, kernel, testConfigRootfs)
 	if err != nil {
 		return
 	}
