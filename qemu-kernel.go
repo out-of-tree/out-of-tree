@@ -170,6 +170,10 @@ func (q *QemuSystem) Start() (err error) {
 		qemuArgs = append(qemuArgs, "-enable-kvm")
 	}
 
+	if q.arch == X86_64 && runtime.GOOS == "darwin" {
+		qemuArgs = append(qemuArgs, "-accel", "hvf", "-cpu", "host")
+	}
+
 	q.cmd = exec.Command("qemu-system-"+string(q.arch), qemuArgs...)
 
 	if q.pipe.stdin, err = q.cmd.StdinPipe(); err != nil {
