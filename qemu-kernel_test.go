@@ -28,24 +28,21 @@ func TestQemuSystemNew_InvalidKernelPath(t *testing.T) {
 }
 
 func TestQemuSystemNew_InvalidQemuArch(t *testing.T) {
-	// FIXME put kernel image to path not just "any valid path"
-	kernel := Kernel{Name: "Valid path", KernelPath: "/bin/sh"}
+	kernel := Kernel{Name: "Valid path", KernelPath: testConfigVmlinuz}
 	if _, err := NewQemuSystem(unsupported, kernel, "/bin/sh"); err == nil {
 		t.Fatal(err)
 	}
 }
 
 func TestQemuSystemNew_InvalidQemuDrivePath(t *testing.T) {
-	// FIXME put kernel image to path not just "any valid path"
-	kernel := Kernel{Name: "Valid path", KernelPath: "/bin/sh"}
+	kernel := Kernel{Name: "Valid path", KernelPath: testConfigVmlinuz}
 	if _, err := NewQemuSystem(X86_64, kernel, "/invalid/path"); err == nil {
 		t.Fatal(err)
 	}
 }
 
 func TestQemuSystemNew(t *testing.T) {
-	// FIXME put kernel image to path not just "any valid path"
-	kernel := Kernel{Name: "Valid path", KernelPath: "/bin/sh"}
+	kernel := Kernel{Name: "Valid path", KernelPath: testConfigVmlinuz}
 	if _, err := NewQemuSystem(X86_64, kernel, "/bin/sh"); err != nil {
 		t.Fatal(err)
 	}
