@@ -8,11 +8,17 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net"
+	"os"
 	"strings"
 	"testing"
 	"time"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 func TestQemuSystemNew_InvalidKernelPath(t *testing.T) {
 	kernel := Kernel{Name: "Invalid", KernelPath: "/invalid/path"}
@@ -170,5 +176,38 @@ func TestQemuSystemCopyFile(t *testing.T) {
 
 	if sha_local != sha_remote {
 		t.Fatal(fmt.Sprintf("Broken file (%s instead of %s)", sha_remote, sha_local))
+	}
+}
+
+func TestQemuSystemCopyAndRun(t *testing.T) {
+	qemu, err := startTestQemu()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer qemu.Stop()
+
+	randStr := fmt.Sprintf("%d", rand.Int())
+	content := []byte("#!/bin/sh\n echo -n " + randStr + "\n")
+
+	tmpfile, err := ioutil.TempFile("", "executable")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	if _, err := tmpfile.Write(content); err != nil {
+		t.Fatal(err)
+	}
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	output, err := qemu.CopyAndRun("user", tmpfile.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if output != randStr {
+		t.Fatal("Wrong output from copyied executable (" + output + "," + randStr + ")")
 	}
 }

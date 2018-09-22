@@ -279,3 +279,14 @@ func (q *QemuSystem) CopyFile(user, localPath, remotePath string) (err error) {
 
 	return
 }
+
+// CopyAndRun is copy local file to qemu vm then run it
+func (q *QemuSystem) CopyAndRun(user, path string) (output string, err error) {
+	remotePath := fmt.Sprintf("/tmp/executable_%d", rand.Int())
+	err = q.CopyFile(user, path, remotePath)
+	if err != nil {
+		return
+	}
+
+	return q.Command(user, "chmod +x "+remotePath+" && "+remotePath)
+}
