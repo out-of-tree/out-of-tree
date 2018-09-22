@@ -57,8 +57,9 @@ const (
 
 // Kernel describe kernel parameters for qemu
 type Kernel struct {
-	Name string
-	Path string
+	Name       string
+	KernelPath string
+	InitrdPath string
 }
 
 // QemuSystem describe qemu parameters and runned process
@@ -98,7 +99,7 @@ func NewQemuSystem(arch arch, kernel Kernel, drivePath string) (q *QemuSystem, e
 	q = &QemuSystem{}
 	q.arch = arch
 
-	if _, err = os.Stat(kernel.Path); err != nil {
+	if _, err = os.Stat(kernel.KernelPath); err != nil {
 		return
 	}
 	q.kernel = kernel
@@ -163,12 +164,16 @@ func (q *QemuSystem) Start() (err error) {
 	hostfwd := fmt.Sprintf("hostfwd=tcp:%s-:22", q.sshAddrPort)
 	qemuArgs := []string{"-snapshot", "-nographic",
 		"-hda", q.drivePath,
-		"-kernel", q.kernel.Path,
+		"-kernel", q.kernel.KernelPath,
 		"-append", "root=/dev/sda ignore_loglevel console=ttyS0 rw",
 		"-smp", fmt.Sprintf("%d", q.Cpus),
 		"-m", fmt.Sprintf("%d", q.Memory),
 		"-device", "e1000,netdev=n1",
 		"-netdev", "user,id=n1," + hostfwd,
+	}
+
+	if q.kernel.InitrdPath != "" {
+		qemuArgs = append(qemuArgs, "-initrd", q.kernel.InitrdPath)
 	}
 
 	if (q.arch == X86_64 || q.arch == I386) && kvmExists() {

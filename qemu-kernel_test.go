@@ -12,7 +12,7 @@ import (
 )
 
 func TestQemuSystemNew_InvalidKernelPath(t *testing.T) {
-	kernel := Kernel{Name: "Invalid", Path: "/invalid/path"}
+	kernel := Kernel{Name: "Invalid", KernelPath: "/invalid/path"}
 	if _, err := NewQemuSystem(X86_64, kernel, "/bin/sh"); err == nil {
 		t.Fatal(err)
 	}
@@ -20,7 +20,7 @@ func TestQemuSystemNew_InvalidKernelPath(t *testing.T) {
 
 func TestQemuSystemNew_InvalidQemuArch(t *testing.T) {
 	// FIXME put kernel image to path not just "any valid path"
-	kernel := Kernel{Name: "Valid path", Path: "/bin/sh"}
+	kernel := Kernel{Name: "Valid path", KernelPath: "/bin/sh"}
 	if _, err := NewQemuSystem(unsupported, kernel, "/bin/sh"); err == nil {
 		t.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func TestQemuSystemNew_InvalidQemuArch(t *testing.T) {
 
 func TestQemuSystemNew_InvalidQemuDrivePath(t *testing.T) {
 	// FIXME put kernel image to path not just "any valid path"
-	kernel := Kernel{Name: "Valid path", Path: "/bin/sh"}
+	kernel := Kernel{Name: "Valid path", KernelPath: "/bin/sh"}
 	if _, err := NewQemuSystem(X86_64, kernel, "/invalid/path"); err == nil {
 		t.Fatal(err)
 	}
@@ -36,14 +36,14 @@ func TestQemuSystemNew_InvalidQemuDrivePath(t *testing.T) {
 
 func TestQemuSystemNew(t *testing.T) {
 	// FIXME put kernel image to path not just "any valid path"
-	kernel := Kernel{Name: "Valid path", Path: "/bin/sh"}
+	kernel := Kernel{Name: "Valid path", KernelPath: "/bin/sh"}
 	if _, err := NewQemuSystem(X86_64, kernel, "/bin/sh"); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestQemuSystemStart(t *testing.T) {
-	kernel := Kernel{Name: "Host kernel", Path: testConfigVmlinuz}
+	kernel := Kernel{Name: "Test kernel", KernelPath: testConfigVmlinuz}
 	qemu, err := NewQemuSystem(X86_64, kernel, "/bin/sh")
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +57,7 @@ func TestQemuSystemStart(t *testing.T) {
 }
 
 func TestQemuSystemStart_Timeout(t *testing.T) {
-	kernel := Kernel{Name: "Host kernel", Path: testConfigVmlinuz}
+	kernel := Kernel{Name: "Test kernel", KernelPath: testConfigVmlinuz}
 	qemu, err := NewQemuSystem(X86_64, kernel, "/bin/sh")
 	if err != nil {
 		t.Fatal(err)
@@ -90,7 +90,11 @@ func TestGetFreeAddrPort(t *testing.T) {
 }
 
 func startTestQemu() (q *QemuSystem, err error) {
-	kernel := Kernel{Name: "Host kernel", Path: testConfigVmlinuz}
+	kernel := Kernel{
+		Name:       "Test kernel",
+		KernelPath: testConfigVmlinuz,
+		InitrdPath: testConfigInitrd,
+	}
 	q, err = NewQemuSystem(X86_64, kernel, testConfigRootfs)
 	if err != nil {
 		return
@@ -107,6 +111,9 @@ func startTestQemu() (q *QemuSystem, err error) {
 
 func TestQemuSystemCommand(t *testing.T) {
 	qemu, err := startTestQemu()
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer qemu.Stop()
 
 	output, err := qemu.Command("root", "cat /etc/shadow")

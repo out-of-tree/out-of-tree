@@ -13,5 +13,6 @@ Vagrant.configure("2") do |config|
     qemu-debian-img generate --repository="http://archive.ubuntu.com/ubuntu" --release="bionic" bionic.img
     cp bionic.img /vagrant/
     cp /boot/vmlinuz-* /vagrant/vmlinuz-bionic
+    cp /boot/initrd-* /vagrant/vmlinuz-bionic
   SHELL
 end
