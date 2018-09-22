@@ -1,12 +1,13 @@
 # go-qemu-kernel
 
-Qemu wrapper for kernel-related CI tasks
+Qemu wrapper for kernel-related CI tasks. Supports *GNU/Linux* and *macOS*.
 
-## Usage
+Features:
+* Uses upstream virtualization -- KVM in GNU/Linux and Hypervisor.framework in macOS.
+* Run files and kernel modules directly from local filesystem. No need to copy byself!
+* Run commands inside qemu virtual machine at the same way as you run in it locally.
 
-TODO
-
-## Development
+## Installation
 
     $ go get github.com/jollheef/go-qemu-kernel
 
@@ -41,3 +42,35 @@ bionic.img and bionic-vmlinuz will be created in current directory.
 ### Run tests
 
     $ go test -v
+
+## Usage
+
+    $ go get github.com/jollheef/go-qemu-kernel
+
+Minimal example:
+
+	kernel := qemu.Kernel{
+		Name:       "Some kernel name",
+		KernelPath: "/path/to/vmlinuz",
+		InitrdPath: "/path/to/initrd", // if required
+	}
+	q, err := qemu.NewQemuSystem(qemu.X86_64, kernel, "/path/to/qcow2")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err = q.Start(); err != nil {
+		log.Fatal(err)
+	}
+	defer q.Stop()
+
+	output, err = q.Command("root", "echo Hello, World!")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// output == "Hello, World!\n"
+
+More information and list of all functions see at go documentation project, or just run locally:
+
+    $ godoc github.com/jollheef/go-qemu-kernel
