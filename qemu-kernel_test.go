@@ -5,6 +5,9 @@
 package qemukernel
 
 import (
+	"crypto/sha512"
+	"fmt"
+	"io/ioutil"
 	"net"
 	"strings"
 	"testing"
@@ -135,5 +138,37 @@ func TestQemuSystemCommand(t *testing.T) {
 	output, err = qemu.Command("user", "cat /etc/shadow")
 	if err == nil { // unsucessful is good because user must not read /etc/shadow
 		t.Fatal("User have rights for /etc/shadow. WAT?!")
+	}
+}
+
+func TestQemuSystemCopyFile(t *testing.T) {
+	qemu, err := startTestQemu()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer qemu.Stop()
+
+	localPath := "/bin/sh"
+
+	content, err := ioutil.ReadFile(localPath)
+	if err != nil {
+		return
+	}
+
+	sha_local := fmt.Sprintf("%x", sha512.Sum512(content))
+
+	err = qemu.CopyFile("user", localPath, "/tmp/test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sha_remote, err := qemu.Command("user", "sha512sum /tmp/test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sha_remote = strings.Split(sha_remote, " ")[0]
+
+	if sha_local != sha_remote {
+		t.Fatal(fmt.Sprintf("Broken file (%s instead of %s)", sha_remote, sha_local))
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -260,5 +261,21 @@ func (q *QemuSystem) Command(user, cmd string) (output string, err error) {
 
 	bytesOutput, err := session.CombinedOutput(cmd)
 	output = string(bytesOutput)
+	return
+}
+
+// CopyFile is copy file from local machine to remote through ssh/scp
+func (q *QemuSystem) CopyFile(user, localPath, remotePath string) (err error) {
+	addrPort := strings.Split(q.sshAddrPort, ":")
+	addr := addrPort[0]
+	port := addrPort[1]
+
+	cmd := exec.Command("scp", "-P", port, "-o", "StrictHostKeyChecking=no",
+		localPath, user+"@"+addr+":"+remotePath)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return errors.New(string(output))
+	}
+
 	return
 }
