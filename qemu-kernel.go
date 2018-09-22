@@ -70,6 +70,13 @@ type QemuSystem struct {
 	Cpus   int
 	Memory int
 
+	// Timeout works after Start invocation
+	Timeout         time.Duration
+	KilledByTimeout bool
+
+	Died        bool
+	sshAddrPort string
+
 	// accessible while qemu is runned
 	cmd  *exec.Cmd
 	pipe struct {
@@ -77,8 +84,6 @@ type QemuSystem struct {
 		stderr io.ReadCloser
 		stdout io.ReadCloser
 	}
-	died        bool
-	sshAddrPort string
 
 	// accessible after qemu is closed
 	Stdout, Stderr string
@@ -197,13 +202,21 @@ func (q *QemuSystem) Start() (err error) {
 		q.Stdout, _ = readUntilEOF(q.pipe.stdout)
 		q.Stderr, _ = readUntilEOF(q.pipe.stderr)
 		q.exitErr = q.cmd.Wait()
-		q.died = true
+		q.Died = true
 	}()
 
 	time.Sleep(time.Second / 10) // wait for immediately die
 
-	if q.died {
+	if q.Died {
 		err = errors.New("qemu died immediately: " + q.Stderr)
+	}
+
+	if q.Timeout != 0 {
+		go func() {
+			time.Sleep(q.Timeout)
+			q.KilledByTimeout = true
+			q.Stop()
+		}()
 	}
 
 	return
@@ -215,7 +228,7 @@ func (q *QemuSystem) Stop() {
 	fmt.Fprintf(q.pipe.stdin, "%cx", 1)
 	// wait for die
 	time.Sleep(time.Second / 10)
-	if !q.died {
+	if !q.Died {
 		q.cmd.Process.Signal(syscall.SIGTERM)
 		time.Sleep(time.Second / 10)
 		q.cmd.Process.Signal(syscall.SIGKILL)

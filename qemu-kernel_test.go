@@ -8,6 +8,7 @@ import (
 	"net"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestQemuSystemNew_InvalidKernelPath(t *testing.T) {
@@ -55,6 +56,30 @@ func TestQemuSystemStart(t *testing.T) {
 	qemu.Stop()
 }
 
+func TestQemuSystemStart_Timeout(t *testing.T) {
+	kernel := Kernel{Name: "Host kernel", Path: testConfigVmlinuz}
+	qemu, err := NewQemuSystem(X86_64, kernel, "/bin/sh")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	qemu.Timeout = time.Second
+
+	if err = qemu.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(2 * time.Second)
+
+	if !qemu.Died {
+		t.Fatal("qemu does not died :c")
+	}
+
+	if !qemu.KilledByTimeout {
+		t.Fatal("qemu died not because of timeout O_o")
+	}
+}
+
 func TestGetFreeAddrPort(t *testing.T) {
 	addrPort := getFreeAddrPort()
 	ln, err := net.Listen("tcp", addrPort)
@@ -70,6 +95,8 @@ func startTestQemu() (q *QemuSystem, err error) {
 	if err != nil {
 		return
 	}
+
+	q.Timeout = 10 * time.Second
 
 	if err = q.Start(); err != nil {
 		return
