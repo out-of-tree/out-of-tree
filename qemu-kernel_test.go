@@ -213,3 +213,30 @@ func TestQemuSystemCopyAndRun(t *testing.T) {
 		t.Fatal("Wrong output from copyied executable (" + output + "," + randStr + ")")
 	}
 }
+
+func TestQemuSystemCopyAndInsmod(t *testing.T) {
+	qemu, err := startTestQemu(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer qemu.Stop()
+
+	lsmodBefore, err := qemu.Command("root", "lsmod | wc -l")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = qemu.CopyAndInsmod(testConfigSampleKo)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	lsmodAfter, err := qemu.Command("root", "lsmod | wc -l")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if lsmodBefore == lsmodAfter {
+		t.Fatal("insmod returns ok but there is no new kernel modules")
+	}
+}

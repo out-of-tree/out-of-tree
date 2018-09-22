@@ -280,6 +280,16 @@ func (q *QemuSystem) CopyFile(user, localPath, remotePath string) (err error) {
 	return
 }
 
+func (q *QemuSystem) CopyAndInsmod(localKoPath string) (output string, err error) {
+	remoteKoPath := fmt.Sprintf("/tmp/module_%d.ko", rand.Int())
+	err = q.CopyFile("root", localKoPath, remoteKoPath)
+	if err != nil {
+		return
+	}
+
+	return q.Command("root", "insmod "+remoteKoPath)
+}
+
 // CopyAndRun is copy local file to qemu vm then run it
 func (q *QemuSystem) CopyAndRun(user, path string) (output string, err error) {
 	remotePath := fmt.Sprintf("/tmp/executable_%d", rand.Int())

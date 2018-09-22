@@ -7,3 +7,4 @@ package qemukernel
 const testConfigVmlinuz = "tools/qemu-debian-img/vmlinuz-bionic"
 const testConfigInitrd = "tools/qemu-debian-img/initrd-bionic"
 const testConfigRootfs = "tools/qemu-debian-img/bionic.img"
+const testConfigSampleKo = "tools/qemu-debian-img/sample.ko"
