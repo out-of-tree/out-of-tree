@@ -65,7 +65,17 @@ func TestQemuSystemStart(t *testing.T) {
 	qemu.Stop()
 }
 
+func TestGetFreeAddrPort(t *testing.T) {
+	addrPort := getFreeAddrPort()
+	ln, err := net.Listen("tcp", addrPort)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ln.Close()
+}
+
 func TestQemuSystemStart_Timeout(t *testing.T) {
+	t.Parallel()
 	kernel := Kernel{Name: "Test kernel", KernelPath: testConfigVmlinuz}
 	qemu, err := NewQemuSystem(X86_64, kernel, "/bin/sh")
 	if err != nil {
@@ -89,16 +99,8 @@ func TestQemuSystemStart_Timeout(t *testing.T) {
 	}
 }
 
-func TestGetFreeAddrPort(t *testing.T) {
-	addrPort := getFreeAddrPort()
-	ln, err := net.Listen("tcp", addrPort)
-	if err != nil {
-		t.Fatal(err)
-	}
-	ln.Close()
-}
-
-func startTestQemu() (q *QemuSystem, err error) {
+func startTestQemu(t *testing.T) (q *QemuSystem, err error) {
+	t.Parallel()
 	kernel := Kernel{
 		Name:       "Test kernel",
 		KernelPath: testConfigVmlinuz,
@@ -119,7 +121,7 @@ func startTestQemu() (q *QemuSystem, err error) {
 }
 
 func TestQemuSystemCommand(t *testing.T) {
-	qemu, err := startTestQemu()
+	qemu, err := startTestQemu(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +150,7 @@ func TestQemuSystemCommand(t *testing.T) {
 }
 
 func TestQemuSystemCopyFile(t *testing.T) {
-	qemu, err := startTestQemu()
+	qemu, err := startTestQemu(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +182,7 @@ func TestQemuSystemCopyFile(t *testing.T) {
 }
 
 func TestQemuSystemCopyAndRun(t *testing.T) {
-	qemu, err := startTestQemu()
+	qemu, err := startTestQemu(t)
 	if err != nil {
 		t.Fatal(err)
 	}
