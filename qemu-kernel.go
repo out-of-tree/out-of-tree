@@ -109,7 +109,7 @@ func NewQemuSystem(arch arch, kernel Kernel, drivePath string) (q *QemuSystem, e
 	q.drivePath = drivePath
 
 	// Default values
-	q.Cpus = 2
+	q.Cpus = 1
 	q.Memory = 512 // megabytes
 
 	return
