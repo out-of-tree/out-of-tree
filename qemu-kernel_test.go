@@ -108,8 +108,6 @@ func startTestQemu(t *testing.T) (q *QemuSystem, err error) {
 		return
 	}
 
-	q.Timeout = 10 * time.Second
-
 	if err = q.Start(); err != nil {
 		return
 	}
