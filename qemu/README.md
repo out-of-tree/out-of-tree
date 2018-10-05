@@ -1,4 +1,4 @@
-# go-qemu-kernel
+# out-of-tree/qemu
 
 Qemu wrapper for kernel-related CI tasks. Supports *GNU/Linux* and *macOS*.
 
@@ -9,7 +9,7 @@ Features:
 
 ## Installation
 
-    $ go get github.com/jollheef/go-qemu-kernel
+    $ go get github.com/jollheef/out-of-tree/qemu
 
 ### Generate root image
 
@@ -30,14 +30,14 @@ Because it's a very complicated to debootstrap qemu images from macOS,
 preferred way is to use Vagrant with any hypervisor.
 
     $ brew cask install vagrant
-    $ cd $GOPATH/src/github.com/jollheef/go-qemu-kernel/tools/qemu-debian-image
+    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/qemu/tools/qemu-debian-image
     $ vagrant up && vagrant destroy -f
 
 bionic.img and bionic-vmlinuz will be created in current directory.
 
 ### Fill configuration file
 
-    $ $EDITOR $GOPATH/src/github.com/jollheef/go-qemu-kernel/test.config.go
+    $ $EDITOR $GOPATH/src/github.com/jollheef/out-of-tree/qemu/test.config.go
 
 ### Run tests
 
@@ -45,7 +45,7 @@ bionic.img and bionic-vmlinuz will be created in current directory.
 
 ## Usage
 
-    $ go get github.com/jollheef/go-qemu-kernel
+    $ go get github.com/jollheef/out-of-tree/qemu
 
 Minimal example:
 
@@ -73,4 +73,4 @@ Minimal example:
 
 More information and list of all functions see at go documentation project, or just run locally:
 
-    $ godoc github.com/jollheef/go-qemu-kernel
+    $ godoc github.com/jollheef/out-of-tree/qemu
