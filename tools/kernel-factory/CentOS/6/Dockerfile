@@ -1,5 +1,7 @@
 FROM centos:6
 
+RUN yum -y groupinstall "Development Tools"
+
 # Last release must be download from mirror.centos.org, because vault.centos.org
 # does not containt repodata for last release.
 RUN yum list --showduplicates kernel \
