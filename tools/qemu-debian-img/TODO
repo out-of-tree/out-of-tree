@@ -1,0 +1,5 @@
+# TODO
+
+* Add ability to bootstrap centos image, rename tool to qemu-bootstrap-img
+
+    yum --installroot=/chroot --releasever=7 --disablerepo='*' --enablerepo=base install centos-release
