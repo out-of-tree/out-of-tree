@@ -3,3 +3,4 @@
 vmlinuz*
 initrd*
 *.ko
+.vagrant
