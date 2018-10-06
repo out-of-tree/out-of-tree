@@ -96,7 +96,7 @@ func TestQemuSystemStart_Timeout(t *testing.T) {
 	}
 }
 
-func startTestQemu(t *testing.T) (q *QemuSystem, err error) {
+func startTestQemu(t *testing.T, timeout time.Duration) (q *QemuSystem, err error) {
 	t.Parallel()
 	kernel := Kernel{
 		Name:       "Test kernel",
@@ -108,6 +108,10 @@ func startTestQemu(t *testing.T) (q *QemuSystem, err error) {
 		return
 	}
 
+	if timeout != 0 {
+		q.Timeout = timeout
+	}
+
 	if err = q.Start(); err != nil {
 		return
 	}
@@ -116,7 +120,7 @@ func startTestQemu(t *testing.T) (q *QemuSystem, err error) {
 }
 
 func TestQemuSystemCommand(t *testing.T) {
-	qemu, err := startTestQemu(t)
+	qemu, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +149,7 @@ func TestQemuSystemCommand(t *testing.T) {
 }
 
 func TestQemuSystemCopyFile(t *testing.T) {
-	qemu, err := startTestQemu(t)
+	qemu, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +181,7 @@ func TestQemuSystemCopyFile(t *testing.T) {
 }
 
 func TestQemuSystemCopyAndRun(t *testing.T) {
-	qemu, err := startTestQemu(t)
+	qemu, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -210,7 +214,7 @@ func TestQemuSystemCopyAndRun(t *testing.T) {
 }
 
 func TestQemuSystemCopyAndInsmod(t *testing.T) {
-	qemu, err := startTestQemu(t)
+	qemu, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,4 +238,29 @@ func TestQemuSystemCopyAndInsmod(t *testing.T) {
 	if lsmodBefore == lsmodAfter {
 		t.Fatal("insmod returns ok but there is no new kernel modules")
 	}
+}
+
+func TestQemuSystemRun(t *testing.T) {
+	qemu, err := startTestQemu(t, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer qemu.Stop()
+
+	for {
+		_, err := qemu.Command("root", "echo")
+		if err == nil {
+			break
+		}
+	}
+
+	start := time.Now()
+	err = qemu.AsyncCommand("root", "sleep 10s")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if time.Since(start) > time.Second {
+		t.Fatalf("qemu.Run does not async (waited %s)", +time.Since(start))
+	}
+
 }

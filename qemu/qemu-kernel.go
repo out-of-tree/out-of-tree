@@ -5,6 +5,7 @@
 package qemukernel
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -237,14 +238,19 @@ func (q *QemuSystem) Stop() {
 	}
 }
 
-// Command executes shell commands on qemu system
-func (q *QemuSystem) Command(user, cmd string) (output string, err error) {
+func (q QemuSystem) ssh(user string) (client *ssh.Client, err error) {
 	cfg := &ssh.ClientConfig{
-		User: user,
+		User:            user,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-	cfg.HostKeyCallback = ssh.InsecureIgnoreHostKey()
 
-	client, err := ssh.Dial("tcp", q.sshAddrPort, cfg)
+	client, err = ssh.Dial("tcp", q.sshAddrPort, cfg)
+	return
+}
+
+// Command executes shell commands on qemu system
+func (q QemuSystem) Command(user, cmd string) (output string, err error) {
+	client, err := q.ssh(user)
 	if err != nil {
 		return
 	}
@@ -258,6 +264,23 @@ func (q *QemuSystem) Command(user, cmd string) (output string, err error) {
 	bytesOutput, err := session.CombinedOutput(cmd)
 	output = string(bytesOutput)
 	return
+}
+
+// AsyncCommand executes command on qemu system but does not wait for exit
+func (q QemuSystem) AsyncCommand(user, cmd string) (err error) {
+	client, err := q.ssh(user)
+	if err != nil {
+		return
+	}
+	defer client.Close()
+
+	session, err := client.NewSession()
+	if err != nil {
+		return
+	}
+
+	return session.Run(fmt.Sprintf(
+		"nohup sh -c '%s' > /dev/null 2> /dev/null < /dev/null &", cmd))
 }
 
 // CopyFile is copy file from local machine to remote through ssh/scp
