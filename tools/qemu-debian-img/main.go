@@ -134,7 +134,9 @@ func generateImage(repo, release, path, size string) (err error) {
 	log.Println("Allow ssh login without password (NOTE: fixed sshd pam.d)")
 	stdout, stderr, _, err = runInChroot(tmpdir,
 		"echo auth sufficient pam_permit.so > /etc/pam.d/sshd"+
+			" && sed -i '/PermitEmptyPasswords/d' /etc/ssh/sshd_config"+
 			" && echo PermitEmptyPasswords yes >> /etc/ssh/sshd_config"+
+			" && sed -i '/PermitRootLogin/d' /etc/ssh/sshd_config"+
 			" && echo PermitRootLogin yes >> /etc/ssh/sshd_config")
 	if err != nil {
 		log.Println(stdout, stderr)
