@@ -33,7 +33,7 @@ preferred way is to use Vagrant with any hypervisor.
     $ cd $GOPATH/src/github.com/jollheef/out-of-tree/qemu/tools/qemu-debian-image
     $ vagrant up && vagrant destroy -f
 
-bionic.img and bionic-vmlinuz will be created in current directory.
+bionic.img, vmlinuz-bionic and initrd-bionic will be created in current directory.
 
 ### Fill configuration file
 
