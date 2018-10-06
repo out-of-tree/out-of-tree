@@ -240,6 +240,41 @@ func TestQemuSystemCopyAndInsmod(t *testing.T) {
 	}
 }
 
+func TestQemuSystemKernelPanic(t *testing.T) {
+	qemu, err := startTestQemu(t, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer qemu.Stop()
+
+	// Enable sysrq
+	_, err = qemu.Command("root", "echo 1 > /proc/sys/kernel/sysrq")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Trigger kernel panic
+	err = qemu.AsyncCommand("root", "sleep 1s && echo c > /proc/sysrq-trigger")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Wait for panic watcher timeout
+	time.Sleep(5 * time.Second)
+
+	if qemu.KilledByTimeout {
+		t.Fatal("qemu is killed by timeout, not because of panic")
+	}
+
+	if !qemu.Died {
+		t.Fatal("qemu is not killed after kernel panic")
+	}
+
+	if !qemu.KernelPanic {
+		t.Fatal("qemu is died but there's no information about panic")
+	}
+}
+
 func TestQemuSystemRun(t *testing.T) {
 	qemu, err := startTestQemu(t, 0)
 	if err != nil {

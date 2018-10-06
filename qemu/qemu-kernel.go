@@ -71,6 +71,8 @@ type QemuSystem struct {
 	Timeout         time.Duration
 	KilledByTimeout bool
 
+	KernelPanic bool
+
 	Died        bool
 	sshAddrPort string
 
@@ -154,6 +156,19 @@ func kvmExists() bool {
 	return true
 }
 
+func (q *QemuSystem) panicWatcher() {
+	for {
+		time.Sleep(time.Second)
+		if bytes.Contains(q.Stdout, []byte("Kernel panic")) {
+			time.Sleep(time.Second)
+			// There is no reason to stay alive after kernel panic
+			q.Stop()
+			q.KernelPanic = true
+			return
+		}
+	}
+}
+
 // Start qemu process
 func (q *QemuSystem) Start() (err error) {
 	rand.Seed(time.Now().UnixNano()) // Are you sure?
@@ -213,6 +228,8 @@ func (q *QemuSystem) Start() (err error) {
 	if q.Died {
 		err = errors.New("qemu died immediately: " + string(q.Stderr))
 	}
+
+	go q.panicWatcher()
 
 	if q.Timeout != 0 {
 		go func() {
