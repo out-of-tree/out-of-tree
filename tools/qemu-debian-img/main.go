@@ -143,7 +143,7 @@ func generateImage(repo, release, path, size string) (err error) {
 
 	log.Println("Add dhclient to rc.local")
 	stdout, stderr, _, err = runInChroot(tmpdir,
-		"echo '#!/bin/sh\ndhclient' >> /etc/rc.local"+
+		"echo '#!/bin/sh\ndhclient' > /etc/rc.local"+
 			" && chmod +x /etc/rc.local")
 	if err != nil {
 		log.Println(stdout, stderr)
