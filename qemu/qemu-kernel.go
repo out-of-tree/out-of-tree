@@ -20,7 +20,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-func readBytesUntilEOF(pipe io.ReadCloser) (buf []byte, err error) {
+func readUntilEOF(pipe io.ReadCloser, buf *[]byte) (err error) {
 	bufSize := 1024
 	for err != io.EOF {
 		stdout := make([]byte, bufSize)
@@ -31,18 +31,12 @@ func readBytesUntilEOF(pipe io.ReadCloser) (buf []byte, err error) {
 			return
 		}
 
-		buf = append(buf, stdout[:n]...)
+		*buf = append(*buf, stdout[:n]...)
 	}
 
 	if err == io.EOF {
 		err = nil
 	}
-	return
-}
-
-func readUntilEOF(pipe io.ReadCloser) (str string, err error) {
-	buf, err := readBytesUntilEOF(pipe)
-	str = string(buf)
 	return
 }
 
@@ -87,9 +81,10 @@ type QemuSystem struct {
 		stdout io.ReadCloser
 	}
 
+	Stdout, Stderr []byte
+
 	// accessible after qemu is closed
-	Stdout, Stderr string
-	exitErr        error
+	exitErr error
 }
 
 // NewQemuSystem constructor
@@ -204,9 +199,10 @@ func (q *QemuSystem) Start() (err error) {
 		return
 	}
 
+	go readUntilEOF(q.pipe.stdout, &q.Stdout)
+	go readUntilEOF(q.pipe.stderr, &q.Stderr)
+
 	go func() {
-		q.Stdout, _ = readUntilEOF(q.pipe.stdout)
-		q.Stderr, _ = readUntilEOF(q.pipe.stderr)
 		q.exitErr = q.cmd.Wait()
 		q.Died = true
 	}()
@@ -214,7 +210,7 @@ func (q *QemuSystem) Start() (err error) {
 	time.Sleep(time.Second / 10) // wait for immediately die
 
 	if q.Died {
-		err = errors.New("qemu died immediately: " + q.Stderr)
+		err = errors.New("qemu died immediately: " + string(q.Stderr))
 	}
 
 	if q.Timeout != 0 {
