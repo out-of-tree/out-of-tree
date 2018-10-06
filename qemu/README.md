@@ -30,6 +30,7 @@ Because it's a very complicated to debootstrap qemu images from macOS,
 preferred way is to use Vagrant with any hypervisor.
 
     $ brew cask install vagrant
+    $ vagrant plugin install vagrant-vbguest
     $ cd $GOPATH/src/github.com/jollheef/out-of-tree/qemu/tools/qemu-debian-image
     $ vagrant up && vagrant destroy -f
 
