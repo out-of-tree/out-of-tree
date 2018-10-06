@@ -270,7 +270,9 @@ func (q *QemuSystem) CopyFile(user, localPath, remotePath string) (err error) {
 	addr := addrPort[0]
 	port := addrPort[1]
 
-	cmd := exec.Command("scp", "-P", port, "-o", "StrictHostKeyChecking=no",
+	cmd := exec.Command("scp", "-P", port,
+		"-o", "StrictHostKeyChecking=no",
+		"-o", "LogLevel=error",
 		localPath, user+"@"+addr+":"+remotePath)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
