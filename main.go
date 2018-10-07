@@ -75,6 +75,10 @@ func (ka artifact) checkSupport(ki kernelInfo, km kernelMask) (
 func (ka artifact) Supported(ki kernelInfo) (supported bool, err error) {
 	for _, km := range ka.SupportedKernels {
 		supported, err = ka.checkSupport(ki, km)
+		if supported {
+			break
+		}
+
 	}
 	return
 }
