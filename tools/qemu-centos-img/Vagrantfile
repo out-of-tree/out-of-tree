@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+
+  config.vm.synced_folder ".", "/vagrant", type: 'virtualbox'
+
+  config.vm.provision "shell", inline: <<-SHELL
+    yum -y install qemu-img e2fsprogs
+    qemu-img create centos7.img 8G
+    mkfs.ext4 -F centos7.img
+    TMPDIR=$(mktemp -d)
+    mount -o loop centos7.img $TMPDIR
+    yum --installroot=$TMPDIR \
+        --releasever=7 \
+        --disablerepo='*' \
+        --enablerepo=base \
+        -y groupinstall Base
+    yum --installroot=$TMPDIR \
+        --releasever=7 \
+        --disablerepo='*' \
+        --enablerepo=base \
+        -y install openssh-server
+    chroot $TMPDIR /bin/sh -c 'useradd -m user'
+    sed -i 's/root:\*:/root::/' $TMPDIR/etc/shadow
+    sed -i 's/user:!!:/user::/' $TMPDIR/etc/shadow
+    echo auth sufficient pam_permit.so > $TMPDIR/etc/pam.d/sshd
+    sed -i '/PermitEmptyPasswords/d' $TMPDIR/etc/ssh/sshd_config
+    echo PermitEmptyPasswords yes >> $TMPDIR/etc/ssh/sshd_config
+    sed -i '/PermitRootLogin/d' $TMPDIR/etc/ssh/sshd_config
+    echo PermitRootLogin yes >> $TMPDIR/etc/ssh/sshd_config
+    umount $TMPDIR
+    cp centos7.img /vagrant/
+  SHELL
+end
