@@ -216,7 +216,7 @@ func genOkFail(name string, ok bool) aurora.Value {
 	}
 }
 
-func dumpResult(ka artifact, ki kernelInfo, build_ok, run_ok, test_ok *bool) {
+func dumpResult(q *qemu.QemuSystem, ka artifact, ki kernelInfo, build_ok, run_ok, test_ok *bool) {
 	distroInfo := fmt.Sprintf("%s-%s {%s}", ki.DistroType,
 		ki.DistroRelease, ki.KernelRelease)
 
@@ -232,7 +232,18 @@ func dumpResult(ka artifact, ki kernelInfo, build_ok, run_ok, test_ok *bool) {
 			genOkFail("TEST", *test_ok))
 	}
 
-	fmt.Println(colored)
+	additional := ""
+	if q.KernelPanic {
+		additional = "(panic)"
+	} else if q.KilledByTimeout {
+		additional = "(timeout)"
+	}
+
+	if additional != "" {
+		fmt.Println(colored, additional)
+	} else {
+		fmt.Println(colored)
+	}
 }
 
 func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
@@ -260,7 +271,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
 	build_ok := false
 	run_ok := false
 	test_ok := false
-	defer dumpResult(ka, ki, &build_ok, &run_ok, &test_ok)
+	defer dumpResult(q, ka, ki, &build_ok, &run_ok, &test_ok)
 
 	// TODO Write build log to file or database
 	outFile, output, err := build(tmp, ka, ki)
