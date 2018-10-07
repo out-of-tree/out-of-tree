@@ -133,8 +133,7 @@ func dockerCommand(container, workdir, timeout, command string) *exec.Cmd {
 }
 
 func build(tmp string, ka artifact, ki kernelInfo) (outPath, output string, err error) {
-	target := fmt.Sprintf("%s_%s-%s-%s", ka.Name, ki.DistroType,
-		ki.DistroRelease, ki.KernelRelease)
+	target := fmt.Sprintf("%d_%s", rand.Int(), ki.DistroRelease)
 
 	tmpSourcePath := tmp + "/source"
 
