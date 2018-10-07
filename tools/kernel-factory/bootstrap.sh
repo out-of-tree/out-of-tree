@@ -12,15 +12,16 @@ find | grep Docker | sed 's/Dockerfile//' | while read DOCKER; do
     BOOT_FILES="$(docker run $CONTAINER_NAME ls /boot)"
     for KERNEL_RELEASE in $(docker run $CONTAINER_NAME ls /lib/modules); do
 	echo '[[Kernels]]' >> output/kernels.toml
-	echo 'distro_type =' $DISTRO_NAME >> output/kernels.toml
-	echo 'distro_release =' $DISTRO_VER >> output/kernels.toml
-	echo 'kernel_release =' $KERNEL_RELEASE >> output/kernels.toml
-	echo 'container_name =' $CONTAINER_NAME >> output/kernels.toml
+	echo 'distro_type =' \"$DISTRO_NAME\" >> output/kernels.toml
+	echo 'distro_release =' \"$DISTRO_VER\" >> output/kernels.toml
+	echo 'kernel_release =' \"$KERNEL_RELEASE\" >> output/kernels.toml
+	echo 'container_name =' \"$CONTAINER_NAME\" >> output/kernels.toml
 	KERNEL_PATH=$(echo $BOOT_FILES | sed  's/ /\n/g' | grep $KERNEL_RELEASE | grep vmlinuz)
-	echo 'kernel_path =' $(realpath output/$KERNEL_PATH) >> output/kernels.toml
+	echo 'kernel_path =' \"$(realpath output/$KERNEL_PATH)\" >> output/kernels.toml
 	INITRD_PATH=$(echo $BOOT_FILES | sed  's/ /\n/g' | grep $KERNEL_RELEASE | grep init)
-	echo 'initrd_path =' $(realpath output/$INITRD_PATH) >> output/kernels.toml
-	echo 'root_f_s =' $ROOTFS_PATH >> output/kernels.toml
+	echo 'initrd_path =' \"$(realpath output/$INITRD_PATH)\" >> output/kernels.toml
+	ROOTFS_PATH=$(realpath $DOCKER/Image)
+	echo 'root_f_s =' \"$ROOTFS_PATH\" >> output/kernels.toml
 	echo >> output/kernels.toml
     done
 done
