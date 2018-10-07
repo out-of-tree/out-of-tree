@@ -3,6 +3,7 @@
 
 int init_module(void)
 {
+	printk("COOKIE!\n");
 	return 0;
 }
 

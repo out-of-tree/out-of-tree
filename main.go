@@ -178,18 +178,13 @@ func cleanDmesg(q *qemu.QemuSystem) (err error) {
 	return
 }
 
-func testKernelModule(q *qemu.QemuSystem, ka artifact) (output string, err error) {
-	// TODO
-	err = errors.New("Not implemented")
+func testKernelModule(q *qemu.QemuSystem, ka artifact, test string) (output string, err error) {
+	output, err = q.Command("root", test)
+	// TODO generic checks for WARNING's and so on
 	return
 }
 
 func testKernelExploit(q *qemu.QemuSystem, ka artifact, test, exploit string) (output string, err error) {
-	output, err = q.Command("user", "chmod +x "+test)
-	if err != nil {
-		return
-	}
-
 	output, err = q.Command("user", "chmod +x "+exploit)
 	if err != nil {
 		return
@@ -280,33 +275,38 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
 		return
 	}
 
+	testPath := outFile + "_test"
+
+	remoteTest := fmt.Sprintf("/tmp/test_%d", rand.Int())
+	err = q.CopyFile("user", testPath, remoteTest)
+	if err != nil {
+		return
+	}
+
+	_, err = q.Command("root", "chmod +x "+remoteTest)
+	if err != nil {
+		return
+	}
+
 	if ka.Type == KernelModule {
 		// TODO Write insmod log to file or database
 		output, err := q.CopyAndInsmod(outFile)
 		if err != nil {
-			log.Println(output)
+			log.Println(output, err)
 			return
 		}
 		run_ok = true
 
 		// TODO Write test results to file or database
-		output, err = testKernelModule(q, ka)
+		output, err = testKernelModule(q, ka, remoteTest)
 		if err != nil {
-			log.Println(output)
+			log.Println(output, err)
 			return
 		}
 		test_ok = true
 	} else if ka.Type == KernelExploit {
 		remoteExploit := fmt.Sprintf("/tmp/exploit_%d", rand.Int())
 		err = q.CopyFile("user", outFile, remoteExploit)
-		if err != nil {
-			return
-		}
-
-		testPath := outFile + "_test"
-
-		remoteTest := fmt.Sprintf("/tmp/test_%d", rand.Int())
-		err = q.CopyFile("user", testPath, remoteTest)
 		if err != nil {
 			return
 		}
