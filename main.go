@@ -198,7 +198,7 @@ func testKernelExploit(q *qemu.QemuSystem, ka artifact, test, exploit string) (o
 		return
 	}
 
-	_, err = q.Command("user", "stat "+randFilePath)
+	_, err = q.Command("root", "stat "+randFilePath)
 	if err != nil {
 		return
 	}
