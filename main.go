@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"regexp"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/logrusorgru/aurora"
@@ -37,6 +38,19 @@ const (
 
 func (at artifactType) String() string {
 	return [...]string{"module", "exploit"}[at]
+}
+
+func (at *artifactType) UnmarshalTOML(data []byte) (err error) {
+	stype := strings.Trim(string(data), `"`)
+	stypelower := strings.ToLower(stype)
+	if strings.Contains(stypelower, "module") {
+		*at = KernelModule
+	} else if strings.Contains(stypelower, "exploit") {
+		*at = KernelExploit
+	} else {
+		err = errors.New(fmt.Sprintf("Type %s is unsupported", stype))
+	}
+	return
 }
 
 type artifact struct {
@@ -75,6 +89,20 @@ const (
 
 func (dt distroType) String() string {
 	return [...]string{"Ubuntu", "CentOS", "Debian"}[dt]
+}
+
+func (dt *distroType) UnmarshalTOML(data []byte) (err error) {
+	sDistro := strings.Trim(string(data), `"`)
+	if strings.EqualFold(sDistro, "Ubuntu") {
+		*dt = Ubuntu
+	} else if strings.EqualFold(sDistro, "CentOS") {
+		*dt = CentOS
+	} else if strings.EqualFold(sDistro, "Debian") {
+		*dt = Debian
+	} else {
+		err = errors.New(fmt.Sprintf("Distro %s is unsupported", sDistro))
+	}
+	return
 }
 
 type kernelInfo struct {
