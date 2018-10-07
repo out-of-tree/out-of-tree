@@ -184,10 +184,30 @@ func testKernelModule(q *qemu.QemuSystem, ka artifact) (output string, err error
 	return
 }
 
-func testKernelExploit(q *qemu.QemuSystem, ka artifact,
-	remoteExploitPath string) (output string, err error) {
-	// TODO
-	err = errors.New("Not implemented")
+func testKernelExploit(q *qemu.QemuSystem, ka artifact, test, exploit string) (output string, err error) {
+	output, err = q.Command("user", "chmod +x "+test)
+	if err != nil {
+		return
+	}
+
+	output, err = q.Command("user", "chmod +x "+exploit)
+	if err != nil {
+		return
+	}
+
+	randFilePath := fmt.Sprintf("/root/%d", rand.Int())
+
+	cmd := fmt.Sprintf("%s %s %s", test, exploit, randFilePath)
+	output, err = q.Command("user", cmd)
+	if err != nil {
+		return
+	}
+
+	_, err = q.Command("user", "stat "+randFilePath)
+	if err != nil {
+		return
+	}
+
 	return
 }
 
@@ -277,14 +297,22 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
 		}
 		test_ok = true
 	} else if ka.Type == KernelExploit {
-		remoteExploitPath := fmt.Sprintf("/tmp/exploit_%d.ko", rand.Int())
-		err = q.CopyFile("root", outFile, remoteExploitPath)
+		remoteExploit := fmt.Sprintf("/tmp/exploit_%d", rand.Int())
+		err = q.CopyFile("user", outFile, remoteExploit)
+		if err != nil {
+			return
+		}
+
+		testPath := outFile + "_test"
+
+		remoteTest := fmt.Sprintf("/tmp/test_%d", rand.Int())
+		err = q.CopyFile("user", testPath, remoteTest)
 		if err != nil {
 			return
 		}
 
 		// TODO Write test results to file or database
-		output, err = testKernelExploit(q, ka, remoteExploitPath)
+		output, err = testKernelExploit(q, ka, remoteTest, remoteExploit)
 		if err != nil {
 			log.Println(output)
 			return
