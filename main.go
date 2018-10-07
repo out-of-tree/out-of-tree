@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"regexp"
@@ -174,21 +175,16 @@ func cleanDmesg(q *qemu.QemuSystem) (err error) {
 	return
 }
 
-func run(q *qemu.QemuSystem, ka artifact, ki kernelInfo, file string) (output string, err error) {
-	switch ka.Type {
-	case KernelModule:
-		output, err = q.CopyAndInsmod(file)
-	case KernelExploit:
-		output, err = q.CopyAndRun("user", file)
-	default:
-		err = errors.New("Unsupported artifact type")
-	}
-
+func testKernelModule(q *qemu.QemuSystem, ka artifact) (output string, err error) {
+	// TODO
+	err = errors.New("Not implemented")
 	return
 }
 
-func test(q *qemu.QemuSystem, ka artifact) (output string, err error) {
+func testKernelExploit(q *qemu.QemuSystem, ka artifact,
+	remoteExploitPath string) (output string, err error) {
 	// TODO
+	err = errors.New("Not implemented")
 	return
 }
 
@@ -203,25 +199,20 @@ func genOkFail(name string, ok bool) aurora.Value {
 }
 
 func dumpResult(ka artifact, ki kernelInfo, build_ok, run_ok, test_ok *bool) {
-	var stest aurora.Value
-	if ka.Type == KernelExploit {
-		stest = genOkFail("LPE", *test_ok)
-	} else {
-		stest = genOkFail("TEST", *test_ok)
-	}
+	distroInfo := fmt.Sprintf("%s-%s {%s}", ki.DistroType,
+		ki.DistroRelease, ki.KernelRelease)
 
-	var srun aurora.Value
+	colored := ""
 	if ka.Type == KernelExploit {
-		srun = genOkFail("RUN", *run_ok)
+		colored = aurora.Sprintf("[*] %40s: %s %s", distroInfo,
+			genOkFail("BUILD", *build_ok),
+			genOkFail("LPE", *test_ok))
 	} else {
-		srun = genOkFail("INSMOD", *run_ok)
+		colored = aurora.Sprintf("[*] %40s: %s %s %s", distroInfo,
+			genOkFail("BUILD", *build_ok),
+			genOkFail("INSMOD", *run_ok),
+			genOkFail("TEST", *test_ok))
 	}
-
-	colored := aurora.Sprintf("[*] %40s: %s %s %s",
-		fmt.Sprintf("%s-%s {%s}", ki.DistroType, ki.DistroRelease,
-			ki.KernelRelease),
-		genOkFail("BUILD", *build_ok),
-		srun, stest)
 
 	fmt.Println(colored)
 }
@@ -265,19 +256,38 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
 		return
 	}
 
-	// TODO Write run log to file or database
-	_, err = run(q, ka, ki, outFile)
-	if err != nil {
-		return
-	}
-	run_ok = true
+	if ka.Type == KernelModule {
+		// TODO Write insmod log to file or database
+		_, err = q.CopyAndInsmod(outFile)
+		if err != nil {
+			return
+		}
+		run_ok = true
 
-	// TODO Write test results to file or database
-	_, err = test(q, ka)
-	if err != nil {
-		return
+		// TODO Write test results to file or database
+		_, err = testKernelModule(q, ka)
+		if err != nil {
+			return
+		}
+		test_ok = true
+	} else if ka.Type == KernelExploit {
+		remoteExploitPath := fmt.Sprintf("/tmp/exploit_%d.ko", rand.Int())
+		err = q.CopyFile("root", outFile, remoteExploitPath)
+		if err != nil {
+			return
+		}
+
+		// TODO Write test results to file or database
+		_, err = testKernelExploit(q, ka, remoteExploitPath)
+		if err != nil {
+			return
+		}
+		run_ok = true // does not really used
+		test_ok = true
+	} else {
+		err = errors.New("Unsupported artifact type")
 	}
-	test_ok = true
+	return
 }
 
 type kernelConfig struct {
