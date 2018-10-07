@@ -142,7 +142,10 @@ func build(tmp string, ka artifact, ki kernelInfo) (outPath, output string, err 
 		return
 	}
 
-	outPath = tmpSourcePath + "/" + target + ".ko"
+	outPath = tmpSourcePath + "/" + target
+	if ka.Type == KernelModule {
+		outPath += ".ko"
+	}
 
 	kernel := "/lib/modules/" + ki.KernelRelease + "/build"
 
