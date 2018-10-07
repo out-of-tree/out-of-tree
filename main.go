@@ -132,7 +132,7 @@ func dockerCommand(container, workdir, timeout, command string) *exec.Cmd {
 		"bash", "-c", "cd /work && "+command)
 }
 
-func build(tmp string, ka artifact, ki kernelInfo) (outPath string, err error) {
+func build(tmp string, ka artifact, ki kernelInfo) (outPath, output string, err error) {
 	target := fmt.Sprintf("%s_%s-%s-%s", ka.Name, ki.DistroType,
 		ki.DistroRelease, ki.KernelRelease)
 
@@ -149,9 +149,10 @@ func build(tmp string, ka artifact, ki kernelInfo) (outPath string, err error) {
 
 	cmd := dockerCommand(ki.ContainerName, tmpSourcePath, "1m", // TODO CFG
 		"make KERNEL="+kernel+" TARGET="+target)
-	output, err := cmd.CombinedOutput()
+	rawOutput, err := cmd.CombinedOutput()
+	output = string(rawOutput)
 	if err != nil {
-		err = errors.New(string(output))
+		err = errors.New("make execution error")
 		return
 	}
 
@@ -245,8 +246,9 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
 	defer dumpResult(ka, ki, &build_ok, &run_ok, &test_ok)
 
 	// TODO Write build log to file or database
-	outFile, err := build(tmp, ka, ki)
+	outFile, output, err := build(tmp, ka, ki)
 	if err != nil {
+		log.Println(output)
 		return
 	}
 	build_ok = true
@@ -258,15 +260,17 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
 
 	if ka.Type == KernelModule {
 		// TODO Write insmod log to file or database
-		_, err = q.CopyAndInsmod(outFile)
+		output, err := q.CopyAndInsmod(outFile)
 		if err != nil {
+			log.Println(output)
 			return
 		}
 		run_ok = true
 
 		// TODO Write test results to file or database
-		_, err = testKernelModule(q, ka)
+		output, err = testKernelModule(q, ka)
 		if err != nil {
+			log.Println(output)
 			return
 		}
 		test_ok = true
@@ -278,8 +282,9 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
 		}
 
 		// TODO Write test results to file or database
-		_, err = testKernelExploit(q, ka, remoteExploitPath)
+		output, err = testKernelExploit(q, ka, remoteExploitPath)
 		if err != nil {
+			log.Println(output)
 			return
 		}
 		run_ok = true // does not really used
