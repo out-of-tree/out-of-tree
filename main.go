@@ -157,10 +157,10 @@ func build(tmp string, ka artifact, ki kernelInfo) (outPath string, err error) {
 	return
 }
 
-func run(q *qemu.QemuSystem, ka artifact, ki kernelInfo, file string) (output string, err error) {
+func cleanDmesg(q *qemu.QemuSystem) (err error) {
 	start := time.Now()
 	for {
-		output, err = q.Command("root", "dmesg -c")
+		_, err = q.Command("root", "dmesg -c")
 		if err == nil {
 			break
 		}
@@ -168,10 +168,13 @@ func run(q *qemu.QemuSystem, ka artifact, ki kernelInfo, file string) (output st
 
 		if time.Now().After(start.Add(time.Minute)) {
 			err = errors.New("Can't connect to qemu")
-			return
+			break
 		}
 	}
+	return
+}
 
+func run(q *qemu.QemuSystem, ka artifact, ki kernelInfo, file string) (output string, err error) {
 	switch ka.Type {
 	case KernelModule:
 		output, err = q.CopyAndInsmod(file)
@@ -256,6 +259,11 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
 		return
 	}
 	build_ok = true
+
+	err = cleanDmesg(q)
+	if err != nil {
+		return
+	}
 
 	// TODO Write run log to file or database
 	_, err = run(q, ka, ki, outFile)
