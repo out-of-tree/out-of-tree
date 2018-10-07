@@ -346,6 +346,10 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	if ka.SourcePath == "" {
+		ka.SourcePath = "."
+	}
+
 	kcfgEnv := "OUT_OF_TREE_KERNELS_CONFIG"
 	kcfgPath := os.Getenv(kcfgEnv)
 	if !exists(kcfgPath) {
