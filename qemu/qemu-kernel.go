@@ -125,7 +125,7 @@ func getRandomAddrPort() (addr string) {
 
 func getRandomPort(ip string) (addr string) {
 	// ip:1024-65535
-	port := rand.Int()%(65535-1024) + 1024
+	port := rand.Int()%(65536-1024) + 1024
 	return fmt.Sprintf("%s:%d", ip, port)
 }
 
