@@ -1,6 +1,6 @@
 *.img
 *.log
-vmlinuz*
-initrd*
+*vmlinuz*
+*initrd*
 *.ko
 .vagrant

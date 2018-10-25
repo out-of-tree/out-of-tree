@@ -18,9 +18,8 @@ Read [Qemu API](qemu/README.md).
 If you already have Go, Qemu, Vagrant and Docker installed, there's cross-platform installation checklist:
 
     $ go get github.com/jollheef/out-of-tree
-    $ cd $GOPATH/src/github.com/jollheef/out-of-tree
-    $ cd tools/qemu-debian-img/
-    $ vagrant up && vagrant destroy -f
+    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/qemu-debian-img/
+    $ ./bootstrap.sh
     $ cd ../kernel-factory
     $ rm -rf {Debian,CentOS,Ubuntu/{14.04,18.04}} # speed up :)
     $ ./bootstrap.sh

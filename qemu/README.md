@@ -15,26 +15,23 @@ Features:
 
 First of all we need to generate rootfs for run qemu.
 
-#### GNU/Linux
+#### Install qemu and docker
 
-    $ sudo apt install -y debootstrap qemu
-    $ sudo qemu-debian-img generate sid.img
+##### GNU/Linux
 
-#### macOS
+    $ sudo apt install -y qemu docker
+
+##### macOS
 
 Note: qemu on macOS since v2.12 (24 April 2018) supports Hypervisor.framework.
 
     $ brew install qemu
+    $ brew cask install docker
 
-Because it's a very complicated to debootstrap qemu images from macOS,
-preferred way is to use Vagrant with any hypervisor.
+#### Generate image
 
-    $ brew cask install vagrant
-    $ vagrant plugin install vagrant-vbguest
-    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/qemu/tools/qemu-debian-image
-    $ vagrant up && vagrant destroy -f
-
-bionic.img, vmlinuz-bionic and initrd-bionic will be created in current directory.
+    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/qemu-debian-img
+    $ ./bootstrap.sh
 
 ### Fill configuration file
 
