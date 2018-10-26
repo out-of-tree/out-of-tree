@@ -8,6 +8,12 @@ out-of-tree kernel {module, exploit} development tool
 
 Read [Qemu API](qemu/README.md).
 
+### Generate images
+
+    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/qemu-debian-img/
+    $ docker run --privileged -v $(pwd):/shared -e IMAGE=/shared/ubuntu1404.img -e RELEASE=trusty -t gen-ubuntu1804-image
+    $ docker run --privileged -v $(pwd):/shared -e IMAGE=/shared/ubuntu1604.img -e RELEASE=xenial -t gen-ubuntu1804-image
+
 ### Generate kernels
 
     cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory
@@ -20,6 +26,7 @@ If you already have Go, Qemu, Vagrant and Docker installed, there's cross-platfo
     $ go get github.com/jollheef/out-of-tree
     $ cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/qemu-debian-img/
     $ ./bootstrap.sh
+    $ docker run --privileged -v $(pwd):/shared -e IMAGE=/shared/ubuntu1604.img -e RELEASE=xenial -t gen-ubuntu1804-image
     $ cd ../kernel-factory
     $ rm -rf {Debian,CentOS,Ubuntu/{14.04,18.04}} # speed up :)
     $ ./bootstrap.sh
