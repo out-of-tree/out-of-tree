@@ -21,7 +21,7 @@ Read [Qemu API](qemu/README.md).
 
 ### "I just want to see how it works"
 
-If you already have Go, Qemu, Vagrant and Docker installed, there's cross-platform installation checklist:
+If you already have Go, Qemu and Docker installed, there's cross-platform installation checklist:
 
     $ go get github.com/jollheef/out-of-tree
     $ cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/qemu-debian-img/
