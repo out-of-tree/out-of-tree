@@ -21,6 +21,7 @@ import (
 	"github.com/naoina/toml"
 	"github.com/otiai10/copy"
 	"github.com/remeh/sizedwaitgroup"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	qemu "github.com/jollheef/out-of-tree/qemu"
 )
@@ -404,16 +405,7 @@ func exists(path string) bool {
 	return true
 }
 
-func main() {
-	ka, err := readArtifactConfig(".out-of-tree.toml")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	if ka.SourcePath == "" {
-		ka.SourcePath = "."
-	}
-
+func oldmain() {
 	kcfgEnv := "OUT_OF_TREE_KERNELS_CONFIG"
 	kcfgPath := os.Getenv(kcfgEnv)
 	if !exists(kcfgPath) {
@@ -424,6 +416,18 @@ func main() {
 		log.Fatalln("Please specify kernels config path in " + kcfgEnv)
 	}
 
+}
+
+func pewHandler(workPath, kcfgPath string) (err error) {
+	ka, err := readArtifactConfig(workPath + "/.out-of-tree.toml")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	if ka.SourcePath == "" {
+		ka.SourcePath = workPath
+	}
+
 	kcfg, err := readKernelConfig(kcfgPath)
 	if err != nil {
 		log.Fatalln(err)
@@ -432,5 +436,26 @@ func main() {
 	err = performCI(ka, kcfg)
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+	return
+}
+
+func main() {
+	pewCommand := kingpin.Command("pew", "Build, run and test module/exploit")
+	path := pewCommand.Arg(
+		"path", "Path to work directory").Default(".").ExistingDir()
+	kernelsConfig := pewCommand.Flag(
+		"kernels-config", "Path to kernels config").Envar(
+		"OUT_OF_TREE_KERNELS_CONFIG").Required().ExistingFile()
+
+	var err error
+	switch kingpin.Parse() {
+	case "pew":
+		err = pewHandler(*path, *kernelsConfig)
+	}
+
+	if err != nil {
+		log.Println(err)
 	}
 }

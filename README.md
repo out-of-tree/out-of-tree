@@ -31,9 +31,10 @@ If you already have Go, Qemu, Vagrant and Docker installed, there's cross-platfo
     $ rm -rf {Debian,CentOS,Ubuntu/{14.04,18.04}} # speed up :)
     $ ./bootstrap.sh
     $ # wait several hours...
+    $ export OUT_OF_TREE_KERNELS_CONFIG=$GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory/output/kernels.toml
     $ cd ../../examples/kernel-exploit
     $ # test kernel exploit
-    $ out-of-tree
+    $ out-of-tree pew
     $ cd ../kernel-module
     $ # test kernel module
-    $ out-of-tree
+    $ out-of-tree pew
