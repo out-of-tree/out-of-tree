@@ -405,7 +405,7 @@ func exists(path string) bool {
 	return true
 }
 
-func pewHandler(workPath, kcfgPath string) (err error) {
+func pewHandler(workPath, kcfgPath, overridedKernel string) (err error) {
 	ka, err := readArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
 		return
@@ -413,6 +413,22 @@ func pewHandler(workPath, kcfgPath string) (err error) {
 
 	if ka.SourcePath == "" {
 		ka.SourcePath = workPath
+	}
+
+	if overridedKernel != "" {
+		parts := strings.Split(overridedKernel, ":")
+		if len(parts) != 2 {
+			return errors.New("Kernel is not 'distroType:regex'")
+		}
+
+		var dt distroType
+		err = dt.UnmarshalTOML([]byte(parts[0]))
+		if err != nil {
+			return
+		}
+
+		km := kernelMask{DistroType: dt, ReleaseMask: parts[1]}
+		ka.SupportedKernels = []kernelMask{km}
 	}
 
 	kcfg, err := readKernelConfig(kcfgPath)
@@ -444,11 +460,13 @@ func main() {
 	kcfg := kcfgFlag.Envar("OUT_OF_TREE_KCFG").Required().ExistingFile()
 
 	pewCommand := app.Command("pew", "Build, run and test module/exploit")
+	pewKernelCmd := pewCommand.Flag("kernel", "Override kernel regex")
+	pewKernel := pewKernelCmd.String()
 
 	var err error
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case pewCommand.FullCommand():
-		err = pewHandler(*path, *kcfg)
+		err = pewHandler(*path, *kcfg, *pewKernel)
 	}
 
 	if err != nil {

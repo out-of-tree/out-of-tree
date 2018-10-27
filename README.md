@@ -38,3 +38,9 @@ If you already have Go, Qemu and Docker installed, there's cross-platform instal
     $ cd ../kernel-module
     $ # test kernel module
     $ out-of-tree pew
+
+## Examples
+
+Test only with one kernel:
+
+    $ out-of-tree pew --kernel='Ubuntu:4.10.0-30-generic'
