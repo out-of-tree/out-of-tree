@@ -429,17 +429,18 @@ func pewHandler(workPath, kcfgPath string) (err error) {
 }
 
 func main() {
-	pewCommand := kingpin.Command("pew", "Build, run and test module/exploit")
-	path := pewCommand.Arg(
-		"path", "Path to work directory").Default(".").ExistingDir()
-	kernelsConfig := pewCommand.Flag(
-		"kernels-config", "Path to kernels config").Envar(
-		"OUT_OF_TREE_KERNELS_CONFIG").Required().ExistingFile()
+	pathFlag := kingpin.Flag("path", "Path to work directory")
+	path := pathFlag.Default(".").ExistingDir()
+
+	kcfgFlag := kingpin.Flag("kernels", "Path to kernels config")
+	kcfg := kcfgFlag.Envar("OUT_OF_TREE_KCFG").Required().ExistingFile()
+
+	kingpin.Command("pew", "Build, run and test module/exploit")
 
 	var err error
 	switch kingpin.Parse() {
 	case "pew":
-		err = pewHandler(*path, *kernelsConfig)
+		err = pewHandler(*path, *kcfg)
 	}
 
 	if err != nil {

@@ -31,7 +31,7 @@ If you already have Go, Qemu and Docker installed, there's cross-platform instal
     $ rm -rf {Debian,CentOS,Ubuntu/{14.04,18.04}} # speed up :)
     $ ./bootstrap.sh
     $ # wait several hours...
-    $ export OUT_OF_TREE_KERNELS_CONFIG=$GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory/output/kernels.toml
+    $ export OUT_OF_TREE_KCFG=$GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory/output/kernels.toml
     $ cd ../../examples/kernel-exploit
     $ # test kernel exploit
     $ out-of-tree pew
