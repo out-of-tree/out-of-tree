@@ -140,7 +140,9 @@ func dockerCommand(container, workdir, timeout, command string) *exec.Cmd {
 		"bash", "-c", "cd /work && "+command)
 }
 
-func build(tmp string, ka artifact, ki kernelInfo) (outPath, output string, err error) {
+func build(tmp string, ka artifact, ki kernelInfo,
+	dockerTimeout time.Duration) (outPath, output string, err error) {
+
 	target := fmt.Sprintf("%d_%s", rand.Int(), ki.KernelRelease)
 
 	tmpSourcePath := tmp + "/source"
@@ -157,7 +159,8 @@ func build(tmp string, ka artifact, ki kernelInfo) (outPath, output string, err 
 
 	kernel := "/lib/modules/" + ki.KernelRelease + "/build"
 
-	cmd := dockerCommand(ki.ContainerName, tmpSourcePath, "1m", // TODO CFG
+	seconds := fmt.Sprintf("%ds", dockerTimeout/time.Second)
+	cmd := dockerCommand(ki.ContainerName, tmpSourcePath, seconds,
 		"make KERNEL="+kernel+" TARGET="+target)
 	rawOutput, err := cmd.CombinedOutput()
 	output = string(rawOutput)
@@ -254,7 +257,9 @@ func dumpResult(q *qemu.QemuSystem, ka artifact, ki kernelInfo, build_ok, run_ok
 	}
 }
 
-func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
+func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo,
+	qemuTimeout, dockerTimeout time.Duration) {
+
 	defer swg.Done()
 
 	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
@@ -262,7 +267,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
 	if err != nil {
 		return
 	}
-	q.Timeout = time.Minute
+	q.Timeout = qemuTimeout
 
 	err = q.Start()
 	if err != nil {
@@ -282,7 +287,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo) {
 	defer dumpResult(q, ka, ki, &build_ok, &run_ok, &test_ok)
 
 	// TODO Write build log to file or database
-	outFile, output, err := build(tmp, ka, ki)
+	outFile, output, err := build(tmp, ka, ki, dockerTimeout)
 	if err != nil {
 		log.Println(output)
 		return
@@ -387,7 +392,9 @@ func readArtifactConfig(path string) (artifactCfg artifact, err error) {
 	return
 }
 
-func performCI(ka artifact, kcfg kernelConfig) (err error) {
+func performCI(ka artifact, kcfg kernelConfig,
+	qemuTimeout, dockerTimeout time.Duration) (err error) {
+
 	swg := sizedwaitgroup.New(runtime.NumCPU())
 	for _, kernel := range kcfg.Kernels {
 		var supported bool
@@ -398,7 +405,8 @@ func performCI(ka artifact, kcfg kernelConfig) (err error) {
 
 		if supported {
 			swg.Add()
-			go whatever(&swg, ka, kernel)
+			go whatever(&swg, ka, kernel, qemuTimeout,
+				dockerTimeout)
 		}
 	}
 	swg.Wait()
@@ -412,7 +420,9 @@ func exists(path string) bool {
 	return true
 }
 
-func pewHandler(workPath, kcfgPath, ovrrdKrnl string, guess bool) (err error) {
+func pewHandler(workPath, kcfgPath, ovrrdKrnl string, guess bool,
+	qemuTimeout, dockerTimeout time.Duration) (err error) {
+
 	ka, err := readArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
 		return
@@ -457,7 +467,7 @@ func pewHandler(workPath, kcfgPath, ovrrdKrnl string, guess bool) (err error) {
 		return
 	}
 
-	err = performCI(ka, kcfg)
+	err = performCI(ka, kcfg, qemuTimeout, dockerTimeout)
 	if err != nil {
 		return
 	}
@@ -480,6 +490,12 @@ func main() {
 	kcfgFlag := app.Flag("kernels", "Path to kernels config")
 	kcfg := kcfgFlag.Envar("OUT_OF_TREE_KCFG").Required().ExistingFile()
 
+	qemuTimeoutFlag := app.Flag("qemu-timeout", "Timeout for qemu")
+	qemuTimeout := qemuTimeoutFlag.Default("1m").Duration()
+
+	dockerTimeoutFlag := app.Flag("docker-timeout", "Timeout for docker")
+	dockerTimeout := dockerTimeoutFlag.Default("1m").Duration()
+
 	pewCommand := app.Command("pew", "Build, run and test module/exploit")
 	pewKernelFlag := pewCommand.Flag("kernel", "Override kernel regex")
 	pewKernel := pewKernelFlag.String()
@@ -490,7 +506,8 @@ func main() {
 	var err error
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case pewCommand.FullCommand():
-		err = pewHandler(*path, *kcfg, *pewKernel, *pewGuess)
+		err = pewHandler(*path, *kcfg, *pewKernel, *pewGuess,
+			*qemuTimeout, *dockerTimeout)
 	}
 
 	if err != nil {
