@@ -95,6 +95,11 @@ const (
 
 var distroTypeStrings = [...]string{"Ubuntu", "CentOS", "Debian"}
 
+func newDistroType(dType string) (dt distroType, err error) {
+	err = dt.UnmarshalTOML([]byte(dType))
+	return
+}
+
 func (dt distroType) String() string {
 	return distroTypeStrings[dt]
 }
@@ -407,7 +412,7 @@ func exists(path string) bool {
 	return true
 }
 
-func pewHandler(workPath, kcfgPath, overridedKernel string) (err error) {
+func pewHandler(workPath, kcfgPath, ovrrdKrnl string, guess bool) (err error) {
 	ka, err := readArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
 		return
@@ -417,20 +422,34 @@ func pewHandler(workPath, kcfgPath, overridedKernel string) (err error) {
 		ka.SourcePath = workPath
 	}
 
-	if overridedKernel != "" {
-		parts := strings.Split(overridedKernel, ":")
+	if ovrrdKrnl != "" {
+		parts := strings.Split(ovrrdKrnl, ":")
 		if len(parts) != 2 {
 			return errors.New("Kernel is not 'distroType:regex'")
 		}
 
 		var dt distroType
-		err = dt.UnmarshalTOML([]byte(parts[0]))
+		dt, err = newDistroType(parts[0])
 		if err != nil {
 			return
 		}
 
 		km := kernelMask{DistroType: dt, ReleaseMask: parts[1]}
 		ka.SupportedKernels = []kernelMask{km}
+	}
+
+	if guess {
+		ka.SupportedKernels = []kernelMask{}
+		for _, dType := range distroTypeStrings {
+			var dt distroType
+			dt, err = newDistroType(dType)
+			if err != nil {
+				return
+			}
+
+			km := kernelMask{DistroType: dt, ReleaseMask: ".*"}
+			ka.SupportedKernels = append(ka.SupportedKernels, km)
+		}
 	}
 
 	kcfg, err := readKernelConfig(kcfgPath)
@@ -465,10 +484,13 @@ func main() {
 	pewKernelFlag := pewCommand.Flag("kernel", "Override kernel regex")
 	pewKernel := pewKernelFlag.String()
 
+	pewGuessFlag := pewCommand.Flag("guess", "Try all defined kernels")
+	pewGuess := pewGuessFlag.Bool()
+
 	var err error
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case pewCommand.FullCommand():
-		err = pewHandler(*path, *kcfg, *pewKernel)
+		err = pewHandler(*path, *kcfg, *pewKernel, *pewGuess)
 	}
 
 	if err != nil {

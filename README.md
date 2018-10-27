@@ -44,3 +44,7 @@ If you already have Go, Qemu and Docker installed, there's cross-platform instal
 Test only with one kernel:
 
     $ out-of-tree pew --kernel='Ubuntu:4.10.0-30-generic'
+
+Guess work kernels:
+
+    $ out-of-tree pew --guess
