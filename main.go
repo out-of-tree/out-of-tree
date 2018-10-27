@@ -258,6 +258,7 @@ func dumpResult(q *qemu.QemuSystem, ka artifact, ki kernelInfo, build_ok, run_ok
 }
 
 func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo,
+	binaryPath, testPath string,
 	qemuTimeout, dockerTimeout time.Duration) {
 
 	defer swg.Done()
@@ -286,24 +287,33 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo,
 	test_ok := false
 	defer dumpResult(q, ka, ki, &build_ok, &run_ok, &test_ok)
 
-	// TODO Write build log to file or database
-	outFile, output, err := build(tmp, ka, ki, dockerTimeout)
-	if err != nil {
-		log.Println(output)
-		return
+	var outFile, output string
+	if binaryPath == "" {
+		// TODO Write build log to file or database
+		outFile, output, err = build(tmp, ka, ki, dockerTimeout)
+		if err != nil {
+			log.Println(output)
+			return
+		}
+		build_ok = true
+	} else {
+		outFile = binaryPath
+		build_ok = true
 	}
-	build_ok = true
 
 	err = cleanDmesg(q)
 	if err != nil {
 		return
 	}
 
-	testPath := outFile + "_test"
+	if testPath == "" {
+		testPath = outFile + "_test"
+	}
 
 	remoteTest := fmt.Sprintf("/tmp/test_%d", rand.Int())
 	err = q.CopyFile("user", testPath, remoteTest)
 	if err != nil {
+		log.Println("copy file err", err)
 		return
 	}
 
@@ -392,7 +402,7 @@ func readArtifactConfig(path string) (artifactCfg artifact, err error) {
 	return
 }
 
-func performCI(ka artifact, kcfg kernelConfig,
+func performCI(ka artifact, kcfg kernelConfig, binaryPath, testPath string,
 	qemuTimeout, dockerTimeout time.Duration) (err error) {
 
 	swg := sizedwaitgroup.New(runtime.NumCPU())
@@ -405,8 +415,8 @@ func performCI(ka artifact, kcfg kernelConfig,
 
 		if supported {
 			swg.Add()
-			go whatever(&swg, ka, kernel, qemuTimeout,
-				dockerTimeout)
+			go whatever(&swg, ka, kernel, binaryPath, testPath,
+				qemuTimeout, dockerTimeout)
 		}
 	}
 	swg.Wait()
@@ -420,8 +430,8 @@ func exists(path string) bool {
 	return true
 }
 
-func pewHandler(workPath, kcfgPath, ovrrdKrnl string, guess bool,
-	qemuTimeout, dockerTimeout time.Duration) (err error) {
+func pewHandler(workPath, kcfgPath, ovrrdKrnl, binaryPath, testPath string,
+	guess bool, qemuTimeout, dockerTimeout time.Duration) (err error) {
 
 	ka, err := readArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -467,7 +477,8 @@ func pewHandler(workPath, kcfgPath, ovrrdKrnl string, guess bool,
 		return
 	}
 
-	err = performCI(ka, kcfg, qemuTimeout, dockerTimeout)
+	err = performCI(ka, kcfg, binaryPath, testPath, qemuTimeout,
+		dockerTimeout)
 	if err != nil {
 		return
 	}
@@ -503,11 +514,17 @@ func main() {
 	pewGuessFlag := pewCommand.Flag("guess", "Try all defined kernels")
 	pewGuess := pewGuessFlag.Bool()
 
+	pewBinaryFlag := pewCommand.Flag("binary", "Use binary, do not build")
+	pewBinary := pewBinaryFlag.String()
+
+	pewTestFlag := pewCommand.Flag("test", "Override path test")
+	pewTest := pewTestFlag.String()
+
 	var err error
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case pewCommand.FullCommand():
-		err = pewHandler(*path, *kcfg, *pewKernel, *pewGuess,
-			*qemuTimeout, *dockerTimeout)
+		err = pewHandler(*path, *kcfg, *pewKernel, *pewBinary,
+			*pewTest, *pewGuess, *qemuTimeout, *dockerTimeout)
 	}
 
 	if err != nil {
