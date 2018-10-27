@@ -405,19 +405,6 @@ func exists(path string) bool {
 	return true
 }
 
-func oldmain() {
-	kcfgEnv := "OUT_OF_TREE_KERNELS_CONFIG"
-	kcfgPath := os.Getenv(kcfgEnv)
-	if !exists(kcfgPath) {
-		kcfgPath = os.Getenv("GOPATH") + "/src/github.com/jollheef/" +
-			"out-of-tree/tools/kernel-factory/output/kernels.toml"
-	}
-	if !exists(kcfgPath) {
-		log.Fatalln("Please specify kernels config path in " + kcfgEnv)
-	}
-
-}
-
 func pewHandler(workPath, kcfgPath string) (err error) {
 	ka, err := readArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
