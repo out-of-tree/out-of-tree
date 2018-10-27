@@ -41,6 +41,10 @@ If you already have Go, Qemu and Docker installed, there's cross-platform instal
 
 ## Examples
 
+Run by absolute path
+
+    $ out-of-tree --path /path/to/exploit/directory pew
+
 Test only with one kernel:
 
     $ out-of-tree pew --kernel='Ubuntu:4.10.0-30-generic'
@@ -48,3 +52,7 @@ Test only with one kernel:
 Guess work kernels:
 
     $ out-of-tree pew --guess
+
+Use custom kernels config
+
+    $ out-of-tree --kernels /path/to/kernels.toml pew
