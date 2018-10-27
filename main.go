@@ -460,8 +460,8 @@ func main() {
 	kcfg := kcfgFlag.Envar("OUT_OF_TREE_KCFG").Required().ExistingFile()
 
 	pewCommand := app.Command("pew", "Build, run and test module/exploit")
-	pewKernelCmd := pewCommand.Flag("kernel", "Override kernel regex")
-	pewKernel := pewKernelCmd.String()
+	pewKernelFlag := pewCommand.Flag("kernel", "Override kernel regex")
+	pewKernel := pewKernelFlag.String()
 
 	var err error
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
