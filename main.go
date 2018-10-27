@@ -93,8 +93,10 @@ const (
 	Debian
 )
 
+var distroTypeStrings = [...]string{"Ubuntu", "CentOS", "Debian"}
+
 func (dt distroType) String() string {
-	return [...]string{"Ubuntu", "CentOS", "Debian"}[dt]
+	return distroTypeStrings[dt]
 }
 
 func (dt *distroType) UnmarshalTOML(data []byte) (err error) {
