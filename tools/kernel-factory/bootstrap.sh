@@ -25,5 +25,4 @@ find | grep Docker | sed 's/Dockerfile//' | while read DOCKER; do
 	echo >> output/kernels.toml
     done
 done
-find output -type f | grep  -v init | grep -v '/vmlinuz' | grep -v kernels.toml | xargs rm
-find output/* -type d | xargs rm -rf
+rm -rf output/grub
