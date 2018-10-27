@@ -49,6 +49,14 @@ Test only with one kernel:
 
     $ out-of-tree pew --kernel='Ubuntu:4.10.0-30-generic'
 
+Test binary module/exploit with implicit defined test ($BINARY_test)
+
+    $ out-of-tree pew --binary /path/to/exploit
+
+Test binary module/exploit with explicit defined test
+
+    $ out-of-tree pew --binary /path/to/exploit --test /path/to/exploit_test
+
 Guess work kernels:
 
     $ out-of-tree pew --guess
