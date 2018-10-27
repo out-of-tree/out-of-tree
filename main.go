@@ -408,7 +408,7 @@ func exists(path string) bool {
 func pewHandler(workPath, kcfgPath string) (err error) {
 	ka, err := readArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
-		log.Fatalln(err)
+		return
 	}
 
 	if ka.SourcePath == "" {
@@ -417,12 +417,12 @@ func pewHandler(workPath, kcfgPath string) (err error) {
 
 	kcfg, err := readKernelConfig(kcfgPath)
 	if err != nil {
-		log.Fatalln(err)
+		return
 	}
 
 	err = performCI(ka, kcfg)
 	if err != nil {
-		log.Fatalln(err)
+		return
 	}
 
 	return
