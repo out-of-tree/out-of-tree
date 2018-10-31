@@ -314,7 +314,8 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo,
 	err = q.CopyFile("user", testPath, remoteTest)
 	if err != nil {
 		log.Println("copy file err", err)
-		return
+		// we should not exit because of testing 'insmod' part
+		// for kernel module
 	}
 
 	_, err = q.Command("root", "chmod +x "+remoteTest)
