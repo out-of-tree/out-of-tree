@@ -1,9 +1,10 @@
-#!/bin/sh
-mkdir output
+#!/bin/sh -eux
+mkdir -p output
 echo > output/kernels.toml
 find | grep Docker | sed 's/Dockerfile//' | while read DOCKER; do
     CONTAINER_NAME=$(echo $DOCKER | sed -e 's;/;;g' -e 's;\.;;g' -e 's;\(.*\);\L\1;')
     docker build -t ${CONTAINER_NAME} ${DOCKER}
+    docker run ${CONTAINER_NAME} bash -c 'ls /boot'
     CONTAINER_ID=$(docker ps -a | grep ${CONTAINER_NAME} | awk '{print $1}' | head -n 1)
     docker cp ${CONTAINER_ID}:/boot/. output/
     DISTRO_NAME=$(echo $DOCKER | cut -d '/' -f 2)
