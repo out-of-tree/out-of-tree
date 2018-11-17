@@ -5,7 +5,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/user"
@@ -14,14 +13,6 @@ import (
 
 	"github.com/jollheef/out-of-tree/config"
 )
-
-func kernelListHandler(kcfg config.KernelConfig) (err error) {
-	for _, kernel := range kcfg.Kernels {
-		fmt.Println(kernel.DistroType, kernel.DistroRelease,
-			kernel.KernelRelease)
-	}
-	return
-}
 
 func main() {
 	app := kingpin.New(
@@ -50,7 +41,6 @@ func main() {
 
 	dockerTimeoutFlag := app.Flag("docker-timeout", "Timeout for docker")
 	dockerTimeout := dockerTimeoutFlag.Default("1m").Duration()
-
 	pewCommand := app.Command("pew", "Build, run and test module/exploit")
 	pewKernelFlag := pewCommand.Flag("kernel", "Override kernel regex")
 	pewKernel := pewKernelFlag.String()
