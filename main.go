@@ -28,8 +28,9 @@ import (
 )
 
 type kernelMask struct {
-	DistroType  distroType
-	ReleaseMask string
+	DistroType    distroType
+	DistroRelease string // 18.04/7.4.1708/9.1
+	ReleaseMask   string
 }
 
 type artifactType int
@@ -67,6 +68,12 @@ func (ka artifact) checkSupport(ki kernelInfo, km kernelMask) (
 	supported bool, err error) {
 
 	if ki.DistroType != km.DistroType {
+		supported = false
+		return
+	}
+
+	// DistroRelease is optional
+	if km.DistroRelease != "" && ki.DistroRelease != km.DistroRelease {
 		supported = false
 		return
 	}
