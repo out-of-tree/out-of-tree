@@ -1,4 +1,0 @@
-1. Lookup kernel in https://snapshot.debian.org/package/linux*
-2. Go to snapshot (e.g. https://snapshot.debian.org/archive/debian/20120612T040311Z/pool/main/l/linux/)
-3. Checkout release version
-4. ...
