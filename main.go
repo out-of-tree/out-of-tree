@@ -12,7 +12,7 @@ import (
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	config "github.com/jollheef/out-of-tree/config"
+	"github.com/jollheef/out-of-tree/config"
 )
 
 func kernelListHandler(kcfg config.KernelConfig) (err error) {

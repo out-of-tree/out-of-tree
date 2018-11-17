@@ -20,7 +20,7 @@ import (
 	"github.com/otiai10/copy"
 	"github.com/remeh/sizedwaitgroup"
 
-	config "github.com/jollheef/out-of-tree/config"
+	"github.com/jollheef/out-of-tree/config"
 	qemu "github.com/jollheef/out-of-tree/qemu"
 )
 
