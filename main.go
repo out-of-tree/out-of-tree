@@ -528,7 +528,7 @@ func main() {
 
 	kcfg, err := readKernelConfig(*kcfgPath)
 	if err != nil {
-		return
+		log.Fatalln(err)
 	}
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
@@ -540,6 +540,6 @@ func main() {
 	}
 
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 }
