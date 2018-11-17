@@ -11,9 +11,11 @@ import (
 	"os/user"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	config "github.com/jollheef/out-of-tree/config"
 )
 
-func kernelListHandler(kcfg kernelConfig) (err error) {
+func kernelListHandler(kcfg config.KernelConfig) (err error) {
 	for _, kernel := range kcfg.Kernels {
 		fmt.Println(kernel.DistroType, kernel.DistroRelease,
 			kernel.KernelRelease)
@@ -67,7 +69,7 @@ func main() {
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	kcfg, err := readKernelConfig(*kcfgPath)
+	kcfg, err := config.ReadKernelConfig(*kcfgPath)
 	if err != nil {
 		log.Fatalln(err)
 	}

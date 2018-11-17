@@ -12,133 +12,17 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/logrusorgru/aurora"
-	"github.com/naoina/toml"
 	"github.com/otiai10/copy"
 	"github.com/remeh/sizedwaitgroup"
 
+	config "github.com/jollheef/out-of-tree/config"
 	qemu "github.com/jollheef/out-of-tree/qemu"
 )
-
-type kernelMask struct {
-	DistroType    distroType
-	DistroRelease string // 18.04/7.4.1708/9.1
-	ReleaseMask   string
-}
-
-type artifactType int
-
-const (
-	KernelModule artifactType = iota
-	KernelExploit
-)
-
-func (at artifactType) String() string {
-	return [...]string{"module", "exploit"}[at]
-}
-
-func (at *artifactType) UnmarshalTOML(data []byte) (err error) {
-	stype := strings.Trim(string(data), `"`)
-	stypelower := strings.ToLower(stype)
-	if strings.Contains(stypelower, "module") {
-		*at = KernelModule
-	} else if strings.Contains(stypelower, "exploit") {
-		*at = KernelExploit
-	} else {
-		err = errors.New(fmt.Sprintf("Type %s is unsupported", stype))
-	}
-	return
-}
-
-type artifact struct {
-	Name             string
-	Type             artifactType
-	SourcePath       string
-	SupportedKernels []kernelMask
-}
-
-func (ka artifact) checkSupport(ki kernelInfo, km kernelMask) (
-	supported bool, err error) {
-
-	if ki.DistroType != km.DistroType {
-		supported = false
-		return
-	}
-
-	// DistroRelease is optional
-	if km.DistroRelease != "" && ki.DistroRelease != km.DistroRelease {
-		supported = false
-		return
-	}
-
-	supported, err = regexp.MatchString(km.ReleaseMask, ki.KernelRelease)
-	return
-}
-
-func (ka artifact) Supported(ki kernelInfo) (supported bool, err error) {
-	for _, km := range ka.SupportedKernels {
-		supported, err = ka.checkSupport(ki, km)
-		if supported {
-			break
-		}
-
-	}
-	return
-}
-
-type distroType int
-
-const (
-	Ubuntu distroType = iota
-	CentOS
-	Debian
-)
-
-var distroTypeStrings = [...]string{"Ubuntu", "CentOS", "Debian"}
-
-func newDistroType(dType string) (dt distroType, err error) {
-	err = dt.UnmarshalTOML([]byte(dType))
-	return
-}
-
-func (dt distroType) String() string {
-	return distroTypeStrings[dt]
-}
-
-func (dt *distroType) UnmarshalTOML(data []byte) (err error) {
-	sDistro := strings.Trim(string(data), `"`)
-	if strings.EqualFold(sDistro, "Ubuntu") {
-		*dt = Ubuntu
-	} else if strings.EqualFold(sDistro, "CentOS") {
-		*dt = CentOS
-	} else if strings.EqualFold(sDistro, "Debian") {
-		*dt = Debian
-	} else {
-		err = errors.New(fmt.Sprintf("Distro %s is unsupported", sDistro))
-	}
-	return
-}
-
-type kernelInfo struct {
-	DistroType    distroType
-	DistroRelease string // 18.04/7.4.1708/9.1
-
-	// Must be *exactly* same as in `uname -r`
-	KernelRelease string
-
-	// Build-time information
-	ContainerName string
-
-	// Runtime information
-	KernelPath string
-	InitrdPath string
-	RootFS     string
-}
 
 func dockerCommand(container, workdir, timeout, command string) *exec.Cmd {
 	return exec.Command("timeout", "-k", timeout, timeout, "docker", "run",
@@ -146,7 +30,7 @@ func dockerCommand(container, workdir, timeout, command string) *exec.Cmd {
 		"bash", "-c", "cd /work && "+command)
 }
 
-func build(tmp string, ka artifact, ki kernelInfo,
+func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 	dockerTimeout time.Duration) (outPath, output string, err error) {
 
 	target := fmt.Sprintf("%d_%s", rand.Int(), ki.KernelRelease)
@@ -159,7 +43,7 @@ func build(tmp string, ka artifact, ki kernelInfo,
 	}
 
 	outPath = tmpSourcePath + "/" + target
-	if ka.Type == KernelModule {
+	if ka.Type == config.KernelModule {
 		outPath += ".ko"
 	}
 
@@ -195,13 +79,17 @@ func cleanDmesg(q *qemu.QemuSystem) (err error) {
 	return
 }
 
-func testKernelModule(q *qemu.QemuSystem, ka artifact, test string) (output string, err error) {
+func testKernelModule(q *qemu.QemuSystem, ka config.Artifact,
+	test string) (output string, err error) {
+
 	output, err = q.Command("root", test)
 	// TODO generic checks for WARNING's and so on
 	return
 }
 
-func testKernelExploit(q *qemu.QemuSystem, ka artifact, test, exploit string) (output string, err error) {
+func testKernelExploit(q *qemu.QemuSystem, ka config.Artifact,
+	test, exploit string) (output string, err error) {
+
 	output, err = q.Command("user", "chmod +x "+exploit)
 	if err != nil {
 		return
@@ -233,12 +121,14 @@ func genOkFail(name string, ok bool) aurora.Value {
 	}
 }
 
-func dumpResult(q *qemu.QemuSystem, ka artifact, ki kernelInfo, build_ok, run_ok, test_ok *bool) {
+func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
+	build_ok, run_ok, test_ok *bool) {
+
 	distroInfo := fmt.Sprintf("%s-%s {%s}", ki.DistroType,
 		ki.DistroRelease, ki.KernelRelease)
 
 	colored := ""
-	if ka.Type == KernelExploit {
+	if ka.Type == config.KernelExploit {
 		colored = aurora.Sprintf("[*] %40s: %s %s", distroInfo,
 			genOkFail("BUILD", *build_ok),
 			genOkFail("LPE", *test_ok))
@@ -263,8 +153,8 @@ func dumpResult(q *qemu.QemuSystem, ka artifact, ki kernelInfo, build_ok, run_ok
 	}
 }
 
-func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo,
-	binaryPath, testPath string,
+func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
+	ki config.KernelInfo, binaryPath, testPath string,
 	qemuTimeout, dockerTimeout time.Duration) {
 
 	defer swg.Done()
@@ -329,7 +219,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo,
 		return
 	}
 
-	if ka.Type == KernelModule {
+	if ka.Type == config.KernelModule {
 		// TODO Write insmod log to file or database
 		output, err := q.CopyAndInsmod(outFile)
 		if err != nil {
@@ -345,7 +235,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo,
 			return
 		}
 		test_ok = true
-	} else if ka.Type == KernelExploit {
+	} else if ka.Type == config.KernelExploit {
 		remoteExploit := fmt.Sprintf("/tmp/exploit_%d", rand.Int())
 		err = q.CopyFile("user", outFile, remoteExploit)
 		if err != nil {
@@ -366,51 +256,8 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka artifact, ki kernelInfo,
 	return
 }
 
-type kernelConfig struct {
-	Kernels []kernelInfo
-}
-
-func readFileAll(path string) (buf []byte, err error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-
-	buf, err = ioutil.ReadAll(f)
-	return
-}
-
-func readKernelConfig(path string) (kernelCfg kernelConfig, err error) {
-	buf, err := readFileAll(path)
-	if err != nil {
-		return
-	}
-
-	err = toml.Unmarshal(buf, &kernelCfg)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func readArtifactConfig(path string) (artifactCfg artifact, err error) {
-	buf, err := readFileAll(path)
-	if err != nil {
-		return
-	}
-
-	err = toml.Unmarshal(buf, &artifactCfg)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func performCI(ka artifact, kcfg kernelConfig, binaryPath, testPath string,
-	qemuTimeout, dockerTimeout time.Duration) (err error) {
+func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
+	testPath string, qemuTimeout, dockerTimeout time.Duration) (err error) {
 
 	found := false
 
@@ -445,10 +292,11 @@ func exists(path string) bool {
 	return true
 }
 
-func pewHandler(kcfg kernelConfig, workPath, ovrrdKrnl, binary, test string,
-	guess bool, qemuTimeout, dockerTimeout time.Duration) (err error) {
+func pewHandler(kcfg config.KernelConfig,
+	workPath, ovrrdKrnl, binary, test string, guess bool,
+	qemuTimeout, dockerTimeout time.Duration) (err error) {
 
-	ka, err := readArtifactConfig(workPath + "/.out-of-tree.toml")
+	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
 		return
 	}
@@ -463,26 +311,26 @@ func pewHandler(kcfg kernelConfig, workPath, ovrrdKrnl, binary, test string,
 			return errors.New("Kernel is not 'distroType:regex'")
 		}
 
-		var dt distroType
-		dt, err = newDistroType(parts[0])
+		var dt config.DistroType
+		dt, err = config.NewDistroType(parts[0])
 		if err != nil {
 			return
 		}
 
-		km := kernelMask{DistroType: dt, ReleaseMask: parts[1]}
-		ka.SupportedKernels = []kernelMask{km}
+		km := config.KernelMask{DistroType: dt, ReleaseMask: parts[1]}
+		ka.SupportedKernels = []config.KernelMask{km}
 	}
 
 	if guess {
-		ka.SupportedKernels = []kernelMask{}
-		for _, dType := range distroTypeStrings {
-			var dt distroType
-			dt, err = newDistroType(dType)
+		ka.SupportedKernels = []config.KernelMask{}
+		for _, dType := range config.DistroTypeStrings {
+			var dt config.DistroType
+			dt, err = config.NewDistroType(dType)
 			if err != nil {
 				return
 			}
 
-			km := kernelMask{DistroType: dt, ReleaseMask: ".*"}
+			km := config.KernelMask{DistroType: dt, ReleaseMask: ".*"}
 			ka.SupportedKernels = append(ka.SupportedKernels, km)
 		}
 	}
