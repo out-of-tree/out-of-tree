@@ -481,6 +481,11 @@ func pewHandler(kcfg kernelConfig, workPath, ovrrdKrnl, binary, test string,
 	return
 }
 
+func kernelListHandler(kcfg kernelConfig) (err error) {
+	for _, kernel := range kcfg.Kernels {
+		fmt.Println(kernel.DistroType, kernel.DistroRelease,
+			kernel.KernelRelease)
+	}
 	return
 }
 
@@ -518,6 +523,9 @@ func main() {
 	pewTestFlag := pewCommand.Flag("test", "Override path test")
 	pewTest := pewTestFlag.String()
 
+	kernelCommand := app.Command("kernel", "Manipulate kernels")
+	kernelListCommand := kernelCommand.Command("list", "List kernels")
+
 	kcfg, err := readKernelConfig(*kcfgPath)
 	if err != nil {
 		return
@@ -527,6 +535,8 @@ func main() {
 	case pewCommand.FullCommand():
 		err = pewHandler(kcfg, *path, *pewKernel, *pewBinary,
 			*pewTest, *pewGuess, *qemuTimeout, *dockerTimeout)
+	case kernelListCommand.FullCommand():
+		err = kernelListHandler(kcfg)
 	}
 
 	if err != nil {
