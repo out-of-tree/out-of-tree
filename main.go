@@ -414,6 +414,8 @@ func readArtifactConfig(path string) (artifactCfg artifact, err error) {
 func performCI(ka artifact, kcfg kernelConfig, binaryPath, testPath string,
 	qemuTimeout, dockerTimeout time.Duration) (err error) {
 
+	found := false
+
 	swg := sizedwaitgroup.New(runtime.NumCPU())
 	for _, kernel := range kcfg.Kernels {
 		var supported bool
@@ -423,12 +425,18 @@ func performCI(ka artifact, kcfg kernelConfig, binaryPath, testPath string,
 		}
 
 		if supported {
+			found = true
 			swg.Add()
 			go whatever(&swg, ka, kernel, binaryPath, testPath,
 				qemuTimeout, dockerTimeout)
 		}
 	}
 	swg.Wait()
+
+	if !found {
+		err = errors.New("No supported kernels found")
+	}
+
 	return
 }
 
