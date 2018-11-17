@@ -431,7 +431,7 @@ func exists(path string) bool {
 	return true
 }
 
-func pewHandler(workPath, kcfgPath, ovrrdKrnl, binaryPath, testPath string,
+func pewHandler(kcfg kernelConfig, workPath, ovrrdKrnl, binary, test string,
 	guess bool, qemuTimeout, dockerTimeout time.Duration) (err error) {
 
 	ka, err := readArtifactConfig(workPath + "/.out-of-tree.toml")
@@ -473,16 +473,13 @@ func pewHandler(workPath, kcfgPath, ovrrdKrnl, binaryPath, testPath string,
 		}
 	}
 
-	kcfg, err := readKernelConfig(kcfgPath)
+	err = performCI(ka, kcfg, binary, test, qemuTimeout, dockerTimeout)
 	if err != nil {
 		return
 	}
 
-	err = performCI(ka, kcfg, binaryPath, testPath, qemuTimeout,
-		dockerTimeout)
-	if err != nil {
-		return
-	}
+	return
+}
 
 	return
 }
@@ -499,8 +496,8 @@ func main() {
 	pathFlag := app.Flag("path", "Path to work directory")
 	path := pathFlag.Default(".").ExistingDir()
 
-	kcfgFlag := app.Flag("kernels", "Path to kernels config")
-	kcfg := kcfgFlag.Envar("OUT_OF_TREE_KCFG").Required().ExistingFile()
+	kcfgPathFlag := app.Flag("kernels", "Path to kernels config")
+	kcfgPath := kcfgPathFlag.Envar("OUT_OF_TREE_KCFG").Required().ExistingFile()
 
 	qemuTimeoutFlag := app.Flag("qemu-timeout", "Timeout for qemu")
 	qemuTimeout := qemuTimeoutFlag.Default("1m").Duration()
@@ -521,10 +518,14 @@ func main() {
 	pewTestFlag := pewCommand.Flag("test", "Override path test")
 	pewTest := pewTestFlag.String()
 
-	var err error
+	kcfg, err := readKernelConfig(*kcfgPath)
+	if err != nil {
+		return
+	}
+
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case pewCommand.FullCommand():
-		err = pewHandler(*path, *kcfg, *pewKernel, *pewBinary,
+		err = pewHandler(kcfg, *path, *pewKernel, *pewBinary,
 			*pewTest, *pewGuess, *qemuTimeout, *dockerTimeout)
 	}
 
