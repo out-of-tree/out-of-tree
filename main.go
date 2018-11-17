@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"os/user"
 	"regexp"
 	"runtime"
 	"strings"
@@ -501,8 +502,15 @@ func main() {
 	pathFlag := app.Flag("path", "Path to work directory")
 	path := pathFlag.Default(".").ExistingDir()
 
+	usr, err := user.Current()
+	if err != nil {
+		return
+	}
+	defaultKcfgPath := usr.HomeDir + "/.out-of-tree/kernels.toml"
+
 	kcfgPathFlag := app.Flag("kernels", "Path to kernels config")
-	kcfgPath := kcfgPathFlag.Envar("OUT_OF_TREE_KCFG").Required().ExistingFile()
+	kcfgPathEnv := kcfgPathFlag.Envar("OUT_OF_TREE_KCFG")
+	kcfgPath := kcfgPathEnv.Default(defaultKcfgPath).ExistingFile()
 
 	qemuTimeoutFlag := app.Flag("qemu-timeout", "Timeout for qemu")
 	qemuTimeout := qemuTimeoutFlag.Default("1m").Duration()
@@ -525,6 +533,8 @@ func main() {
 
 	kernelCommand := app.Command("kernel", "Manipulate kernels")
 	kernelListCommand := kernelCommand.Command("list", "List kernels")
+
+	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	kcfg, err := readKernelConfig(*kcfgPath)
 	if err != nil {
