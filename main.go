@@ -7,6 +7,7 @@ package main
 import (
 	"log"
 	"os"
+	"os/exec"
 	"os/user"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -56,6 +57,14 @@ func main() {
 
 	kernelCommand := app.Command("kernel", "Manipulate kernels")
 	kernelListCommand := kernelCommand.Command("list", "List kernels")
+
+	// Check for required commands
+	for _, cmd := range []string{"timeout", "docker", "qemu"} {
+		_, err := exec.Command("which", cmd).CombinedOutput()
+		if err != nil {
+			log.Fatalln("Command not found:", cmd)
+		}
+	}
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
