@@ -2,7 +2,7 @@
 
 out-of-tree kernel {module, exploit} development tool
 
-![Screenshot](https://cloudflare-ipfs.com/ipfs/QmUmfCPWjW83xboSwSbKq1YhtAPBWpVqZAeGk3UCJemvmU)
+![Screenshot](https://cloudflare-ipfs.com/ipfs/Qmb88fgdDjbWkxz91sWsgmoZZNfVThnCtj37u3mF2s3T3T)
 
 ## Installation
 
