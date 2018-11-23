@@ -58,6 +58,12 @@ func main() {
 	kernelCommand := app.Command("kernel", "Manipulate kernels")
 	kernelListCommand := kernelCommand.Command("list", "List kernels")
 
+	genCommand := app.Command("gen", "Generate .out-of-tree.toml skeleton")
+	genModuleCommand := genCommand.Command("module",
+		"Generate .out-of-tree.toml skeleton for kernel module")
+	genExploitCommand := genCommand.Command("exploit",
+		"Generate .out-of-tree.toml skeleton for kernel exploit")
+
 	// Check for required commands
 	for _, cmd := range []string{"timeout", "docker", "qemu"} {
 		_, err := exec.Command("which", cmd).CombinedOutput()
@@ -79,6 +85,10 @@ func main() {
 			*pewTest, *pewGuess, *qemuTimeout, *dockerTimeout)
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
+	case genModuleCommand.FullCommand():
+		err = genConfig(config.KernelModule)
+	case genExploitCommand.FullCommand():
+		err = genConfig(config.KernelExploit)
 	}
 
 	if err != nil {
