@@ -212,6 +212,13 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		log.Println("copy file err", err)
 		// we should not exit because of testing 'insmod' part
 		// for kernel module
+		if ka.Type == config.KernelExploit {
+			log.Println("Use `echo touch FILE | exploit` for test")
+			q.Command("user",
+				"echo -e '#!/bin/sh\necho touch $2 | $1' "+
+					"> "+remoteTest+
+					" && chmod +x "+remoteTest)
+		}
 	}
 
 	_, err = q.Command("root", "chmod +x "+remoteTest)
