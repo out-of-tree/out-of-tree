@@ -45,6 +45,20 @@ func (at *ArtifactType) UnmarshalTOML(data []byte) (err error) {
 	return
 }
 
+func (at ArtifactType) MarshalTOML() (data []byte, err error) {
+	s := ""
+	switch at {
+	case KernelModule:
+		s = "module"
+	case KernelExploit:
+		s = "exploit"
+	default:
+		err = errors.New(fmt.Sprintf("Cannot marshal %d", at))
+	}
+	data = []byte(`"` + s + `"`)
+	return
+}
+
 type Artifact struct {
 	Name             string
 	Type             ArtifactType
@@ -111,6 +125,22 @@ func (dt *DistroType) UnmarshalTOML(data []byte) (err error) {
 	} else {
 		err = errors.New(fmt.Sprintf("Distro %s is unsupported", sDistro))
 	}
+	return
+}
+
+func (dt DistroType) MarshalTOML() (data []byte, err error) {
+	s := ""
+	switch dt {
+	case Ubuntu:
+		s = "Ubuntu"
+	case CentOS:
+		s = "CentOS"
+	case Debian:
+		s = "Debian"
+	default:
+		err = errors.New(fmt.Sprintf("Cannot marshal %d", dt))
+	}
+	data = []byte(`"` + s + `"`)
 	return
 }
 
