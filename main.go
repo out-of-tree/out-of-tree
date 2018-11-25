@@ -64,6 +64,10 @@ func main() {
 	genExploitCommand := genCommand.Command("exploit",
 		"Generate .out-of-tree.toml skeleton for kernel exploit")
 
+	debugCommand := app.Command("debug", "Kernel debug environment")
+	debugCommandFlag := debugCommand.Flag("kernel", "Regex (first match)")
+	debugKernel := debugCommandFlag.Required().String()
+
 	// Check for required commands
 	for _, cmd := range []string{"timeout", "docker", "qemu"} {
 		_, err := exec.Command("which", cmd).CombinedOutput()
@@ -89,6 +93,8 @@ func main() {
 		err = genConfig(config.KernelModule)
 	case genExploitCommand.FullCommand():
 		err = genConfig(config.KernelExploit)
+	case debugCommand.FullCommand():
+		err = debugHandler(kcfg, *path, *debugKernel, *dockerTimeout)
 	}
 
 	if err != nil {
