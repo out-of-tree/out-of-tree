@@ -81,7 +81,7 @@ func interactive(q *qemu.QemuSystem) (err error) {
 	}
 }
 
-func debugHandler(kcfg config.KernelConfig, workPath string, kernRegex string,
+func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	dockerTimeout time.Duration) (err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
@@ -103,8 +103,7 @@ func debugHandler(kcfg config.KernelConfig, workPath string, kernRegex string,
 	if err != nil {
 		return
 	}
-	gdb := "tcp::1234" // TODO param
-	q.Debug(gdb)       // TODO param
+	q.Debug(gdb)
 	coloredGdbAddress := aurora.BgGreen(aurora.Black(gdb))
 	fmt.Printf("[*] gdb runned on %s\n", coloredGdbAddress)
 

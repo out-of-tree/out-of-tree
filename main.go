@@ -67,6 +67,8 @@ func main() {
 	debugCommand := app.Command("debug", "Kernel debug environment")
 	debugCommandFlag := debugCommand.Flag("kernel", "Regex (first match)")
 	debugKernel := debugCommandFlag.Required().String()
+	debugFlagGDB := debugCommand.Flag("gdb", "Set gdb listen address")
+	debugGDB := debugFlagGDB.Default("tcp::1234").String()
 
 	// Check for required commands
 	for _, cmd := range []string{"timeout", "docker", "qemu"} {
@@ -94,7 +96,8 @@ func main() {
 	case genExploitCommand.FullCommand():
 		err = genConfig(config.KernelExploit)
 	case debugCommand.FullCommand():
-		err = debugHandler(kcfg, *path, *debugKernel, *dockerTimeout)
+		err = debugHandler(kcfg, *path, *debugKernel, *debugGDB,
+			*dockerTimeout)
 	}
 
 	if err != nil {
