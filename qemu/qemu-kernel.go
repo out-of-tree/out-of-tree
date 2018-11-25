@@ -350,3 +350,13 @@ func (q *QemuSystem) Debug(conn string) {
 	q.debug = true
 	q.gdb = conn
 }
+
+func (q QemuSystem) GetSshCommand() (cmd string) {
+	addrPort := strings.Split(q.sshAddrPort, ":")
+	addr := addrPort[0]
+	port := addrPort[1]
+
+	cmd = "ssh -o StrictHostKeyChecking=no"
+	cmd += " -p " + port + " root@" + addr
+	return
+}
