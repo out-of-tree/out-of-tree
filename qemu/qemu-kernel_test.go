@@ -299,3 +299,47 @@ func TestQemuSystemRun(t *testing.T) {
 	}
 
 }
+
+func openedPort(port int) bool {
+	conn, err := net.Dial("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
+}
+
+func TestQemuSystemDebug(t *testing.T) {
+	t.Parallel()
+	kernel := Kernel{
+		KernelPath: testConfigVmlinuz,
+		InitrdPath: testConfigInitrd,
+	}
+	q, err := NewQemuSystem(X86_64, kernel, testConfigRootfs)
+	if err != nil {
+		return
+	}
+
+	port := 45256
+
+	q.Debug(fmt.Sprintf("tcp::%d", port))
+
+	if openedPort(port) {
+		t.Fatal("Port opened before qemu starts")
+	}
+
+	if err = q.Start(); err != nil {
+		return
+	}
+	defer q.Stop()
+
+	if !openedPort(port) {
+		t.Fatal("Qemu debug port does not opened")
+	}
+
+	q.Stop()
+
+	if openedPort(port) {
+		t.Fatal("Qemu listens after die")
+	}
+}

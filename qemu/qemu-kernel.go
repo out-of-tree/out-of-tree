@@ -67,6 +67,9 @@ type QemuSystem struct {
 	Cpus   int
 	Memory int
 
+	debug bool
+	gdb   string // tcp::1234
+
 	// Timeout works after Start invocation
 	Timeout         time.Duration
 	KilledByTimeout bool
@@ -182,6 +185,10 @@ func (q *QemuSystem) Start() (err error) {
 		"-m", fmt.Sprintf("%d", q.Memory),
 		"-device", "e1000,netdev=n1",
 		"-netdev", "user,id=n1," + hostfwd,
+	}
+
+	if q.debug {
+		qemuArgs = append(qemuArgs, "-gdb", q.gdb)
 	}
 
 	if q.kernel.InitrdPath != "" {
@@ -337,4 +344,9 @@ func (q *QemuSystem) CopyAndRun(user, path string) (output string, err error) {
 	}
 
 	return q.Command(user, "chmod +x "+remotePath+" && "+remotePath)
+}
+
+func (q *QemuSystem) Debug(conn string) {
+	q.debug = true
+	q.gdb = conn
 }
