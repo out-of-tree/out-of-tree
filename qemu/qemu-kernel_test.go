@@ -333,6 +333,8 @@ func TestQemuSystemDebug(t *testing.T) {
 	}
 	defer q.Stop()
 
+	time.Sleep(time.Second)
+
 	if !openedPort(port) {
 		t.Fatal("Qemu debug port does not opened")
 	}

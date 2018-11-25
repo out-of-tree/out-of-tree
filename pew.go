@@ -300,6 +300,22 @@ func exists(path string) bool {
 	return true
 }
 
+func kernelMask(kernel string) (km config.KernelMask, err error) {
+	parts := strings.Split(kernel, ":")
+	if len(parts) != 2 {
+		err = errors.New("Kernel is not 'distroType:regex'")
+		return
+	}
+
+	dt, err := config.NewDistroType(parts[0])
+	if err != nil {
+		return
+	}
+
+	km = config.KernelMask{DistroType: dt, ReleaseMask: parts[1]}
+	return
+}
+
 func pewHandler(kcfg config.KernelConfig,
 	workPath, ovrrdKrnl, binary, test string, guess bool,
 	qemuTimeout, dockerTimeout time.Duration) (err error) {
@@ -314,18 +330,12 @@ func pewHandler(kcfg config.KernelConfig,
 	}
 
 	if ovrrdKrnl != "" {
-		parts := strings.Split(ovrrdKrnl, ":")
-		if len(parts) != 2 {
-			return errors.New("Kernel is not 'distroType:regex'")
-		}
-
-		var dt config.DistroType
-		dt, err = config.NewDistroType(parts[0])
+		var km config.KernelMask
+		km, err = kernelMask(ovrrdKrnl)
 		if err != nil {
 			return
 		}
 
-		km := config.KernelMask{DistroType: dt, ReleaseMask: parts[1]}
 		ka.SupportedKernels = []config.KernelMask{km}
 	}
 
