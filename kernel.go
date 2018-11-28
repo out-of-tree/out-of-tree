@@ -146,7 +146,6 @@ func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
 	log.Printf("Start adding kernel %s for %s:%s",
 		pkgname, sk.DistroType.String(), sk.DistroRelease)
 
-	//s := fmt.Sprintf("RUN apt-get install -y %s %s\n", pkgname,
 	s := fmt.Sprintf("RUN apt-get install -y %s %s\n", pkgname,
 		strings.Replace(pkgname, "image", "headers", -1))
 
