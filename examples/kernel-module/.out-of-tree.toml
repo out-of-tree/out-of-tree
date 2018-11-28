@@ -6,6 +6,7 @@ type = "module"
 [[supported_kernels]]
 # Can be Ubuntu/CentOS/Debian/etc.
 distro_type = "Ubuntu"
+distro_release = "16.04"
 # regex for `uname -r`
 # See also: regex-golang.appspot.com
 release_mask = "4.4.0-70-.*"
@@ -13,5 +14,6 @@ release_mask = "4.4.0-70-.*"
 # [[supported_kernels]] may be defined unlimited number of times
 [[supported_kernels]]
 distro_type = "Ubuntu"
+distro_release = "18.04"
 # Also you can use only one kernel
 release_mask = "4.15.0-29-generic"

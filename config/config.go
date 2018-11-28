@@ -21,6 +21,12 @@ type KernelMask struct {
 	ReleaseMask   string
 }
 
+func (km KernelMask) DockerName() string {
+	distro := strings.ToLower(km.DistroType.String())
+	release := strings.Replace(km.DistroRelease, ".", "", -1)
+	return fmt.Sprintf("out_of_tree_%s_%s", distro, release)
+}
+
 type ArtifactType int
 
 const (
