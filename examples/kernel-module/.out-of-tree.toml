@@ -16,4 +16,10 @@ release_mask = "4.4.0-70-.*"
 distro_type = "Ubuntu"
 distro_release = "18.04"
 # Also you can use only one kernel
-release_mask = "4.15.0-29-generic"
+release_mask = "4.15.0-(24|29)-generic"
+
+[[supported_kernels]]
+distro_type = "Ubuntu"
+distro_release = "18.04"
+# Also you can use only one kernel
+release_mask = "4.15.0-23-generic"

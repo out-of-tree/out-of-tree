@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/jollheef/out-of-tree/config"
+	"github.com/naoina/toml"
 )
 
 func kernelListHandler(kcfg config.KernelConfig) (err error) {
@@ -223,13 +224,86 @@ func copyKernels(name string) (err error) {
 	return
 }
 
+func genKernelPath(files []os.FileInfo, kname string) string {
+	for _, file := range files {
+		if strings.Contains(file.Name(), "vmlinuz") {
+			if strings.Contains(file.Name(), kname) {
+				return file.Name()
+			}
+		}
+	}
+	return "unknown"
+}
+
+func genInitrdPath(files []os.FileInfo, kname string) string {
+	for _, file := range files {
+		if strings.Contains(file.Name(), "initrd") {
+			if strings.Contains(file.Name(), kname) {
+				return file.Name()
+			}
+		}
+	}
+	return "unknown"
+}
+
+func genRootfsImage(km config.KernelMask) string {
+	return "does not implemented yet, you need to set it byself"
+}
+
+func genKernels(km config.KernelMask, newkcfg *config.KernelConfig) (
+	err error) {
+
+	name := km.DockerName()
+	cmd := exec.Command("docker", "run", name, "ls", "/lib/modules")
+	rawOutput, err := cmd.CombinedOutput()
+	if err != nil {
+		return
+	}
+
+	usr, err := user.Current()
+	if err != nil {
+		return
+	}
+	kernelsBase := usr.HomeDir + "/.out-of-tree/kernels/"
+	files, err := ioutil.ReadDir(kernelsBase)
+	if err != nil {
+		return
+	}
+
+	for _, k := range strings.Fields(string(rawOutput)) {
+		ki := config.KernelInfo{
+			DistroType:    km.DistroType,
+			DistroRelease: km.DistroRelease,
+			KernelRelease: k,
+			ContainerName: name,
+
+			KernelPath: kernelsBase + genKernelPath(files, k),
+			InitrdPath: kernelsBase + genInitrdPath(files, k),
+			RootFS:     genRootfsImage(km),
+		}
+		newkcfg.Kernels = append(newkcfg.Kernels, ki)
+	}
+
+	return
+}
+
+func hasKernel(ki config.KernelInfo, kcfg config.KernelConfig) bool {
+	for _, sk := range kcfg.Kernels {
+		if sk == ki {
+			return true
+		}
+	}
+	return false
+
+}
+
 func kernelAutogenHandler(kcfg config.KernelConfig, workPath string) (err error) {
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
 		return
 	}
 
-	var usedImages []string
+	newkcfg := config.KernelConfig{}
 
 	for _, sk := range ka.SupportedKernels {
 		if sk.DistroRelease == "" {
@@ -253,24 +327,38 @@ func kernelAutogenHandler(kcfg config.KernelConfig, workPath string) (err error)
 			dockerImageAppend(sk, pkg)
 		}
 
-		usedImages = append(usedImages, sk.DockerName())
-	}
-
-	for _, ui := range usedImages {
-		err = kickImage(ui)
+		err = kickImage(sk.DockerName())
 		if err != nil {
-			log.Println("kick image", ui, ":", err)
+			log.Println("kick image", sk.DockerName(), ":", err)
 			continue
 		}
 
-		err = copyKernels(ui)
+		err = copyKernels(sk.DockerName())
 		if err != nil {
-			log.Println("copy kernels", ui, ":", err)
+			log.Println("copy kernels", sk.DockerName(), ":", err)
+			continue
+		}
+
+		err = genKernels(sk, &newkcfg)
+		if err != nil {
+			log.Println("gen kernels", sk.DockerName(), ":", err)
 			continue
 		}
 	}
 
-	log.Println("Currently generation of kernels.toml is not implemented")
-	log.Println("So next step is up to you hand :)")
+	stripkcfg := config.KernelConfig{}
+	for _, nk := range newkcfg.Kernels {
+		if !hasKernel(nk, stripkcfg) {
+			stripkcfg.Kernels = append(stripkcfg.Kernels, nk)
+		}
+	}
+
+	buf, err := toml.Marshal(&stripkcfg)
+	if err != nil {
+		return
+	}
+	fmt.Println()
+	fmt.Println(string(buf)) // TODO auto-save to some path
+
 	return
 }
