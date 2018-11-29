@@ -247,7 +247,11 @@ func genInitrdPath(files []os.FileInfo, kname string) string {
 }
 
 func genRootfsImage(km config.KernelMask) string {
-	return "does not implemented yet, you need to set it byself"
+	usr, err := user.Current()
+	if err != nil {
+		return fmt.Sprintln(err)
+	}
+	return usr.HomeDir + "/.out-of-tree/images/" + km.ImageName()
 }
 
 func genKernels(km config.KernelMask, newkcfg *config.KernelConfig) (

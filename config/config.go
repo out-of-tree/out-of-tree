@@ -27,6 +27,12 @@ func (km KernelMask) DockerName() string {
 	return fmt.Sprintf("out_of_tree_%s_%s", distro, release)
 }
 
+func (km KernelMask) ImageName() string {
+	distro := strings.ToLower(km.DistroType.String())
+	release := strings.Replace(km.DistroRelease, ".", "", -1)
+	return fmt.Sprintf("%s_%s.img", distro, release)
+}
+
 type ArtifactType int
 
 const (
