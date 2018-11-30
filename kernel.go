@@ -97,7 +97,7 @@ func generateBaseDockerImage(sk config.KernelMask) (err error) {
 		d += "ENV DEBIAN_FRONTEND=noninteractive\n"
 		d += "RUN apt-get update\n"
 		d += "RUN apt-get install -y build-essential libelf-dev\n"
-		d += "RUN apt-get install -y wget git\n"
+		d += "RUN apt-get install -y wget git libelf-dev\n"
 	default:
 		s := fmt.Sprintf("%s not yet supported", sk.DistroType.String())
 		err = errors.New(s)
