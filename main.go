@@ -33,9 +33,13 @@ func main() {
 	}
 	defaultKcfgPath := usr.HomeDir + "/.out-of-tree/kernels.toml"
 
-	kcfgPathFlag := app.Flag("kernels", "Path to kernels config")
-	kcfgPathEnv := kcfgPathFlag.Envar("OUT_OF_TREE_KCFG")
-	kcfgPath := kcfgPathEnv.Default(defaultKcfgPath).ExistingFile()
+	kcfgPathFlag := app.Flag("kernels", "Path to main kernels config")
+	kcfgPath := kcfgPathFlag.Default(defaultKcfgPath).ExistingFile()
+
+	defaultUserKcfgPath := usr.HomeDir + "/.out-of-tree/kernels.user.toml"
+	userKcfgPathFlag := app.Flag("user-kernels", "User kernels config")
+	userKcfgPathEnv := userKcfgPathFlag.Envar("OUT_OF_TREE_KCFG")
+	userKcfgPath := userKcfgPathEnv.Default(defaultUserKcfgPath).String()
 
 	qemuTimeoutFlag := app.Flag("qemu-timeout", "Timeout for qemu")
 	qemuTimeout := qemuTimeoutFlag.Default("1m").Duration()
@@ -87,6 +91,15 @@ func main() {
 	kcfg, err := config.ReadKernelConfig(*kcfgPath)
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+	if exists(*userKcfgPath) {
+		userKcfg, err := config.ReadKernelConfig(*userKcfgPath)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		kcfg.Kernels = append(kcfg.Kernels, userKcfg.Kernels...)
 	}
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
