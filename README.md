@@ -19,6 +19,7 @@ Then you can check it on kernel module example:
 
     $ cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory
     $ ./bootstrap.sh # more than 6-8 hours for all kernels
+    $ export OUT_OF_TREE_KCFG=$GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory/output/kernels.toml
 
 ## Examples
 
