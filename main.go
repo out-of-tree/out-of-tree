@@ -78,6 +78,9 @@ func main() {
 	debugFlagGDB := debugCommand.Flag("gdb", "Set gdb listen address")
 	debugGDB := debugFlagGDB.Default("tcp::1234").String()
 
+	bootstrapCommand := app.Command("bootstrap",
+		"Create directories && download images")
+
 	// Check for required commands
 	for _, cmd := range []string{"timeout", "docker", "qemu"} {
 		_, err := exec.Command("which", cmd).CombinedOutput()
@@ -123,6 +126,8 @@ func main() {
 	case debugCommand.FullCommand():
 		err = debugHandler(kcfg, *path, *debugKernel, *debugGDB,
 			*dockerTimeout)
+	case bootstrapCommand.FullCommand():
+		err = bootstrapHandler()
 	}
 
 	if err != nil {
