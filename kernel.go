@@ -389,7 +389,7 @@ func hasKernel(ki config.KernelInfo, kcfg config.KernelConfig) bool {
 	return false
 }
 
-func kernelAutogenHandler(kcfg config.KernelConfig, workPath string) (err error) {
+func kernelAutogenHandler(workPath string) (err error) {
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
 		return
@@ -432,4 +432,45 @@ func kernelAutogenHandler(kcfg config.KernelConfig, workPath string) (err error)
 
 	err = updateKernelsCfg()
 	return
+}
+
+func kernelDockerRegenHandler() (err error) {
+	dockerImages, err := listDockerImages()
+	if err != nil {
+		return
+	}
+
+	for _, d := range dockerImages {
+		var imagePath string
+		imagePath, err = dockerImagePath(config.KernelMask{
+			DistroType:    d.DistroType,
+			DistroRelease: d.DistroRelease,
+		})
+		if err != nil {
+			return
+		}
+
+		cmd := exec.Command("docker", "build", "-t",
+			d.ContainerName, imagePath)
+		var rawOutput []byte
+		rawOutput, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Println("docker build:", string(rawOutput))
+			return
+		}
+
+		err = kickImage(d.ContainerName)
+		if err != nil {
+			log.Println("kick image", d.ContainerName, ":", err)
+			continue
+		}
+
+		err = copyKernels(d.ContainerName)
+		if err != nil {
+			log.Println("copy kernels", d.ContainerName, ":", err)
+			continue
+		}
+	}
+
+	return updateKernelsCfg()
 }

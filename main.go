@@ -59,6 +59,8 @@ func main() {
 	kernelListCommand := kernelCommand.Command("list", "List kernels")
 	kernelAutogenCommand := kernelCommand.Command("autogen",
 		"Generate kernels based on a current config")
+	kernelDockerRegenCommand := kernelCommand.Command("docker-regen",
+		"Regenerate kernels config from out_of_tree_* docker images")
 
 	genCommand := app.Command("gen", "Generate .out-of-tree.toml skeleton")
 	genModuleCommand := genCommand.Command("module",
@@ -94,7 +96,9 @@ func main() {
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():
-		err = kernelAutogenHandler(kcfg, *path)
+		err = kernelAutogenHandler(*path)
+	case kernelDockerRegenCommand.FullCommand():
+		err = kernelDockerRegenHandler()
 	case genModuleCommand.FullCommand():
 		err = genConfig(config.KernelModule)
 	case genExploitCommand.FullCommand():
