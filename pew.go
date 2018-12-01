@@ -162,18 +162,21 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
 	q, err := qemu.NewQemuSystem(qemu.X86_64, kernel, ki.RootFS)
 	if err != nil {
+		log.Println("Qemu creation error:", err)
 		return
 	}
 	q.Timeout = qemuTimeout
 
 	err = q.Start()
 	if err != nil {
+		log.Println("Qemu start error:", err)
 		return
 	}
 	defer q.Stop()
 
 	tmp, err := ioutil.TempDir("/tmp/", "out-of-tree_")
 	if err != nil {
+		log.Println("Temporary directory creation error:", err)
 		return
 	}
 	defer os.RemoveAll(tmp)
