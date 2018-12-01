@@ -9,11 +9,45 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"sort"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/jollheef/out-of-tree/config"
 )
+
+func findFallback(kcfg config.KernelConfig, ki config.KernelInfo) (rootfs string) {
+	for _, k := range kcfg.Kernels {
+		if !exists(k.RootFS) || k.DistroType != ki.DistroType {
+			continue
+		}
+		if k.RootFS < ki.RootFS {
+			rootfs = k.RootFS
+			return
+		}
+	}
+	return
+}
+
+func handleFallbacks(kcfg config.KernelConfig) {
+	sort.Sort(sort.Reverse(config.ByRootFS(kcfg.Kernels)))
+
+	for i, k := range kcfg.Kernels {
+		if !exists(k.RootFS) {
+			newRootFS := findFallback(kcfg, k)
+
+			s := k.RootFS + " does not exists "
+			if newRootFS != "" {
+				s += "(fallback to " + newRootFS + ")"
+			} else {
+				s += "(no fallback found)"
+			}
+
+			kcfg.Kernels[i].RootFS = newRootFS
+			log.Println(s)
+		}
+	}
+}
 
 func main() {
 	app := kingpin.New(
@@ -108,6 +142,8 @@ func main() {
 			}
 		}
 	}
+
+	handleFallbacks(kcfg)
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case pewCommand.FullCommand():

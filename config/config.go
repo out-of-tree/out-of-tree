@@ -150,6 +150,12 @@ func (dt DistroType) MarshalTOML() (data []byte, err error) {
 	return
 }
 
+type ByRootFS []KernelInfo
+
+func (a ByRootFS) Len() int           { return len(a) }
+func (a ByRootFS) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByRootFS) Less(i, j int) bool { return a[i].RootFS < a[j].RootFS }
+
 type KernelInfo struct {
 	DistroType    DistroType
 	DistroRelease string // 18.04/7.4.1708/9.1
