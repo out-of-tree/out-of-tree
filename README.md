@@ -4,6 +4,19 @@ out-of-tree kernel {module, exploit} development tool
 
 ![Screenshot](https://cloudflare-ipfs.com/ipfs/Qmb88fgdDjbWkxz91sWsgmoZZNfVThnCtj37u3mF2s3T3T)
 
+## Requirements
+
+[Qemu](https://www.qemu.org), [docker](https://docker.com) and [golang](https://golang.org) is required.
+
+### Gentoo
+
+    # emerge app-emulation/qemu app-emulation/docker dev-lang/go
+
+### macOS
+
+    $ brew install go qemu
+    $ brew cask install docker
+
 ## Installation
 
     $ go get github.com/jollheef/out-of-tree
