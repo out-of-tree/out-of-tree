@@ -99,7 +99,11 @@ func main() {
 			log.Fatalln(err)
 		}
 
-		kcfg.Kernels = append(kcfg.Kernels, userKcfg.Kernels...)
+		for _, nk := range userKcfg.Kernels {
+			if !hasKernel(nk, kcfg) {
+				kcfg.Kernels = append(kcfg.Kernels, nk)
+			}
+		}
 	}
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
