@@ -15,12 +15,6 @@ Then you can check it on kernel module example:
     $ out-of-tree kernel autogen # generate kernels based on .out-of-tree.toml
     $ out-of-tree pew
 
-## Generate all kernels (does not required if you dont need to use `--guess`)
-
-    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory
-    $ ./bootstrap.sh # more than 6-8 hours for all kernels
-    $ export OUT_OF_TREE_KCFG=$GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory/output/kernels.toml
-
 ## Examples
 
 Run by absolute path
@@ -50,6 +44,14 @@ Guess work kernels:
 Use custom kernels config
 
     $ out-of-tree --kernels /path/to/kernels.toml pew
+
+## Generate all kernels
+
+Does not required if you dont need to use `--guess`.
+
+    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory
+    $ ./bootstrap.sh # more than 6-8 hours for all kernels
+    $ export OUT_OF_TREE_KCFG=$GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory/output/kernels.toml
 
 ## Development
 
