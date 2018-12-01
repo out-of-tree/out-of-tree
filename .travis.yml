@@ -13,3 +13,7 @@ addons:
 
 services:
   - docker
+
+before_script:
+  - cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/qemu-debian-img
+  - ./bootstrap.sh
