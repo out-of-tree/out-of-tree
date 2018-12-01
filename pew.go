@@ -223,11 +223,11 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 			// we should not exit because of testing 'insmod' part
 			// for kernel module
 		}
-	}
-
-	_, err = q.Command("root", "chmod +x "+remoteTest)
-	if err != nil {
-		return
+	} else {
+		_, err = q.Command("root", "chmod +x "+remoteTest)
+		if err != nil {
+			return
+		}
 	}
 
 	if ka.Type == config.KernelModule {
