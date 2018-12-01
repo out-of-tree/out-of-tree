@@ -8,6 +8,12 @@ out-of-tree kernel {module, exploit} development tool
 
 [Qemu](https://www.qemu.org), [docker](https://docker.com) and [golang](https://golang.org) is required.
 
+Also do not forget to set GOPATH and PATH e.g.:
+
+    $ echo 'export GOPATH=$HOME' >> ~/.bashrc
+    $ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+    $ source ~/.bashrc
+
 ### Gentoo
 
     # emerge app-emulation/qemu app-emulation/docker dev-lang/go
