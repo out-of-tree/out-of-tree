@@ -1,8 +1,15 @@
-os:
-  - linux
-  - osx
-
 language: go
 
 go:
   - master
+
+os:
+  - linux
+
+addons:
+  apt:
+    packages:
+    - qemu
+
+services:
+  - docker
