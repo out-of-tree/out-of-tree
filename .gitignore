@@ -10,12 +10,3 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-
-# Snap
-parts
-prime
-stage
-snap/.snapcraft
-squashfs-root
-*.snap
-*_source.tar.bz2

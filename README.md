@@ -1,5 +1,4 @@
 [![Build Status](https://travis-ci.org/jollheef/out-of-tree.svg?branch=master)](https://travis-ci.org/jollheef/out-of-tree)
-[![Snap Status](https://build.snapcraft.io/badge/jollheef/out-of-tree.svg)](https://build.snapcraft.io/user/jollheef/out-of-tree)
 
 # [out-of-tree](https://out-of-tree.io)
 
@@ -25,10 +24,6 @@ Also do not forget to set GOPATH and PATH e.g.:
 
     $ brew install go qemu
     $ brew cask install docker
-
-## Installation
-
-[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/out-of-tree)
 
 ## Build from source
 
