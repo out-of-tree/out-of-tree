@@ -139,7 +139,7 @@ func main() {
 
 	if !exists(usr.HomeDir + "/.out-of-tree/kernels.toml") {
 		log.Println("No ~/.out-of-tree/kernels.toml: Probably you " +
-			"need to run `out-of-tree kernels autogen` in " +
+			"need to run `out-of-tree kernel autogen` in " +
 			"directory that contains .out-of-tree.toml " +
 			"with defined kernel masks " +
 			"(see docs at https://out-of-tree.io)")
