@@ -48,6 +48,8 @@ func unpackTar(archive, destination string) (err error) {
 }
 
 func bootstrapHandler() (err error) {
+	log.Println("Download images...")
+
 	usr, err := user.Current()
 	if err != nil {
 		return
@@ -72,5 +74,10 @@ func bootstrapHandler() (err error) {
 	}
 
 	err = unpackTar(imagesArchive, imagesPath)
+	if err != nil {
+		log.Println("Unpack images error:", err)
+	}
+
+	log.Println("Success!")
 	return
 }
