@@ -149,7 +149,7 @@ func main() {
 
 	kcfg, err := config.ReadKernelConfig(*kcfgPath)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 
 	if exists(*userKcfgPath) {
