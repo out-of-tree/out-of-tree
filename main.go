@@ -116,7 +116,7 @@ func main() {
 		"Create directories && download images")
 
 	// Check for required commands
-	for _, cmd := range []string{"timeout", "docker", "qemu"} {
+	for _, cmd := range []string{"timeout", "docker", "qemu-system-x86_64"} {
 		_, err := exec.Command("which", cmd).CombinedOutput()
 		if err != nil {
 			log.Fatalln("Command not found:", cmd)
