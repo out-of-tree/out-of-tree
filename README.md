@@ -1,5 +1,8 @@
 # [out-of-tree](https://out-of-tree.io)
 
+[![Build Status](https://img.shields.io/travis/jollheef/out-of-tree.svg?branch=master&style=for-the-badge)](https://travis-ci.org/jollheef/out-of-tree)
+[![license](https://img.shields.io/badge/license-AGPL-brightgreen.svg?style=for-the-badge)](https://github.com/jollheef/out-of-tree/blob/master/LICENSE)
+
 out-of-tree kernel {module, exploit} development tool
 
 ![Screenshot](https://cloudflare-ipfs.com/ipfs/Qmb88fgdDjbWkxz91sWsgmoZZNfVThnCtj37u3mF2s3T3T)
