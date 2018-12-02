@@ -4,8 +4,8 @@ summary: out-of-tree kernel {module, exploit} development tool
 description: |
   out-of-tree kernel {module, exploit} development tool
 
-grade: devel
-confinement: devmode
+grade: stable
+confinement: classic
 
 parts:
   out-of-tree:
