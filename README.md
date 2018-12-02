@@ -28,6 +28,10 @@ Also do not forget to set GOPATH and PATH e.g.:
 
 ## Installation
 
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/out-of-tree)
+
+## Build from source
+
     $ go get github.com/jollheef/out-of-tree
     $ out-of-tree bootstrap
 
