@@ -68,7 +68,7 @@ func main() {
 	defaultKcfgPath := usr.HomeDir + "/.out-of-tree/kernels.toml"
 
 	kcfgPathFlag := app.Flag("kernels", "Path to main kernels config")
-	kcfgPath := kcfgPathFlag.Default(defaultKcfgPath).ExistingFile()
+	kcfgPath := kcfgPathFlag.Default(defaultKcfgPath).String()
 
 	defaultUserKcfgPath := usr.HomeDir + "/.out-of-tree/kernels.user.toml"
 	userKcfgPathFlag := app.Flag("user-kernels", "User kernels config")
