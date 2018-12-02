@@ -145,6 +145,15 @@ func main() {
 
 	handleFallbacks(kcfg)
 
+	if !exists(usr.HomeDir + "/.out-of-tree") {
+		log.Println("First run, bootstrap...")
+		err = bootstrapHandler()
+		if err != nil {
+			log.Println("bootstrap error:", err)
+		}
+		return
+	}
+
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case pewCommand.FullCommand():
 		err = pewHandler(kcfg, *path, *pewKernel, *pewBinary,
