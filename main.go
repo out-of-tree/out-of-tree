@@ -123,13 +123,18 @@ func main() {
 		}
 	}
 
-	if !exists(usr.HomeDir + "/.out-of-tree") {
-		log.Println("First run, bootstrap...")
-		err = bootstrapHandler()
-		if err != nil {
-			log.Println("bootstrap error:", err)
-		}
-		return
+	if !exists(usr.HomeDir + "/.out-of-tree/images") {
+		log.Println("No ~/.out-of-tree/images: " +
+			"Probably you need to run `out-of-tree bootstrap`" +
+			" for downloading basic images")
+	}
+
+	if !exists(usr.HomeDir + "/.out-of-tree/kernels.toml") {
+		log.Println("No ~/.out-of-tree/kernels.toml: Probably you " +
+			"need to run `out-of-tree kernels autogen` in " +
+			"directory that contains .out-of-tree.toml " +
+			"with defined kernel masks " +
+			"(see docs at https://out-of-tree.io)")
 	}
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
