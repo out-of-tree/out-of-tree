@@ -241,7 +241,7 @@ func TestQemuSystemCopyAndInsmod(t *testing.T) {
 }
 
 func TestQemuSystemKernelPanic(t *testing.T) {
-	qemu, err := startTestQemu(t, time.Minute)
+	qemu, err := startTestQemu(t, 5*time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -290,11 +290,11 @@ func TestQemuSystemRun(t *testing.T) {
 	}
 
 	start := time.Now()
-	err = qemu.AsyncCommand("root", "sleep 10s")
+	err = qemu.AsyncCommand("root", "sleep 1m")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if time.Since(start) > time.Second {
+	if time.Since(start) > 10*time.Second {
 		t.Fatalf("qemu.Run does not async (waited %s)", +time.Since(start))
 	}
 
