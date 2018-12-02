@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/jollheef/out-of-tree.svg?branch=master)](https://travis-ci.org/jollheef/out-of-tree)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jollheef/out-of-tree)](https://goreportcard.com/report/github.com/jollheef/out-of-tree)
 
 # [out-of-tree](https://out-of-tree.io)
 
