@@ -295,7 +295,8 @@ func TestQemuSystemRun(t *testing.T) {
 		t.Fatal(err)
 	}
 	if time.Since(start) > 10*time.Second {
-		t.Fatalf("qemu.Run does not async (waited %s)", +time.Since(start))
+		t.Fatalf("qemu.AsyncCommand does not async (waited %s)",
+			time.Since(start))
 	}
 
 }
