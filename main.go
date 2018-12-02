@@ -123,6 +123,15 @@ func main() {
 		}
 	}
 
+	if !exists(usr.HomeDir + "/.out-of-tree") {
+		log.Println("First run, bootstrap...")
+		err = bootstrapHandler()
+		if err != nil {
+			log.Println("bootstrap error:", err)
+		}
+		return
+	}
+
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	kcfg, err := config.ReadKernelConfig(*kcfgPath)
@@ -144,15 +153,6 @@ func main() {
 	}
 
 	handleFallbacks(kcfg)
-
-	if !exists(usr.HomeDir + "/.out-of-tree") {
-		log.Println("First run, bootstrap...")
-		err = bootstrapHandler()
-		if err != nil {
-			log.Println("bootstrap error:", err)
-		}
-		return
-	}
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case pewCommand.FullCommand():
