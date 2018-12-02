@@ -99,6 +99,14 @@ func main() {
 		"Generate kernels based on a current config")
 	kernelDockerRegenCommand := kernelCommand.Command("docker-regen",
 		"Regenerate kernels config from out_of_tree_* docker images")
+	kernelGenallCommand := kernelCommand.Command("genall",
+		"Generate all kernels for distro")
+
+	genallDistroFlag := kernelGenallCommand.Flag("distro", "Distributive")
+	distro := genallDistroFlag.Required().String()
+
+	genallVerFlag := kernelGenallCommand.Flag("ver", "Distro version")
+	version := genallVerFlag.Required().String()
 
 	genCommand := app.Command("gen", "Generate .out-of-tree.toml skeleton")
 	genModuleCommand := genCommand.Command("module",
@@ -169,6 +177,8 @@ func main() {
 		err = kernelAutogenHandler(*path)
 	case kernelDockerRegenCommand.FullCommand():
 		err = kernelDockerRegenHandler()
+	case kernelGenallCommand.FullCommand():
+		err = kernelGenallHandler(*distro, *version)
 	case genModuleCommand.FullCommand():
 		err = genConfig(config.KernelModule)
 	case genExploitCommand.FullCommand():

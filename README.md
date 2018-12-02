@@ -66,13 +66,9 @@ Use custom kernels config
 
     $ out-of-tree --kernels /path/to/kernels.toml pew
 
-## Generate all kernels
+Generate all kernels
 
-Does not required if you dont need to use `--guess`.
-
-    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory
-    $ ./bootstrap.sh # more than 6-8 hours for all kernels
-    $ export OUT_OF_TREE_KCFG=$GOPATH/src/github.com/jollheef/out-of-tree/tools/kernel-factory/output/kernels.toml
+    $ out-of-tree kernel genall --distro Ubuntu --ver 16.04
 
 ## Development
 

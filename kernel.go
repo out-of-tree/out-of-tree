@@ -29,17 +29,17 @@ func kernelListHandler(kcfg config.KernelConfig) (err error) {
 	return
 }
 
-func matchDebianKernelPkg(container, mask string, generic bool) (pkgs []string,
-	err error) {
+func matchDebianHeadersPkg(container, mask string, generic bool) (
+	pkgs []string, err error) {
 
-	cmd := "apt-cache search linux-image | cut -d ' ' -f 1"
+	cmd := "apt-cache search linux-headers | cut -d ' ' -f 1"
 	c := dockerCommand(container, "/tmp", "1m", cmd)
 	rawOutput, err := c.CombinedOutput()
 	if err != nil {
 		return
 	}
 
-	r, err := regexp.Compile("linux-image-" + mask)
+	r, err := regexp.Compile("linux-headers-" + mask)
 	if err != nil {
 		return
 	}
@@ -49,6 +49,9 @@ func matchDebianKernelPkg(container, mask string, generic bool) (pkgs []string,
 	for _, k := range kernels {
 		pkg := string(k)
 		if generic && !strings.HasSuffix(pkg, "generic") {
+			continue
+		}
+		if pkg == "linux-headers-generic" {
 			continue
 		}
 		pkgs = append(pkgs, pkg)
@@ -144,11 +147,12 @@ func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
 		return
 	}
 
-	log.Printf("Start adding kernel %s for %s:%s",
-		pkgname, sk.DistroType.String(), sk.DistroRelease)
+	imagepkg := strings.Replace(pkgname, "headers", "image", -1)
 
-	s := fmt.Sprintf("RUN apt-get install -y %s %s\n", pkgname,
-		strings.Replace(pkgname, "image", "headers", -1))
+	log.Printf("Start adding kernel %s for %s:%s",
+		imagepkg, sk.DistroType.String(), sk.DistroRelease)
+
+	s := fmt.Sprintf("RUN apt-get install -y %s %s\n", imagepkg, pkgname)
 
 	err = ioutil.WriteFile(imagePath+"/Dockerfile",
 		append(raw, []byte(s)...), 0644)
@@ -389,6 +393,38 @@ func hasKernel(ki config.KernelInfo, kcfg config.KernelConfig) bool {
 	return false
 }
 
+func generateKernels(km config.KernelMask) (err error) {
+	err = generateBaseDockerImage(km)
+	if err != nil {
+		return
+	}
+
+	var pkgs []string
+	pkgs, err = matchDebianHeadersPkg(km.DockerName(),
+		km.ReleaseMask, true)
+	if err != nil {
+		return
+	}
+
+	for i, pkg := range pkgs {
+		log.Println(i, "/", len(pkgs))
+		dockerImageAppend(km, pkg)
+	}
+
+	err = kickImage(km.DockerName())
+	if err != nil {
+		log.Println("kick image", km.DockerName(), ":", err)
+		return
+	}
+
+	err = copyKernels(km.DockerName())
+	if err != nil {
+		log.Println("copy kernels", km.DockerName(), ":", err)
+		return
+	}
+	return
+}
+
 func kernelAutogenHandler(workPath string) (err error) {
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -401,32 +437,9 @@ func kernelAutogenHandler(workPath string) (err error) {
 			return
 		}
 
-		err = generateBaseDockerImage(sk)
+		err = generateKernels(sk)
 		if err != nil {
 			return
-		}
-
-		var pkgs []string
-		pkgs, err = matchDebianKernelPkg(sk.DockerName(),
-			sk.ReleaseMask, true)
-		if err != nil {
-			return
-		}
-
-		for _, pkg := range pkgs {
-			dockerImageAppend(sk, pkg)
-		}
-
-		err = kickImage(sk.DockerName())
-		if err != nil {
-			log.Println("kick image", sk.DockerName(), ":", err)
-			continue
-		}
-
-		err = copyKernels(sk.DockerName())
-		if err != nil {
-			log.Println("copy kernels", sk.DockerName(), ":", err)
-			continue
 		}
 	}
 
@@ -470,6 +483,25 @@ func kernelDockerRegenHandler() (err error) {
 			log.Println("copy kernels", d.ContainerName, ":", err)
 			continue
 		}
+	}
+
+	return updateKernelsCfg()
+}
+
+func kernelGenallHandler(distro, version string) (err error) {
+	distroType, err := config.NewDistroType(distro)
+	if err != nil {
+		return
+	}
+
+	km := config.KernelMask{
+		DistroType:    distroType,
+		DistroRelease: version,
+		ReleaseMask:   ".*",
+	}
+	err = generateKernels(km)
+	if err != nil {
+		return
 	}
 
 	return updateKernelsCfg()
