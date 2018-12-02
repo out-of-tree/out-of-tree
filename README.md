@@ -1,7 +1,7 @@
-# [out-of-tree](https://out-of-tree.io)
+[![Build Status](https://travis-ci.org/jollheef/out-of-tree.svg?branch=master)](https://travis-ci.org/jollheef/out-of-tree)
+[![Snap Status](https://build.snapcraft.io/badge/jollheef/out-of-tree.svg)](https://build.snapcraft.io/user/jollheef/out-of-tree)
 
-[![Build Status](https://img.shields.io/travis/jollheef/out-of-tree.svg?branch=master&style=for-the-badge)](https://travis-ci.org/jollheef/out-of-tree)
-[![license](https://img.shields.io/badge/license-AGPL-brightgreen.svg?style=for-the-badge)](https://github.com/jollheef/out-of-tree/blob/master/LICENSE)
+# [out-of-tree](https://out-of-tree.io)
 
 out-of-tree kernel {module, exploit} development tool
 
