@@ -32,7 +32,7 @@ Also do not forget to set GOPATH and PATH e.g.:
 
 ## Build from source
 
-    $ go get github.com/jollheef/out-of-tree
+    $ go get -u github.com/jollheef/out-of-tree
     $ out-of-tree bootstrap
 
 Then you can check it on kernel module example:
