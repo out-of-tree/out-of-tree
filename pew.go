@@ -24,6 +24,8 @@ import (
 	qemu "github.com/jollheef/out-of-tree/qemu"
 )
 
+var somethingFailed = false
+
 func dockerCommand(container, workdir, timeout, command string) *exec.Cmd {
 	return exec.Command("timeout", "-k", timeout, timeout, "docker", "run",
 		"-v", workdir+":/work", container,
@@ -116,6 +118,7 @@ func genOkFail(name string, ok bool) aurora.Value {
 		s := " " + name + " SUCCESS "
 		return aurora.BgGreen(aurora.Black(s))
 	} else {
+		somethingFailed = true
 		s := " " + name + " FAILURE "
 		return aurora.BgRed(aurora.Gray(aurora.Bold(s)))
 	}

@@ -193,4 +193,8 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	if somethingFailed {
+		os.Exit(1)
+	}
 }
