@@ -14,6 +14,7 @@ import (
 	"os/user"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/jollheef/out-of-tree/config"
 	"github.com/naoina/toml"
@@ -33,8 +34,7 @@ func matchDebianHeadersPkg(container, mask string, generic bool) (
 	pkgs []string, err error) {
 
 	cmd := "apt-cache search linux-headers | cut -d ' ' -f 1"
-	c := dockerCommand(container, "/tmp", "1m", cmd)
-	rawOutput, err := c.CombinedOutput()
+	output, err := dockerRun(time.Minute, container, "/tmp", cmd)
 	if err != nil {
 		return
 	}
@@ -44,7 +44,7 @@ func matchDebianHeadersPkg(container, mask string, generic bool) (
 		return
 	}
 
-	kernels := r.FindAll(rawOutput, -1)
+	kernels := r.FindAll([]byte(output), -1)
 
 	for _, k := range kernels {
 		pkg := string(k)

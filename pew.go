@@ -26,10 +26,24 @@ import (
 
 var somethingFailed = false
 
-func dockerCommand(container, workdir, timeout, command string) *exec.Cmd {
-	return exec.Command("timeout", "-k", timeout, timeout, "docker", "run",
-		"-v", workdir+":/work", container,
-		"bash", "-c", "cd /work && "+command)
+func dockerRun(timeout time.Duration, container, workdir, command string) (
+	output string, err error) {
+
+	cmd := exec.Command("docker", "run", "-v", workdir+":/work",
+		container, "bash", "-c", "cd /work && "+command)
+
+	timer := time.AfterFunc(timeout, func() {
+		cmd.Process.Kill()
+	})
+	defer timer.Stop()
+
+	raw, err := cmd.CombinedOutput()
+	if err != nil {
+		return
+	}
+
+	output = string(raw)
+	return
 }
 
 func build(tmp string, ka config.Artifact, ki config.KernelInfo,
@@ -51,11 +65,8 @@ func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 
 	kernel := "/lib/modules/" + ki.KernelRelease + "/build"
 
-	seconds := fmt.Sprintf("%ds", dockerTimeout/time.Second)
-	cmd := dockerCommand(ki.ContainerName, tmpSourcePath, seconds,
-		"make KERNEL="+kernel+" TARGET="+target)
-	rawOutput, err := cmd.CombinedOutput()
-	output = string(rawOutput)
+	output, err = dockerRun(dockerTimeout, ki.ContainerName,
+		tmpSourcePath, "make KERNEL="+kernel+" TARGET="+target)
 	if err != nil {
 		err = errors.New("make execution error")
 		return

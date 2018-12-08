@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func TestDockerCommand(t *testing.T) {
+func TestDockerRun(t *testing.T) {
 	tmp, err := ioutil.TempDir("/tmp/", "out-of-tree_test_")
 	if err != nil {
 		t.Fatal(err)
@@ -22,8 +22,9 @@ func TestDockerCommand(t *testing.T) {
 
 	start := time.Now()
 
-	c := dockerCommand("ubuntu", tmp, "1s", "sleep 5s")
-	_, err = c.CombinedOutput()
+	timeout := time.Second
+
+	_, err = dockerRun(timeout, "ubuntu", tmp, "sleep 5s")
 	if err == nil {
 		t.Fatal("docker is not killed by timeout")
 	}
@@ -32,13 +33,12 @@ func TestDockerCommand(t *testing.T) {
 			time.Since(start), time.Second))
 	}
 
-	c = dockerCommand("ubuntu", tmp, "1m", "echo hello")
-	rawOutput, err := c.CombinedOutput()
+	output, err := dockerRun(time.Minute, "ubuntu", tmp, "echo hello")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(rawOutput), "hello") {
-		t.Fatal("wrong output (" + string(rawOutput) + ")")
+	if !strings.Contains(output, "hello") {
+		t.Fatal("wrong output (" + output + ")")
 	}
 }
