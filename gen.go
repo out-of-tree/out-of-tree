@@ -17,7 +17,9 @@ func genConfig(at config.ArtifactType) (err error) {
 		Type: at,
 	}
 	a.SupportedKernels = append(a.SupportedKernels, config.KernelMask{
-		config.Ubuntu, "18.04", ".*",
+		DistroType:    config.Ubuntu,
+		DistroRelease: "18.04",
+		ReleaseMask:   ".*",
 	})
 
 	buf, err := toml.Marshal(&a)
