@@ -244,7 +244,8 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		}
 	}
 
-	if ka.Type == config.KernelModule {
+	switch ka.Type {
+	case config.KernelModule:
 		// TODO Write insmod log to file or database
 		output, err := q.CopyAndInsmod(outFile)
 		if err != nil {
@@ -260,7 +261,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 			return
 		}
 		test_ok = true
-	} else if ka.Type == config.KernelExploit {
+	case config.KernelExploit:
 		remoteExploit := fmt.Sprintf("/tmp/exploit_%d", rand.Int())
 		err = q.CopyFile("user", outFile, remoteExploit)
 		if err != nil {
@@ -275,7 +276,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		}
 		run_ok = true // does not really used
 		test_ok = true
-	} else {
+	default:
 		err = errors.New("Unsupported artifact type")
 	}
 	return
