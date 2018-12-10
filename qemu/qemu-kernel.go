@@ -44,6 +44,7 @@ func readUntilEOF(pipe io.ReadCloser, buf *[]byte) (err error) {
 type arch string
 
 const (
+	// X86_64 must be exactly same as in qemu-system-${HERE}
 	X86_64 arch = "x86_64"
 	I386        = "i386"
 	// TODO add other
@@ -325,6 +326,7 @@ func (q *QemuSystem) CopyFile(user, localPath, remotePath string) (err error) {
 	return
 }
 
+// CopyAndInsmod copy kernel module to temporary file on qemu then insmod it
 func (q *QemuSystem) CopyAndInsmod(localKoPath string) (output string, err error) {
 	remoteKoPath := fmt.Sprintf("/tmp/module_%d.ko", rand.Int())
 	err = q.CopyFile("root", localKoPath, remoteKoPath)
@@ -346,11 +348,13 @@ func (q *QemuSystem) CopyAndRun(user, path string) (output string, err error) {
 	return q.Command(user, "chmod +x "+remotePath+" && "+remotePath)
 }
 
+// Debug is for enable qemu debug and set hostname and port for listen
 func (q *QemuSystem) Debug(conn string) {
 	q.debug = true
 	q.gdb = conn
 }
 
+// GetSshCommand returns command for connect to qemu machine over ssh
 func (q QemuSystem) GetSshCommand() (cmd string) {
 	addrPort := strings.Split(q.sshAddrPort, ":")
 	addr := addrPort[0]
