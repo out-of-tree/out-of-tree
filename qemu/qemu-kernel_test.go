@@ -143,7 +143,7 @@ func TestQemuSystemCommand(t *testing.T) {
 	}
 
 	output, err = qemu.Command("user", "cat /etc/shadow")
-	if err == nil { // unsucessful is good because user must not read /etc/shadow
+	if err == nil { // unsuccessful is good because user must not read /etc/shadow
 		t.Fatal("User have rights for /etc/shadow. WAT?!")
 	}
 }
