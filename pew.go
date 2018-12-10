@@ -278,9 +278,8 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		runOk = true // does not really used
 		testOk = true
 	default:
-		err = errors.New("Unsupported artifact type")
+		log.Println("Unsupported artifact type")
 	}
-	return
 }
 
 func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
