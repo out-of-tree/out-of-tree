@@ -142,7 +142,7 @@ func TestQemuSystemCommand(t *testing.T) {
 		t.Fatal("Wrong output from `cat /etc/passwd` by user")
 	}
 
-	output, err = qemu.Command("user", "cat /etc/shadow")
+	_, err = qemu.Command("user", "cat /etc/shadow")
 	// unsuccessful is good because user must not read /etc/shadow
 	if err == nil {
 		t.Fatal("User have rights for /etc/shadow. WAT?!")
