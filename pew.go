@@ -136,7 +136,7 @@ func genOkFail(name string, ok bool) aurora.Value {
 }
 
 func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
-	build_ok, run_ok, test_ok *bool) {
+	buildOk, runOk, testOk *bool) {
 
 	distroInfo := fmt.Sprintf("%s-%s {%s}", ki.DistroType,
 		ki.DistroRelease, ki.KernelRelease)
@@ -144,13 +144,13 @@ func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
 	colored := ""
 	if ka.Type == config.KernelExploit {
 		colored = aurora.Sprintf("[*] %40s: %s %s", distroInfo,
-			genOkFail("BUILD", *build_ok),
-			genOkFail("LPE", *test_ok))
+			genOkFail("BUILD", *buildOk),
+			genOkFail("LPE", *testOk))
 	} else {
 		colored = aurora.Sprintf("[*] %40s: %s %s %s", distroInfo,
-			genOkFail("BUILD", *build_ok),
-			genOkFail("INSMOD", *run_ok),
-			genOkFail("TEST", *test_ok))
+			genOkFail("BUILD", *buildOk),
+			genOkFail("INSMOD", *runOk),
+			genOkFail("TEST", *testOk))
 	}
 
 	additional := ""
@@ -195,10 +195,10 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	}
 	defer os.RemoveAll(tmp)
 
-	build_ok := false
-	run_ok := false
-	test_ok := false
-	defer dumpResult(q, ka, ki, &build_ok, &run_ok, &test_ok)
+	buildOk := false
+	runOk := false
+	testOk := false
+	defer dumpResult(q, ka, ki, &buildOk, &runOk, &testOk)
 
 	var outFile, output string
 	if binaryPath == "" {
@@ -208,10 +208,10 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 			log.Println(output)
 			return
 		}
-		build_ok = true
+		buildOk = true
 	} else {
 		outFile = binaryPath
-		build_ok = true
+		buildOk = true
 	}
 
 	err = cleanDmesg(q)
@@ -252,7 +252,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 			log.Println(output, err)
 			return
 		}
-		run_ok = true
+		runOk = true
 
 		// TODO Write test results to file or database
 		output, err = testKernelModule(q, ka, remoteTest)
@@ -260,7 +260,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 			log.Println(output, err)
 			return
 		}
-		test_ok = true
+		testOk = true
 	case config.KernelExploit:
 		remoteExploit := fmt.Sprintf("/tmp/exploit_%d", rand.Int())
 		err = q.CopyFile("user", outFile, remoteExploit)
@@ -274,8 +274,8 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 			log.Println(output)
 			return
 		}
-		run_ok = true // does not really used
-		test_ok = true
+		runOk = true // does not really used
+		testOk = true
 	default:
 		err = errors.New("Unsupported artifact type")
 	}
