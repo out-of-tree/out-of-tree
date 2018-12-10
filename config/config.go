@@ -5,7 +5,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -46,7 +45,7 @@ func (at *ArtifactType) UnmarshalTOML(data []byte) (err error) {
 	} else if strings.Contains(stypelower, "exploit") {
 		*at = KernelExploit
 	} else {
-		err = errors.New(fmt.Sprintf("Type %s is unsupported", stype))
+		err = fmt.Errorf("Type %s is unsupported", stype)
 	}
 	return
 }
@@ -59,7 +58,7 @@ func (at ArtifactType) MarshalTOML() (data []byte, err error) {
 	case KernelExploit:
 		s = "exploit"
 	default:
-		err = errors.New(fmt.Sprintf("Cannot marshal %d", at))
+		err = fmt.Errorf("Cannot marshal %d", at)
 	}
 	data = []byte(`"` + s + `"`)
 	return
@@ -129,7 +128,7 @@ func (dt *DistroType) UnmarshalTOML(data []byte) (err error) {
 	} else if strings.EqualFold(sDistro, "Debian") {
 		*dt = Debian
 	} else {
-		err = errors.New(fmt.Sprintf("Distro %s is unsupported", sDistro))
+		err = fmt.Errorf("Distro %s is unsupported", sDistro)
 	}
 	return
 }
@@ -144,7 +143,7 @@ func (dt DistroType) MarshalTOML() (data []byte, err error) {
 	case Debian:
 		s = "Debian"
 	default:
-		err = errors.New(fmt.Sprintf("Cannot marshal %d", dt))
+		err = fmt.Errorf("Cannot marshal %d", dt)
 	}
 	data = []byte(`"` + s + `"`)
 	return
