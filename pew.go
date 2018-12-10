@@ -124,15 +124,16 @@ func testKernelExploit(q *qemu.QemuSystem, ka config.Artifact,
 	return
 }
 
-func genOkFail(name string, ok bool) aurora.Value {
+func genOkFail(name string, ok bool) (aurv aurora.Value) {
 	if ok {
 		s := " " + name + " SUCCESS "
-		return aurora.BgGreen(aurora.Black(s))
+		aurv = aurora.BgGreen(aurora.Black(s))
 	} else {
 		somethingFailed = true
 		s := " " + name + " FAILURE "
-		return aurora.BgRed(aurora.Gray(aurora.Bold(s)))
+		aurv = aurora.BgRed(aurora.Gray(aurora.Bold(s)))
 	}
+	return
 }
 
 func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
