@@ -143,7 +143,8 @@ func TestQemuSystemCommand(t *testing.T) {
 	}
 
 	output, err = qemu.Command("user", "cat /etc/shadow")
-	if err == nil { // unsuccessful is good because user must not read /etc/shadow
+	// unsuccessful is good because user must not read /etc/shadow
+	if err == nil {
 		t.Fatal("User have rights for /etc/shadow. WAT?!")
 	}
 }
@@ -162,21 +163,22 @@ func TestQemuSystemCopyFile(t *testing.T) {
 		return
 	}
 
-	sha_local := fmt.Sprintf("%x", sha512.Sum512(content))
+	shaLocal := fmt.Sprintf("%x", sha512.Sum512(content))
 
 	err = qemu.CopyFile("user", localPath, "/tmp/test")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	sha_remote, err := qemu.Command("user", "sha512sum /tmp/test")
+	shaRemote, err := qemu.Command("user", "sha512sum /tmp/test")
 	if err != nil {
 		t.Fatal(err)
 	}
-	sha_remote = strings.Split(sha_remote, " ")[0]
+	shaRemote = strings.Split(shaRemote, " ")[0]
 
-	if sha_local != sha_remote {
-		t.Fatal(fmt.Sprintf("Broken file (%s instead of %s)", sha_remote, sha_local))
+	if shaLocal != shaRemote {
+		t.Fatal(fmt.Sprintf("Broken file (%s instead of %s)",
+			shaRemote, shaLocal))
 	}
 }
 
@@ -209,7 +211,8 @@ func TestQemuSystemCopyAndRun(t *testing.T) {
 	}
 
 	if output != randStr {
-		t.Fatal("Wrong output from copyied executable (" + output + "," + randStr + ")")
+		t.Fatal("Wrong output from copyied executable (" +
+			output + "," + randStr + ")")
 	}
 }
 
