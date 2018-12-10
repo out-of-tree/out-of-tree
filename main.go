@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -47,6 +48,17 @@ func handleFallbacks(kcfg config.KernelConfig) {
 			log.Println(s)
 		}
 	}
+}
+
+func checkRequiredUtils() (err error) {
+	// Check for required commands
+	for _, cmd := range []string{"docker", "qemu-system-x86_64"} {
+		_, err := exec.Command("which", cmd).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Command not found: %s", cmd)
+		}
+	}
+	return
 }
 
 func main() {
@@ -123,12 +135,9 @@ func main() {
 	bootstrapCommand := app.Command("bootstrap",
 		"Create directories && download images")
 
-	// Check for required commands
-	for _, cmd := range []string{"docker", "qemu-system-x86_64"} {
-		_, err := exec.Command("which", cmd).CombinedOutput()
-		if err != nil {
-			log.Fatalln("Command not found:", cmd)
-		}
+	err = checkRequiredUtils()
+	if err != nil {
+		log.Fatalln(err)
 	}
 
 	if !exists(usr.HomeDir + "/.out-of-tree/images") {
