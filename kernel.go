@@ -84,11 +84,11 @@ func generateBaseDockerImage(sk config.KernelMask) (err error) {
 		log.Printf("Base image for %s:%s found",
 			sk.DistroType.String(), sk.DistroRelease)
 		return
-	} else {
-		log.Printf("Base image for %s:%s not found, start generating",
-			sk.DistroType.String(), sk.DistroRelease)
-		os.MkdirAll(imagePath, os.ModePerm)
 	}
+
+	log.Printf("Base image for %s:%s not found, start generating",
+		sk.DistroType.String(), sk.DistroRelease)
+	os.MkdirAll(imagePath, os.ModePerm)
 
 	d += fmt.Sprintf("FROM %s:%s\n",
 		strings.ToLower(sk.DistroType.String()),
