@@ -334,6 +334,22 @@ func kernelMask(kernel string) (km config.KernelMask, err error) {
 	return
 }
 
+func genAllKernels() (sk []config.KernelMask, err error) {
+	for _, dType := range config.DistroTypeStrings {
+		var dt config.DistroType
+		dt, err = config.NewDistroType(dType)
+		if err != nil {
+			return
+		}
+
+		sk = append(sk, config.KernelMask{
+			DistroType:  dt,
+			ReleaseMask: ".*",
+		})
+	}
+	return
+}
+
 func pewHandler(kcfg config.KernelConfig,
 	workPath, ovrrdKrnl, binary, test string, guess bool,
 	qemuTimeout, dockerTimeout time.Duration) (err error) {
@@ -358,16 +374,9 @@ func pewHandler(kcfg config.KernelConfig,
 	}
 
 	if guess {
-		ka.SupportedKernels = []config.KernelMask{}
-		for _, dType := range config.DistroTypeStrings {
-			var dt config.DistroType
-			dt, err = config.NewDistroType(dType)
-			if err != nil {
-				return
-			}
-
-			km := config.KernelMask{DistroType: dt, ReleaseMask: ".*"}
-			ka.SupportedKernels = append(ka.SupportedKernels, km)
+		ka.SupportedKernels, err = genAllKernels()
+		if err != nil {
+			return
 		}
 	}
 
