@@ -33,7 +33,7 @@ Also do not forget to set GOPATH and PATH e.g.:
 
 Then you can check it on kernel module example:
 
-    $ cd $GOPATH/github.com/jollheef/out-of-tree/examples/kernel-module
+    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/examples/kernel-module
     $ out-of-tree kernel autogen # generate kernels based on .out-of-tree.toml
     $ out-of-tree pew
 
