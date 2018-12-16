@@ -30,7 +30,7 @@ Also do not forget to set GOPATH and PATH e.g.:
 
     $ sudo dnf install go qemu moby-engine
 
-Also check out [post-installation steps](https://docs.docker.com/install/linux/linux-postinstall/).
+Also check out [docker post-installation steps](https://docs.docker.com/install/linux/linux-postinstall/).
 
 ## Build from source
 
