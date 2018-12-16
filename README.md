@@ -26,6 +26,12 @@ Also do not forget to set GOPATH and PATH e.g.:
     $ brew install go qemu
     $ brew cask install docker
 
+### Fedora
+
+    $ sudo dnf install go qemu moby-engine
+
+Also check out [post-installation steps](https://docs.docker.com/install/linux/linux-postinstall/).
+
 ## Build from source
 
     $ go get -u github.com/jollheef/out-of-tree
