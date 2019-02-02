@@ -7,8 +7,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/jollheef/out-of-tree/config"
 	"github.com/naoina/toml"
+
+	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
 func genConfig(at config.ArtifactType) (err error) {

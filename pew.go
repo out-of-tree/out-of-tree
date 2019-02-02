@@ -20,8 +20,8 @@ import (
 	"github.com/otiai10/copy"
 	"github.com/remeh/sizedwaitgroup"
 
-	"github.com/jollheef/out-of-tree/config"
-	qemu "github.com/jollheef/out-of-tree/qemu"
+	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
 var somethingFailed = false

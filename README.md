@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/jollheef/out-of-tree.svg?branch=master)](https://travis-ci.org/jollheef/out-of-tree)
-[![Go Report Card](https://goreportcard.com/badge/github.com/jollheef/out-of-tree)](https://goreportcard.com/report/github.com/jollheef/out-of-tree)
+[![Go Report Card](https://goreportcard.com/badge/code.dumpstack.io/tools/out-of-tree)](https://goreportcard.com/report/code.dumpstack.io/tools/out-of-tree)
 
 # [out-of-tree](https://out-of-tree.io)
 
@@ -34,12 +34,12 @@ Also check out [docker post-installation steps](https://docs.docker.com/install/
 
 ## Build from source
 
-    $ go get -u github.com/jollheef/out-of-tree
+    $ go get -u code.dumpstack.io/tools/out-of-tree
     $ out-of-tree bootstrap
 
 Then you can check it on kernel module example:
 
-    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/examples/kernel-module
+    $ cd $GOPATH/src/code.dumpstack.io/tools/out-of-tree/examples/kernel-module
     $ out-of-tree kernel autogen # generate kernels based on .out-of-tree.toml
     $ out-of-tree pew
 
@@ -83,6 +83,6 @@ Read [Qemu API](qemu/README.md).
 
 ### Generate images
 
-    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/qemu-debian-img/
+    $ cd $GOPATH/src/code.dumpstack.io/tools/out-of-tree/tools/qemu-debian-img/
     $ docker run --privileged -v $(pwd):/shared -e IMAGE=/shared/ubuntu1404.img -e RELEASE=trusty -t gen-ubuntu1804-image
     $ docker run --privileged -v $(pwd):/shared -e IMAGE=/shared/ubuntu1604.img -e RELEASE=xenial -t gen-ubuntu1804-image

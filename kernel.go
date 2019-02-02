@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jollheef/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config"
 	"github.com/naoina/toml"
 )
 

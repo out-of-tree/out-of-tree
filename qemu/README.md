@@ -9,7 +9,7 @@ Features:
 
 ## Installation
 
-    $ go get github.com/jollheef/out-of-tree/qemu
+    $ go get code.dumpstack.io/tools/out-of-tree/qemu
 
 ### Generate root image
 
@@ -30,12 +30,12 @@ Note: qemu on macOS since v2.12 (24 April 2018) supports Hypervisor.framework.
 
 #### Generate image
 
-    $ cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/qemu-debian-img
+    $ cd $GOPATH/src/code.dumpstack.io/tools/out-of-tree/tools/qemu-debian-img
     $ ./bootstrap.sh
 
 ### Fill configuration file
 
-    $ $EDITOR $GOPATH/src/github.com/jollheef/out-of-tree/qemu/test.config.go
+    $ $EDITOR $GOPATH/src/code.dumpstack.io/tools/out-of-tree/qemu/test.config.go
 
 ### Run tests
 
@@ -43,7 +43,7 @@ Note: qemu on macOS since v2.12 (24 April 2018) supports Hypervisor.framework.
 
 ## Usage
 
-    $ go get github.com/jollheef/out-of-tree/qemu
+    $ go get code.dumpstack.io/tools/out-of-tree/qemu
 
 Minimal example:
 
@@ -71,4 +71,4 @@ Minimal example:
 
 More information and list of all functions see at go documentation project, or just run locally:
 
-    $ godoc github.com/jollheef/out-of-tree/qemu
+    $ godoc code.dumpstack.io/tools/out-of-tree/qemu

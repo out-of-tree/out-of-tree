@@ -14,7 +14,7 @@ import (
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/jollheef/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
 func findFallback(kcfg config.KernelConfig, ki config.KernelInfo) (rootfs string) {

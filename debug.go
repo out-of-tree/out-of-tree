@@ -13,9 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jollheef/out-of-tree/config"
-	qemu "github.com/jollheef/out-of-tree/qemu"
 	"github.com/logrusorgru/aurora"
+
+	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
 func firstSupported(kcfg config.KernelConfig, ka config.Artifact,
