@@ -2,7 +2,7 @@
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
-package qemukernel
+package qemu
 
 import (
 	"crypto/sha512"
@@ -50,16 +50,16 @@ func TestQemuSystemNew(t *testing.T) {
 
 func TestQemuSystemStart(t *testing.T) {
 	kernel := Kernel{Name: "Test kernel", KernelPath: testConfigVmlinuz}
-	qemu, err := NewQemuSystem(X86_64, kernel, "/bin/sh")
+	q, err := NewQemuSystem(X86_64, kernel, "/bin/sh")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err = qemu.Start(); err != nil {
+	if err = q.Start(); err != nil {
 		t.Fatal(err)
 	}
 
-	qemu.Stop()
+	q.Stop()
 }
 
 func TestGetFreeAddrPort(t *testing.T) {
@@ -74,24 +74,24 @@ func TestGetFreeAddrPort(t *testing.T) {
 func TestQemuSystemStart_Timeout(t *testing.T) {
 	t.Parallel()
 	kernel := Kernel{Name: "Test kernel", KernelPath: testConfigVmlinuz}
-	qemu, err := NewQemuSystem(X86_64, kernel, "/bin/sh")
+	q, err := NewQemuSystem(X86_64, kernel, "/bin/sh")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	qemu.Timeout = time.Second
+	q.Timeout = time.Second
 
-	if err = qemu.Start(); err != nil {
+	if err = q.Start(); err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(2 * time.Second)
 
-	if !qemu.Died {
+	if !q.Died {
 		t.Fatal("qemu does not died :c")
 	}
 
-	if !qemu.KilledByTimeout {
+	if !q.KilledByTimeout {
 		t.Fatal("qemu died not because of timeout O_o")
 	}
 }
@@ -120,13 +120,13 @@ func startTestQemu(t *testing.T, timeout time.Duration) (q *QemuSystem, err erro
 }
 
 func TestQemuSystemCommand(t *testing.T) {
-	qemu, err := startTestQemu(t, 0)
+	q, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer qemu.Stop()
+	defer q.Stop()
 
-	output, err := qemu.Command("root", "cat /etc/shadow")
+	output, err := q.Command("root", "cat /etc/shadow")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +134,7 @@ func TestQemuSystemCommand(t *testing.T) {
 		t.Fatal("Wrong output from `cat /etc/shadow` by root")
 	}
 
-	output, err = qemu.Command("user", "cat /etc/passwd")
+	output, err = q.Command("user", "cat /etc/passwd")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +142,7 @@ func TestQemuSystemCommand(t *testing.T) {
 		t.Fatal("Wrong output from `cat /etc/passwd` by user")
 	}
 
-	_, err = qemu.Command("user", "cat /etc/shadow")
+	_, err = q.Command("user", "cat /etc/shadow")
 	// unsuccessful is good because user must not read /etc/shadow
 	if err == nil {
 		t.Fatal("User have rights for /etc/shadow. WAT?!")
@@ -150,11 +150,11 @@ func TestQemuSystemCommand(t *testing.T) {
 }
 
 func TestQemuSystemCopyFile(t *testing.T) {
-	qemu, err := startTestQemu(t, 0)
+	q, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer qemu.Stop()
+	defer q.Stop()
 
 	localPath := "/bin/sh"
 
@@ -165,12 +165,12 @@ func TestQemuSystemCopyFile(t *testing.T) {
 
 	shaLocal := fmt.Sprintf("%x", sha512.Sum512(content))
 
-	err = qemu.CopyFile("user", localPath, "/tmp/test")
+	err = q.CopyFile("user", localPath, "/tmp/test")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	shaRemote, err := qemu.Command("user", "sha512sum /tmp/test")
+	shaRemote, err := q.Command("user", "sha512sum /tmp/test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -183,11 +183,11 @@ func TestQemuSystemCopyFile(t *testing.T) {
 }
 
 func TestQemuSystemCopyAndRun(t *testing.T) {
-	qemu, err := startTestQemu(t, 0)
+	q, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer qemu.Stop()
+	defer q.Stop()
 
 	randStr := fmt.Sprintf("%d", rand.Int())
 	content := []byte("#!/bin/sh\n echo -n " + randStr + "\n")
@@ -205,7 +205,7 @@ func TestQemuSystemCopyAndRun(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	output, err := qemu.CopyAndRun("user", tmpfile.Name())
+	output, err := q.CopyAndRun("user", tmpfile.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,23 +217,23 @@ func TestQemuSystemCopyAndRun(t *testing.T) {
 }
 
 func TestQemuSystemCopyAndInsmod(t *testing.T) {
-	qemu, err := startTestQemu(t, 0)
+	q, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer qemu.Stop()
+	defer q.Stop()
 
-	lsmodBefore, err := qemu.Command("root", "lsmod | wc -l")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = qemu.CopyAndInsmod(testConfigSampleKo)
+	lsmodBefore, err := q.Command("root", "lsmod | wc -l")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	lsmodAfter, err := qemu.Command("root", "lsmod | wc -l")
+	_, err = q.CopyAndInsmod(testConfigSampleKo)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	lsmodAfter, err := q.Command("root", "lsmod | wc -l")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -244,20 +244,20 @@ func TestQemuSystemCopyAndInsmod(t *testing.T) {
 }
 
 func TestQemuSystemKernelPanic(t *testing.T) {
-	qemu, err := startTestQemu(t, 5*time.Minute)
+	q, err := startTestQemu(t, 5*time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer qemu.Stop()
+	defer q.Stop()
 
 	// Enable sysrq
-	_, err = qemu.Command("root", "echo 1 > /proc/sys/kernel/sysrq")
+	_, err = q.Command("root", "echo 1 > /proc/sys/kernel/sysrq")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Trigger kernel panic
-	err = qemu.AsyncCommand("root", "sleep 1s && echo c > /proc/sysrq-trigger")
+	err = q.AsyncCommand("root", "sleep 1s && echo c > /proc/sysrq-trigger")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -265,40 +265,40 @@ func TestQemuSystemKernelPanic(t *testing.T) {
 	// Wait for panic watcher timeout
 	time.Sleep(5 * time.Second)
 
-	if qemu.KilledByTimeout {
+	if q.KilledByTimeout {
 		t.Fatal("qemu is killed by timeout, not because of panic")
 	}
 
-	if !qemu.Died {
+	if !q.Died {
 		t.Fatal("qemu is not killed after kernel panic")
 	}
 
-	if !qemu.KernelPanic {
+	if !q.KernelPanic {
 		t.Fatal("qemu is died but there's no information about panic")
 	}
 }
 
 func TestQemuSystemRun(t *testing.T) {
-	qemu, err := startTestQemu(t, 0)
+	q, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer qemu.Stop()
+	defer q.Stop()
 
 	for {
-		_, err := qemu.Command("root", "echo")
+		_, err := q.Command("root", "echo")
 		if err == nil {
 			break
 		}
 	}
 
 	start := time.Now()
-	err = qemu.AsyncCommand("root", "sleep 1m")
+	err = q.AsyncCommand("root", "sleep 1m")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if time.Since(start) > 10*time.Second {
-		t.Fatalf("qemu.AsyncCommand does not async (waited %s)",
+		t.Fatalf("q.AsyncCommand does not async (waited %s)",
 			time.Since(start))
 	}
 
