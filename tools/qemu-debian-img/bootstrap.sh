@@ -1,4 +1,6 @@
 #!/bin/sh -eux
+cd $(dirname $(realpath $0))
+
 docker build -t gen-ubuntu1804-image .
 docker run --privileged -v $(pwd):/shared -t gen-ubuntu1804-image
 RUN="docker run -v $(pwd):/shared -t gen-ubuntu1804-image"
