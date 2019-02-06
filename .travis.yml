@@ -21,9 +21,9 @@ env:
 install: true
 
 before_script:
-  - cd $GOPATH/src/github.com/jollheef/out-of-tree/tools/qemu-debian-img
+  - cd $GOPATH/src/code.dumpstack.io/tools/out-of-tree/tools/qemu-debian-img
   - ./bootstrap.sh
-  - cd $GOPATH/src/github.com/jollheef/out-of-tree
+  - cd $GOPATH/src/code.dumpstack.io/tools/out-of-tree
 
 script:
   - go test -parallel 1 -v ./...
