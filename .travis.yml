@@ -24,7 +24,7 @@ env:
 install: true
 
 before_script:
-  - ./tools/out-of-tree/bootstrap.sh
+  - ./tools/qemu-debian-img/bootstrap.sh
 
 script:
   - go test -parallel 1 -v ./...
