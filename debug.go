@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/logrusorgru/aurora"
+	"gopkg.in/logrusorgru/aurora.v1"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
