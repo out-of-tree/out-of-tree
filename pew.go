@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/logrusorgru/aurora"
+	"gopkg.in/logrusorgru/aurora.v1"
 	"github.com/otiai10/copy"
 	"github.com/remeh/sizedwaitgroup"
 
