@@ -16,3 +16,5 @@ golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613 h1:MQ/ZZiDsUapFFiMS+vzwXk
 golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 gopkg.in/alecthomas/kingpin.v2 v2.2.6 h1:jMFz6MfLP0/4fUyZle81rXUoxOBFi19VUFKVDOQfozc=
 gopkg.in/alecthomas/kingpin.v2 v2.2.6/go.mod h1:FMv+mEhP44yOT+4EoQTLFTRgOQ1FBLkstjWtayDeSgw=
+gopkg.in/logrusorgru/aurora.v1 v1.0.0-20181002194514-a7b3b318ed4e h1:uKdf1KQDFZDYqNzSDhxB5hFxj5Fq4e3/C/ejtRJxlY0=
+gopkg.in/logrusorgru/aurora.v1 v1.0.0-20181002194514-a7b3b318ed4e/go.mod h1:DGR33jeYG1jxERD2W4hGjuW94Pxf3mkUf/Ddhf5BskA=

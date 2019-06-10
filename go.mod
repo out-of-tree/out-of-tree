@@ -14,4 +14,5 @@ require (
 	github.com/remeh/sizedwaitgroup v0.0.0-20180822144253-5e7302b12cce
 	golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
+	gopkg.in/logrusorgru/aurora.v1 v1.0.0-20181002194514-a7b3b318ed4e
 )
