@@ -16,9 +16,9 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/logrusorgru/aurora.v1"
 	"github.com/otiai10/copy"
 	"github.com/remeh/sizedwaitgroup"
+	"gopkg.in/logrusorgru/aurora.v1"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
