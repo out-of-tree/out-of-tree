@@ -234,9 +234,9 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 					"> "+remoteTest+
 					" && chmod +x "+remoteTest)
 		} else {
-			log.Println("copy file err", err)
-			// we should not exit because of testing 'insmod' part
-			// for kernel module
+			log.Println("No test, use dummy")
+			q.Command("user", "echo '#!/bin/sh' "+
+				"> "+remoteTest+" && chmod +x "+remoteTest)
 		}
 	} else {
 		_, err = q.Command("root", "chmod +x "+remoteTest)
