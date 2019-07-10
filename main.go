@@ -61,6 +61,14 @@ func checkRequiredUtils() (err error) {
 	return
 }
 
+func checkDockerPermissions() (err error) {
+	output, err := exec.Command("docker", "ps").CombinedOutput()
+	if err != nil {
+		err = fmt.Errorf(string(output))
+	}
+	return
+}
+
 func main() {
 	app := kingpin.New(
 		"out-of-tree",
@@ -138,6 +146,15 @@ func main() {
 	err = checkRequiredUtils()
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+	err = checkDockerPermissions()
+	if err != nil {
+		log.Println(err)
+		log.Println("You have two options:")
+		log.Println("\t1. Add user to group docker;")
+		log.Println("\t2. Run out-of-tree with sudo.")
+		os.Exit(1)
 	}
 
 	if !exists(usr.HomeDir + "/.out-of-tree/images") {
