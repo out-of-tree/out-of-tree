@@ -7,7 +7,7 @@
 #     $ docker build -t gen-ubuntu1804-image .
 #     $ docker run --privileged -v $(pwd):/shared -t gen-ubuntu1804-image
 #
-# centos7.img will be created in current directory. You can change $(pwd) to
+# ubuntu1804.img will be created in current directory. You can change $(pwd) to
 # different directory to use different destination for image.
 #
 FROM ubuntu:18.04
