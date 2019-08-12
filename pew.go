@@ -285,13 +285,27 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	}
 }
 
+func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
+	// Fisher–Yates shuffle
+	for i := len(a) - 1; i > 0; i-- {
+		j := rand.Intn(i + 1)
+		a[i], a[j] = a[j], a[i]
+	}
+	return a
+}
+
 func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
-	testPath string, qemuTimeout, dockerTimeout time.Duration) (err error) {
+	testPath string, qemuTimeout, dockerTimeout time.Duration,
+	max int64) (err error) {
 
 	found := false
 
 	swg := sizedwaitgroup.New(runtime.NumCPU())
-	for _, kernel := range kcfg.Kernels {
+	for _, kernel := range shuffleKernels(kcfg.Kernels) {
+		if max <= 0 {
+			break
+		}
+
 		var supported bool
 		supported, err = ka.Supported(kernel)
 		if err != nil {
@@ -300,6 +314,7 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 
 		if supported {
 			found = true
+			max -= 1
 			swg.Add()
 			go whatever(&swg, ka, kernel, binaryPath, testPath,
 				qemuTimeout, dockerTimeout)
@@ -355,7 +370,8 @@ func genAllKernels() (sk []config.KernelMask, err error) {
 
 func pewHandler(kcfg config.KernelConfig,
 	workPath, ovrrdKrnl, binary, test string, guess bool,
-	qemuTimeout, dockerTimeout time.Duration) (err error) {
+	qemuTimeout, dockerTimeout time.Duration,
+	max int64) (err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -383,7 +399,7 @@ func pewHandler(kcfg config.KernelConfig,
 		}
 	}
 
-	err = performCI(ka, kcfg, binary, test, qemuTimeout, dockerTimeout)
+	err = performCI(ka, kcfg, binary, test, qemuTimeout, dockerTimeout, max)
 	if err != nil {
 		return
 	}
