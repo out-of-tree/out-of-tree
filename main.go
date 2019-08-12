@@ -7,10 +7,12 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"os/user"
 	"sort"
+	"time"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -70,6 +72,8 @@ func checkDockerPermissions() (err error) {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	app := kingpin.New(
 		"out-of-tree",
 		"kernel {module, exploit} development tool",
@@ -117,6 +121,11 @@ func main() {
 	kernelListCommand := kernelCommand.Command("list", "List kernels")
 	kernelAutogenCommand := kernelCommand.Command("autogen",
 		"Generate kernels based on a current config")
+	kernelAutogenMax := kernelAutogenCommand.Flag("max",
+		"Download random kernels from set defined by regex in "+
+			"release_mask, but no more than X for each of "+
+			"release_mask").PlaceHolder("X").Default(
+		fmt.Sprint(KERNELS_ALL)).Int64()
 	kernelDockerRegenCommand := kernelCommand.Command("docker-regen",
 		"Regenerate kernels config from out_of_tree_* docker images")
 	kernelGenallCommand := kernelCommand.Command("genall",
@@ -200,7 +209,7 @@ func main() {
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():
-		err = kernelAutogenHandler(*path)
+		err = kernelAutogenHandler(*path, *kernelAutogenMax)
 	case kernelDockerRegenCommand.FullCommand():
 		err = kernelDockerRegenHandler()
 	case kernelGenallCommand.FullCommand():

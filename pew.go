@@ -39,6 +39,9 @@ func dockerRun(timeout time.Duration, container, workdir, command string) (
 
 	raw, err := cmd.CombinedOutput()
 	if err != nil {
+		e := fmt.Sprintf("error `%v` for cmd `%v` with output `%v`",
+			err, command, string(raw))
+		err = errors.New(e)
 		return
 	}
 

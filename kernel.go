@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
+	"math/rand"
 	"os"
 	"os/exec"
 	"os/user"
@@ -19,6 +21,8 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"github.com/naoina/toml"
 )
+
+var KERNELS_ALL int64 = math.MaxInt64
 
 func kernelListHandler(kcfg config.KernelConfig) (err error) {
 	if len(kcfg.Kernels) == 0 {
@@ -393,7 +397,17 @@ func hasKernel(ki config.KernelInfo, kcfg config.KernelConfig) bool {
 	return false
 }
 
-func generateKernels(km config.KernelMask) (err error) {
+func shuffle(a []string) []string {
+	// Fisher–Yates shuffle
+	for i := len(a) - 1; i > 0; i-- {
+		j := rand.Intn(i + 1)
+		a[i], a[j] = a[j], a[i]
+	}
+	return a
+}
+
+func generateKernels(km config.KernelMask, max int64) (err error) {
+	log.Println("Generating for kernel mask", km)
 	err = generateBaseDockerImage(km)
 	if err != nil {
 		return
@@ -406,9 +420,20 @@ func generateKernels(km config.KernelMask) (err error) {
 		return
 	}
 
-	for i, pkg := range pkgs {
-		log.Println(i, "/", len(pkgs))
-		dockerImageAppend(km, pkg)
+	for i, pkg := range shuffle(pkgs) {
+		if max <= 0 {
+			log.Println("Max is reached")
+			break
+		}
+
+		log.Println(i, "/", len(pkgs), pkg)
+
+		err = dockerImageAppend(km, pkg)
+		if err == nil {
+			max -= 1
+		} else {
+			log.Println("dockerImageAppend", err)
+		}
 	}
 
 	err = kickImage(km.DockerName())
@@ -425,7 +450,7 @@ func generateKernels(km config.KernelMask) (err error) {
 	return
 }
 
-func kernelAutogenHandler(workPath string) (err error) {
+func kernelAutogenHandler(workPath string, max int64) (err error) {
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
 		return
@@ -437,7 +462,7 @@ func kernelAutogenHandler(workPath string) (err error) {
 			return
 		}
 
-		err = generateKernels(sk)
+		err = generateKernels(sk, max)
 		if err != nil {
 			return
 		}
@@ -499,7 +524,7 @@ func kernelGenallHandler(distro, version string) (err error) {
 		DistroRelease: version,
 		ReleaseMask:   ".*",
 	}
-	err = generateKernels(km)
+	err = generateKernels(km, KERNELS_ALL)
 	if err != nil {
 		return
 	}
