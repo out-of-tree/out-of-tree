@@ -21,13 +21,13 @@ func logLogEntry(l logEntry) {
 
 	colored := ""
 	if l.Type == config.KernelExploit {
-		colored = aurora.Sprintf("[%s] %40s %40s: %s %s",
-			l.Timestamp, artifactInfo, distroInfo,
+		colored = aurora.Sprintf("[%8d] [%s] %40s %40s: %s %s",
+			l.ID, l.Timestamp, artifactInfo, distroInfo,
 			genOkFail("BUILD", l.Build.Ok),
 			genOkFail("LPE", l.Test.Ok))
 	} else {
-		colored = aurora.Sprintf("[%s] %40s %40s: %s %s %s",
-			l.Timestamp, artifactInfo, distroInfo,
+		colored = aurora.Sprintf("[%8d] [%s] %40s %40s: %s %s %s",
+			l.ID, l.Timestamp, artifactInfo, distroInfo,
 			genOkFail("BUILD", l.Build.Ok),
 			genOkFail("INSMOD", l.Run.Ok),
 			genOkFail("TEST", l.Test.Ok))
