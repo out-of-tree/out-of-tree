@@ -92,3 +92,42 @@ func logHandler(db *sql.DB, path string, num int, rate bool) (err error) {
 
 	return
 }
+
+func logDumpHandler(db *sql.DB, id int) (err error) {
+	l, err := getLogByID(db, id)
+	if err != nil {
+		return
+	}
+
+	fmt.Println("ID:", l.ID)
+	fmt.Println("Date:", l.Timestamp)
+	fmt.Println()
+
+	fmt.Println("Type:", l.Type.String())
+	fmt.Println("Name:", l.Name)
+	fmt.Println()
+
+	fmt.Println("Distro:", l.DistroType.String(), l.DistroRelease)
+	fmt.Println("Kernel:", l.KernelRelease)
+	fmt.Println()
+
+	fmt.Println("Build ok:", l.Build.Ok)
+	if l.Type == config.KernelModule {
+		fmt.Println("Insmod ok:", l.Run.Ok)
+	}
+	fmt.Println("Test ok:", l.Test.Ok)
+	fmt.Println()
+
+	fmt.Printf("Build output:\n%s\n", l.Build.Output)
+	fmt.Println()
+
+	if l.Type == config.KernelModule {
+		fmt.Printf("Insmod output:\n%s\n", l.Run.Output)
+		fmt.Println()
+	}
+
+	fmt.Printf("Test output:\n%s\n", l.Test.Output)
+	fmt.Println()
+
+	return
+}

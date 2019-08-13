@@ -158,9 +158,15 @@ func main() {
 	bootstrapCommand := app.Command("bootstrap",
 		"Create directories && download images")
 
-	logCommand := app.Command("log", "Query logs")
-	logNum := logCommand.Flag("num", "How much lines").Default("50").Int()
-	logRate := logCommand.Flag("rate", "Show artifact success rate").Bool()
+	logCommand := app.Command("log", "Logs")
+
+	logQueryCommand := logCommand.Command("query", "Query logs")
+	logNum := logQueryCommand.Flag("num", "How much lines").Default("50").Int()
+	logRate := logQueryCommand.Flag("rate", "Show artifact success rate").Bool()
+
+	logDumpCommand := logCommand.Command("dump",
+		"Show all info for log entry with ID")
+	logDumpID := logDumpCommand.Arg("ID", "").Required().Int()
 
 	err = checkRequiredUtils()
 	if err != nil {
@@ -240,8 +246,10 @@ func main() {
 			*dockerTimeout)
 	case bootstrapCommand.FullCommand():
 		err = bootstrapHandler()
-	case logCommand.FullCommand():
+	case logQueryCommand.FullCommand():
 		err = logHandler(db, *path, *logNum, *logRate)
+	case logDumpCommand.FullCommand():
+		err = logDumpHandler(db, *logDumpID)
 	}
 
 	if err != nil {

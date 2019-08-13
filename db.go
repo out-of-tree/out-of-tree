@@ -156,6 +156,28 @@ func getAllArtifactLogs(db *sql.DB, num int, ka config.Artifact) (
 	return
 }
 
+func getLogByID(db *sql.DB, id int) (le logEntry, err error) {
+	stmt, err := db.Prepare("SELECT id, time, name, type, " +
+		"distro_type, distro_release, kernel_release, " +
+		"build_ok, run_ok, test_ok, " +
+		"build_output, run_output, test_output, " +
+		"kernel_panic, timeout_kill " +
+		"FROM log WHERE id=$1")
+	if err != nil {
+		return
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRow(id).Scan(&le.ID, &le.Timestamp,
+		&le.Name, &le.Type,
+		&le.DistroType, &le.DistroRelease, &le.KernelRelease,
+		&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
+		&le.Build.Output, &le.Run.Output, &le.Test.Output,
+		&le.KernelPanic, &le.KilledByTimeout,
+	)
+	return
+}
+
 func createSchema(db *sql.DB) (err error) {
 	err = createLogTable(db)
 	if err != nil {
