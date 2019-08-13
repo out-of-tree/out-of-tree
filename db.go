@@ -7,6 +7,8 @@ package main
 import (
 	"database/sql"
 
+	_ "github.com/mattn/go-sqlite3"
+
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )

@@ -17,7 +17,6 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/otiai10/copy"
 	"github.com/remeh/sizedwaitgroup"
 	"gopkg.in/logrusorgru/aurora.v1"
