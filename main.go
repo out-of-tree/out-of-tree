@@ -94,6 +94,10 @@ func main() {
 	kcfgPathFlag := app.Flag("kernels", "Path to main kernels config")
 	kcfgPath := kcfgPathFlag.Default(defaultKcfgPath).String()
 
+	defaultDbPath := usr.HomeDir + "/.out-of-tree/db.sqlite"
+	dbPathFlag := app.Flag("db", "Path to database")
+	dbPath := dbPathFlag.Default(defaultDbPath).String()
+
 	defaultUserKcfgPath := usr.HomeDir + "/.out-of-tree/kernels.user.toml"
 	userKcfgPathFlag := app.Flag("user-kernels", "User kernels config")
 	userKcfgPathEnv := userKcfgPathFlag.Envar("OUT_OF_TREE_KCFG")
@@ -204,11 +208,17 @@ func main() {
 
 	handleFallbacks(kcfg)
 
+	db, err := openDatabase(*dbPath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer db.Close()
+
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case pewCommand.FullCommand():
 		err = pewHandler(kcfg, *path, *pewKernel, *pewBinary,
 			*pewTest, *pewGuess, *qemuTimeout, *dockerTimeout,
-			*pewMax)
+			*pewMax, db)
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():

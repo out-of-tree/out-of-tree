@@ -5,6 +5,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -16,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/otiai10/copy"
 	"github.com/remeh/sizedwaitgroup"
 	"gopkg.in/logrusorgru/aurora.v1"
@@ -139,8 +141,15 @@ func genOkFail(name string, ok bool) (aurv aurora.Value) {
 	return
 }
 
+type phasesResult struct {
+	Build, Run, Test struct {
+		Output string
+		Ok     bool
+	}
+}
+
 func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
-	buildOk, runOk, testOk *bool) {
+	res *phasesResult, db *sql.DB) {
 
 	distroInfo := fmt.Sprintf("%s-%s {%s}", ki.DistroType,
 		ki.DistroRelease, ki.KernelRelease)
@@ -148,13 +157,13 @@ func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
 	colored := ""
 	if ka.Type == config.KernelExploit {
 		colored = aurora.Sprintf("[*] %40s: %s %s", distroInfo,
-			genOkFail("BUILD", *buildOk),
-			genOkFail("LPE", *testOk))
+			genOkFail("BUILD", res.Build.Ok),
+			genOkFail("LPE", res.Test.Ok))
 	} else {
 		colored = aurora.Sprintf("[*] %40s: %s %s %s", distroInfo,
-			genOkFail("BUILD", *buildOk),
-			genOkFail("INSMOD", *runOk),
-			genOkFail("TEST", *testOk))
+			genOkFail("BUILD", res.Build.Ok),
+			genOkFail("INSMOD", res.Run.Ok),
+			genOkFail("TEST", res.Test.Ok))
 	}
 
 	additional := ""
@@ -169,11 +178,16 @@ func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
 	} else {
 		fmt.Println(colored)
 	}
+
+	err := addToLog(db, q, ka, ki, res)
+	if err != nil {
+		log.Println("[db] addToLog (", ka, ") error:", err)
+	}
 }
 
 func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	ki config.KernelInfo, binaryPath, testPath string,
-	qemuTimeout, dockerTimeout time.Duration) {
+	qemuTimeout, dockerTimeout time.Duration, db *sql.DB) {
 
 	defer swg.Done()
 
@@ -199,23 +213,21 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	}
 	defer os.RemoveAll(tmp)
 
-	buildOk := false
-	runOk := false
-	testOk := false
-	defer dumpResult(q, ka, ki, &buildOk, &runOk, &testOk)
+	result := phasesResult{}
+	defer dumpResult(q, ka, ki, &result, db)
 
 	var outFile, output string
 	if binaryPath == "" {
 		// TODO Write build log to file or database
-		outFile, output, err = build(tmp, ka, ki, dockerTimeout)
+		outFile, result.Build.Output, err = build(tmp, ka, ki, dockerTimeout)
 		if err != nil {
 			log.Println(output)
 			return
 		}
-		buildOk = true
+		result.Build.Ok = true
 	} else {
 		outFile = binaryPath
-		buildOk = true
+		result.Build.Ok = true
 	}
 
 	err = cleanDmesg(q)
@@ -250,21 +262,19 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 
 	switch ka.Type {
 	case config.KernelModule:
-		// TODO Write insmod log to file or database
-		output, err := q.CopyAndInsmod(outFile)
+		result.Run.Output, err = q.CopyAndInsmod(outFile)
 		if err != nil {
-			log.Println(output, err)
+			log.Println(result.Run.Output, err)
 			return
 		}
-		runOk = true
+		result.Run.Ok = true
 
-		// TODO Write test results to file or database
-		output, err = testKernelModule(q, ka, remoteTest)
+		result.Test.Output, err = testKernelModule(q, ka, remoteTest)
 		if err != nil {
 			log.Println(output, err)
 			return
 		}
-		testOk = true
+		result.Test.Ok = true
 	case config.KernelExploit:
 		remoteExploit := fmt.Sprintf("/tmp/exploit_%d", rand.Int())
 		err = q.CopyFile("user", outFile, remoteExploit)
@@ -272,14 +282,14 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 			return
 		}
 
-		// TODO Write test results to file or database
-		output, err = testKernelExploit(q, ka, remoteTest, remoteExploit)
+		result.Test.Output, err = testKernelExploit(q, ka, remoteTest,
+			remoteExploit)
 		if err != nil {
-			log.Println(output)
+			log.Println(result.Test.Output)
 			return
 		}
-		runOk = true // does not really used
-		testOk = true
+		result.Run.Ok = true // does not really used
+		result.Test.Ok = true
 	default:
 		log.Println("Unsupported artifact type")
 	}
@@ -296,7 +306,7 @@ func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
 
 func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 	testPath string, qemuTimeout, dockerTimeout time.Duration,
-	max int64) (err error) {
+	max int64, db *sql.DB) (err error) {
 
 	found := false
 
@@ -317,7 +327,7 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 			max -= 1
 			swg.Add()
 			go whatever(&swg, ka, kernel, binaryPath, testPath,
-				qemuTimeout, dockerTimeout)
+				qemuTimeout, dockerTimeout, db)
 		}
 	}
 	swg.Wait()
@@ -371,7 +381,7 @@ func genAllKernels() (sk []config.KernelMask, err error) {
 func pewHandler(kcfg config.KernelConfig,
 	workPath, ovrrdKrnl, binary, test string, guess bool,
 	qemuTimeout, dockerTimeout time.Duration,
-	max int64) (err error) {
+	max int64, db *sql.DB) (err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -399,7 +409,8 @@ func pewHandler(kcfg config.KernelConfig,
 		}
 	}
 
-	err = performCI(ka, kcfg, binary, test, qemuTimeout, dockerTimeout, max)
+	err = performCI(ka, kcfg, binary, test, qemuTimeout, dockerTimeout,
+		max, db)
 	if err != nil {
 		return
 	}
