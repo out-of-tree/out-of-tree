@@ -218,7 +218,6 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 
 	var outFile, output string
 	if binaryPath == "" {
-		// TODO Write build log to file or database
 		outFile, result.Build.Output, err = build(tmp, ka, ki, dockerTimeout)
 		if err != nil {
 			log.Println(output)
