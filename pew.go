@@ -150,6 +150,8 @@ type phasesResult struct {
 func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
 	res *phasesResult, db *sql.DB) {
 
+	// TODO merge (problem is it's not 100% same) with log.go:logLogEntry
+
 	distroInfo := fmt.Sprintf("%s-%s {%s}", ki.DistroType,
 		ki.DistroRelease, ki.KernelRelease)
 

@@ -6,12 +6,23 @@ package main
 
 import (
 	"database/sql"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
+
+type logEntry struct {
+	ID        int
+	Timestamp time.Time
+
+	qemu.QemuSystem
+	config.Artifact
+	config.KernelInfo
+	phasesResult
+}
 
 func createLogTable(db *sql.DB) (err error) {
 	_, err = db.Exec(`
@@ -59,8 +70,8 @@ func addToLog(db *sql.DB, q *qemu.QemuSystem, ka config.Artifact,
 	defer stmt.Close()
 
 	_, err = stmt.Exec(
-		ka.Name, ka.Type.String(),
-		ki.DistroType.String(), ki.DistroRelease, ki.KernelRelease,
+		ka.Name, ka.Type,
+		ki.DistroType, ki.DistroRelease, ki.KernelRelease,
 		res.Build.Output, res.Build.Ok,
 		res.Run.Output, res.Run.Ok,
 		res.Test.Output, res.Test.Ok,
@@ -68,6 +79,78 @@ func addToLog(db *sql.DB, q *qemu.QemuSystem, ka config.Artifact,
 	)
 	if err != nil {
 		return
+	}
+
+	return
+}
+
+func getAllLogs(db *sql.DB, num int) (les []logEntry, err error) {
+	stmt, err := db.Prepare("SELECT id, time, name, type, " +
+		"distro_type, distro_release, kernel_release, " +
+		"build_ok, run_ok, test_ok, kernel_panic, " +
+		"timeout_kill FROM log ORDER BY datetime(time) DESC " +
+		"LIMIT $1")
+	if err != nil {
+		return
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(num)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		le := logEntry{}
+		err = rows.Scan(&le.ID, &le.Timestamp,
+			&le.Name, &le.Type,
+			&le.DistroType, &le.DistroRelease, &le.KernelRelease,
+			&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
+			&le.KernelPanic, &le.KilledByTimeout,
+		)
+		if err != nil {
+			return
+		}
+
+		les = append(les, le)
+	}
+
+	return
+}
+
+func getAllArtifactLogs(db *sql.DB, num int, ka config.Artifact) (
+	les []logEntry, err error) {
+
+	stmt, err := db.Prepare("SELECT id, time, name, type, " +
+		"distro_type, distro_release, kernel_release, " +
+		"build_ok, run_ok, test_ok, kernel_panic, " +
+		"timeout_kill FROM log WHERE name=$1 AND type=$2 " +
+		"ORDER BY datetime(time) DESC LIMIT $3")
+	if err != nil {
+		return
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(ka.Name, ka.Type, num)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		le := logEntry{}
+		err = rows.Scan(&le.ID, &le.Timestamp,
+			&le.Name, &le.Type,
+			&le.DistroType, &le.DistroRelease, &le.KernelRelease,
+			&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
+			&le.KernelPanic, &le.KilledByTimeout,
+		)
+		if err != nil {
+			return
+		}
+
+		les = append(les, le)
 	}
 
 	return

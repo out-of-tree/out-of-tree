@@ -158,6 +158,10 @@ func main() {
 	bootstrapCommand := app.Command("bootstrap",
 		"Create directories && download images")
 
+	logCommand := app.Command("log", "Query logs")
+	logNum := logCommand.Flag("num", "How much lines").Default("50").Int()
+	logRate := logCommand.Flag("rate", "Show artifact success rate").Bool()
+
 	err = checkRequiredUtils()
 	if err != nil {
 		log.Fatalln(err)
@@ -236,6 +240,8 @@ func main() {
 			*dockerTimeout)
 	case bootstrapCommand.FullCommand():
 		err = bootstrapHandler()
+	case logCommand.FullCommand():
+		err = logHandler(db, *path, *logNum, *logRate)
 	}
 
 	if err != nil {
