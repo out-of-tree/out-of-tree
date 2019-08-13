@@ -79,7 +79,7 @@ func main() {
 		"kernel {module, exploit} development tool",
 	)
 
-	app.Author("Mikhail Klementev <jollheef@riseup.net>")
+	app.Author("Mikhail Klementev <root@dumpstack.io>")
 	app.Version("0.2.0")
 
 	pathFlag := app.Flag("path", "Path to work directory")
