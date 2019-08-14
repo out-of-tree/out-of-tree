@@ -66,7 +66,7 @@ func checkRequiredUtils() (err error) {
 func checkDockerPermissions() (err error) {
 	output, err := exec.Command("docker", "ps").CombinedOutput()
 	if err != nil {
-		err = fmt.Errorf(string(output))
+		err = fmt.Errorf("%s", output)
 	}
 	return
 }
@@ -124,6 +124,9 @@ func main() {
 
 	pewTestFlag := pewCommand.Flag("test", "Override path test")
 	pewTest := pewTestFlag.String()
+
+	pewDistFlag := pewCommand.Flag("dist", "Build result path")
+	pewDist := pewDistFlag.Default(PATH_DEV_NULL).String()
 
 	kernelCommand := app.Command("kernel", "Manipulate kernels")
 	kernelListCommand := kernelCommand.Command("list", "List kernels")
@@ -230,7 +233,7 @@ func main() {
 	case pewCommand.FullCommand():
 		err = pewHandler(kcfg, *path, *pewKernel, *pewBinary,
 			*pewTest, *pewGuess, *qemuTimeout, *dockerTimeout,
-			*pewMax, db)
+			*pewMax, *pewDist, db)
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():

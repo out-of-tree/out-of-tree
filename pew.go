@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -26,6 +27,8 @@ import (
 )
 
 var somethingFailed = false
+
+const PATH_DEV_NULL = "/dev/null"
 
 func dockerRun(timeout time.Duration, container, workdir, command string) (
 	output string, err error) {
@@ -141,14 +144,33 @@ func genOkFail(name string, ok bool) (aurv aurora.Value) {
 }
 
 type phasesResult struct {
+	BuildArtifact    string
 	Build, Run, Test struct {
 		Output string
 		Ok     bool
 	}
 }
 
+func copyFile(sourcePath, destinationPath string) (err error) {
+	sourceFile, err := os.Open(sourcePath)
+	if err != nil {
+		return
+	}
+	defer sourceFile.Close()
+
+	destinationFile, err := os.Create(destinationPath)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(destinationFile, sourceFile); err != nil {
+		destinationFile.Close()
+		return err
+	}
+	return destinationFile.Close()
+}
+
 func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
-	res *phasesResult, db *sql.DB) {
+	res *phasesResult, dist, binary string, db *sql.DB) {
 
 	// TODO merge (problem is it's not 100% same) with log.go:logLogEntry
 
@@ -184,11 +206,29 @@ func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
 	if err != nil {
 		log.Println("[db] addToLog (", ka, ") error:", err)
 	}
+
+	if binary == "" && dist != PATH_DEV_NULL {
+		err = os.MkdirAll(dist, os.ModePerm)
+		if err != nil {
+			log.Println("os.MkdirAll (", ka, ") error:", err)
+		}
+
+		path := fmt.Sprintf("%s/%s-%s-%s", dist, ki.DistroType,
+			ki.DistroRelease, ki.KernelRelease)
+		if ka.Type != config.KernelExploit {
+			path += ".ko"
+		}
+
+		err = copyFile(res.BuildArtifact, path)
+		if err != nil {
+			log.Println("copyFile (", ka, ") error:", err)
+		}
+	}
 }
 
 func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	ki config.KernelInfo, binaryPath, testPath string,
-	qemuTimeout, dockerTimeout time.Duration, db *sql.DB) {
+	qemuTimeout, dockerTimeout time.Duration, dist string, db *sql.DB) {
 
 	defer swg.Done()
 
@@ -215,18 +255,18 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	defer os.RemoveAll(tmp)
 
 	result := phasesResult{}
-	defer dumpResult(q, ka, ki, &result, db)
+	defer dumpResult(q, ka, ki, &result, dist, binaryPath, db)
 
-	var outFile, output string
 	if binaryPath == "" {
-		outFile, result.Build.Output, err = build(tmp, ka, ki, dockerTimeout)
+		result.BuildArtifact, result.Build.Output, err = build(tmp, ka,
+			ki, dockerTimeout)
 		if err != nil {
-			log.Println(output)
+			log.Println(result.Build.Output)
 			return
 		}
 		result.Build.Ok = true
 	} else {
-		outFile = binaryPath
+		result.BuildArtifact = binaryPath
 		result.Build.Ok = true
 	}
 
@@ -236,7 +276,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	}
 
 	if testPath == "" {
-		testPath = outFile + "_test"
+		testPath = result.BuildArtifact + "_test"
 	}
 
 	remoteTest := fmt.Sprintf("/tmp/test_%d", rand.Int())
@@ -262,7 +302,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 
 	switch ka.Type {
 	case config.KernelModule:
-		result.Run.Output, err = q.CopyAndInsmod(outFile)
+		result.Run.Output, err = q.CopyAndInsmod(result.BuildArtifact)
 		if err != nil {
 			log.Println(result.Run.Output, err)
 			return
@@ -271,13 +311,13 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 
 		result.Test.Output, err = testKernelModule(q, ka, remoteTest)
 		if err != nil {
-			log.Println(output, err)
+			log.Println(result.Test.Output, err)
 			return
 		}
 		result.Test.Ok = true
 	case config.KernelExploit:
 		remoteExploit := fmt.Sprintf("/tmp/exploit_%d", rand.Int())
-		err = q.CopyFile("user", outFile, remoteExploit)
+		err = q.CopyFile("user", result.BuildArtifact, remoteExploit)
 		if err != nil {
 			return
 		}
@@ -306,7 +346,7 @@ func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
 
 func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 	testPath string, qemuTimeout, dockerTimeout time.Duration,
-	max int64, db *sql.DB) (err error) {
+	max int64, dist string, db *sql.DB) (err error) {
 
 	found := false
 
@@ -327,7 +367,7 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 			max -= 1
 			swg.Add()
 			go whatever(&swg, ka, kernel, binaryPath, testPath,
-				qemuTimeout, dockerTimeout, db)
+				qemuTimeout, dockerTimeout, dist, db)
 		}
 	}
 	swg.Wait()
@@ -381,7 +421,7 @@ func genAllKernels() (sk []config.KernelMask, err error) {
 func pewHandler(kcfg config.KernelConfig,
 	workPath, ovrrdKrnl, binary, test string, guess bool,
 	qemuTimeout, dockerTimeout time.Duration,
-	max int64, db *sql.DB) (err error) {
+	max int64, dist string, db *sql.DB) (err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -410,7 +450,7 @@ func pewHandler(kcfg config.KernelConfig,
 	}
 
 	err = performCI(ka, kcfg, binary, test, qemuTimeout, dockerTimeout,
-		max, db)
+		max, dist, db)
 	if err != nil {
 		return
 	}
