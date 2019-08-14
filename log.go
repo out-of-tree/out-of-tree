@@ -129,5 +129,11 @@ func logDumpHandler(db *sql.DB, id int) (err error) {
 	fmt.Printf("Test output:\n%s\n", l.Test.Output)
 	fmt.Println()
 
+	fmt.Printf("Qemu stdout:\n%s\n", l.Stdout)
+	fmt.Println()
+
+	fmt.Printf("Qemu stderr:\n%s\n", l.Stderr)
+	fmt.Println()
+
 	return
 }
