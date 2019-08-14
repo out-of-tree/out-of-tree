@@ -89,6 +89,8 @@ func main() {
 	if err != nil {
 		return
 	}
+	os.MkdirAll(usr.HomeDir+"/.out-of-tree", os.ModePerm)
+
 	defaultKcfgPath := usr.HomeDir + "/.out-of-tree/kernels.toml"
 
 	kcfgPathFlag := app.Flag("kernels", "Path to main kernels config")
