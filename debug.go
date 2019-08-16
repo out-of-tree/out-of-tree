@@ -158,6 +158,8 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	fmt.Printf("\n%s\n", q.GetSshCommand())
 	fmt.Printf("gdb %s -ex 'target remote %s'\n\n", ki.VmlinuxPath, gdb)
 
+	// TODO set substitute-path /build/.../linux-... /path/to/linux-source
+
 	err = interactive(q)
 	return
 }
