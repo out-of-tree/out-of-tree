@@ -373,7 +373,8 @@ func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
 
 func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 	testPath string, qemuTimeout, dockerTimeout time.Duration,
-	max int64, dist, tag string, threads int, db *sql.DB) (err error) {
+	max, runs int64, dist, tag string, threads int,
+	db *sql.DB) (err error) {
 
 	found := false
 
@@ -392,9 +393,12 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 		if supported {
 			found = true
 			max -= 1
-			swg.Add()
-			go whatever(&swg, ka, kernel, binaryPath, testPath,
-				qemuTimeout, dockerTimeout, dist, tag, db)
+			for i := int64(0); i < runs; i++ {
+				swg.Add()
+				go whatever(&swg, ka, kernel, binaryPath,
+					testPath, qemuTimeout, dockerTimeout,
+					dist, tag, db)
+			}
 		}
 	}
 	swg.Wait()
@@ -448,7 +452,8 @@ func genAllKernels() (sk []config.KernelMask, err error) {
 func pewHandler(kcfg config.KernelConfig,
 	workPath, ovrrdKrnl, binary, test string, guess bool,
 	qemuTimeout, dockerTimeout time.Duration,
-	max int64, dist, tag string, threads int, db *sql.DB) (err error) {
+	max, runs int64, dist, tag string, threads int,
+	db *sql.DB) (err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -477,7 +482,7 @@ func pewHandler(kcfg config.KernelConfig,
 	}
 
 	err = performCI(ka, kcfg, binary, test, qemuTimeout, dockerTimeout,
-		max, dist, tag, threads, db)
+		max, runs, dist, tag, threads, db)
 	if err != nil {
 		return
 	}

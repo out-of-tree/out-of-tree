@@ -114,9 +114,15 @@ func main() {
 
 	dockerTimeoutFlag := app.Flag("docker-timeout", "Timeout for docker")
 	dockerTimeout := dockerTimeoutFlag.Default("1m").Duration()
+
 	pewCommand := app.Command("pew", "Build, run and test module/exploit")
+
 	pewMax := pewCommand.Flag("max", "Test no more than X kernels").
 		PlaceHolder("X").Default(fmt.Sprint(KERNELS_ALL)).Int64()
+
+	pewRuns := pewCommand.Flag("runs", "Runs per each kernel").
+		Default("1").Int64()
+
 	pewKernelFlag := pewCommand.Flag("kernel", "Override kernel regex")
 	pewKernel := pewKernelFlag.String()
 
@@ -249,7 +255,7 @@ func main() {
 	case pewCommand.FullCommand():
 		err = pewHandler(kcfg, *path, *pewKernel, *pewBinary,
 			*pewTest, *pewGuess, *qemuTimeout, *dockerTimeout,
-			*pewMax, *pewDist, *pewTag, *pewThreads, db)
+			*pewMax, *pewRuns, *pewDist, *pewTag, *pewThreads, db)
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():
