@@ -11,7 +11,9 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"runtime"
 	"sort"
+	"strconv"
 	"time"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -130,6 +132,9 @@ func main() {
 	pewDistFlag := pewCommand.Flag("dist", "Build result path")
 	pewDist := pewDistFlag.Default(PATH_DEV_NULL).String()
 
+	pewThreadsFlag := pewCommand.Flag("threads", "Build result path")
+	pewThreads := pewThreadsFlag.Default(strconv.Itoa(runtime.NumCPU())).Int()
+
 	kernelCommand := app.Command("kernel", "Manipulate kernels")
 	kernelUseHost := kernelCommand.Flag("host", "Use also host kernels").Bool()
 	kernelListCommand := kernelCommand.Command("list", "List kernels")
@@ -240,7 +245,7 @@ func main() {
 	case pewCommand.FullCommand():
 		err = pewHandler(kcfg, *path, *pewKernel, *pewBinary,
 			*pewTest, *pewGuess, *qemuTimeout, *dockerTimeout,
-			*pewMax, *pewDist, db)
+			*pewMax, *pewDist, *pewThreads, db)
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():

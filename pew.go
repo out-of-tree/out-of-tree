@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"runtime"
 	"strings"
 	"time"
 
@@ -373,11 +372,11 @@ func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
 
 func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 	testPath string, qemuTimeout, dockerTimeout time.Duration,
-	max int64, dist string, db *sql.DB) (err error) {
+	max int64, dist string, threads int, db *sql.DB) (err error) {
 
 	found := false
 
-	swg := sizedwaitgroup.New(runtime.NumCPU())
+	swg := sizedwaitgroup.New(threads)
 	for _, kernel := range shuffleKernels(kcfg.Kernels) {
 		if max <= 0 {
 			break
@@ -448,7 +447,7 @@ func genAllKernels() (sk []config.KernelMask, err error) {
 func pewHandler(kcfg config.KernelConfig,
 	workPath, ovrrdKrnl, binary, test string, guess bool,
 	qemuTimeout, dockerTimeout time.Duration,
-	max int64, dist string, db *sql.DB) (err error) {
+	max int64, dist string, threads int, db *sql.DB) (err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -477,7 +476,7 @@ func pewHandler(kcfg config.KernelConfig,
 	}
 
 	err = performCI(ka, kcfg, binary, test, qemuTimeout, dockerTimeout,
-		max, dist, db)
+		max, dist, threads, db)
 	if err != nil {
 		return
 	}
