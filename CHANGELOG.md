@@ -29,5 +29,5 @@ Initial release that was never tagged.
 
 Refer to state after first public release on ZeroNights 2018
 ([video](https://youtu.be/2tL7bbCdIio),
-[slides](https://2018.zeronights.ru/wp-content/uploads/materials/07-Ways-to-automate-testing-Linux-kernel-exploits.pdf).
+[slides](https://2018.zeronights.ru/wp-content/uploads/materials/07-Ways-to-automate-testing-Linux-kernel-exploits.pdf)).
 
