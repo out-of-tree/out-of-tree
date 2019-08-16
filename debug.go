@@ -83,7 +83,7 @@ func interactive(q *qemu.QemuSystem) (err error) {
 }
 
 func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
-	dockerTimeout time.Duration) (err error) {
+	dockerTimeout time.Duration, kaslr, smep, smap bool) (err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -104,6 +104,22 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	if err != nil {
 		return
 	}
+
+	q.SetKASLR(kaslr)
+	q.SetSMEP(smep)
+	q.SetSMAP(smap)
+
+	redgreen := func(name string, enabled bool) aurora.Value {
+		if enabled {
+			return aurora.BgGreen(aurora.Black(name))
+		}
+
+		return aurora.BgRed(aurora.Gray(aurora.Bold(name)))
+	}
+
+	fmt.Printf("[*] %s %s %s\n", redgreen("KASLR", kaslr),
+		redgreen("SMEP", smep), redgreen("SMAP", smap))
+
 	q.Debug(gdb)
 	coloredGdbAddress := aurora.BgGreen(aurora.Black(gdb))
 	fmt.Printf("[*] gdb runned on %s\n", coloredGdbAddress)
@@ -138,6 +154,9 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 
 	coloredRemoteFile := aurora.BgGreen(aurora.Black(remoteFile))
 	fmt.Printf("[*] build result copied to %s\n", coloredRemoteFile)
+
+	fmt.Printf("\n%s\n", q.GetSshCommand())
+	fmt.Printf("gdb -ex 'target remote %s'\n\n", gdb)
 
 	err = interactive(q)
 	return

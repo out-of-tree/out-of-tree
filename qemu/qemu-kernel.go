@@ -71,6 +71,10 @@ type QemuSystem struct {
 	debug bool
 	gdb   string // tcp::1234
 
+	noKASLR bool
+	noSMEP  bool
+	noSMAP  bool
+
 	// Timeout works after Start invocation
 	Timeout         time.Duration
 	KilledByTimeout bool
@@ -181,15 +185,28 @@ func (q *QemuSystem) Start() (err error) {
 	qemuArgs := []string{"-snapshot", "-nographic",
 		"-hda", q.drivePath,
 		"-kernel", q.kernel.KernelPath,
-		"-append", "root=/dev/sda ignore_loglevel console=ttyS0 rw",
 		"-smp", fmt.Sprintf("%d", q.Cpus),
 		"-m", fmt.Sprintf("%d", q.Memory),
 		"-device", "e1000,netdev=n1",
 		"-netdev", "user,id=n1," + hostfwd,
 	}
 
+	cmdline := "root=/dev/sda ignore_loglevel console=ttyS0 rw"
+
 	if q.debug {
 		qemuArgs = append(qemuArgs, "-gdb", q.gdb)
+	}
+
+	if q.noKASLR {
+		cmdline += " nokaslr"
+	}
+
+	if q.noSMEP {
+		cmdline += " nosmep"
+	}
+
+	if q.noSMAP {
+		cmdline += " nosmap"
 	}
 
 	if q.kernel.InitrdPath != "" {
@@ -203,6 +220,8 @@ func (q *QemuSystem) Start() (err error) {
 	if q.arch == X86_64 && runtime.GOOS == "darwin" {
 		qemuArgs = append(qemuArgs, "-accel", "hvf", "-cpu", "host")
 	}
+
+	qemuArgs = append(qemuArgs, "-append", cmdline)
 
 	q.cmd = exec.Command("qemu-system-"+string(q.arch), qemuArgs...)
 
@@ -352,6 +371,21 @@ func (q *QemuSystem) CopyAndRun(user, path string) (output string, err error) {
 func (q *QemuSystem) Debug(conn string) {
 	q.debug = true
 	q.gdb = conn
+}
+
+// SetKASLR is changing KASLR state through kernel boot args
+func (q *QemuSystem) SetKASLR(state bool) {
+	q.noKASLR = !state
+}
+
+// SetSMEP is changing SMEP state through kernel boot args
+func (q *QemuSystem) SetSMEP(state bool) {
+	q.noSMEP = !state
+}
+
+// SetSMAP is changing SMAP state through kernel boot args
+func (q *QemuSystem) SetSMAP(state bool) {
+	q.noSMAP = !state
 }
 
 // GetSshCommand returns command for connect to qemu machine over ssh

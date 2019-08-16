@@ -163,6 +163,10 @@ func main() {
 	debugFlagGDB := debugCommand.Flag("gdb", "Set gdb listen address")
 	debugGDB := debugFlagGDB.Default("tcp::1234").String()
 
+	kaslr := debugCommand.Flag("enable-kaslr", "Enable KASLR").Default("false").Bool()
+	nosmep := debugCommand.Flag("disable-smep", "Disable SMEP").Default("false").Bool()
+	nosmap := debugCommand.Flag("disable-smap", "Disable SMAP").Default("false").Bool()
+
 	bootstrapCommand := app.Command("bootstrap",
 		"Create directories && download images")
 
@@ -251,7 +255,7 @@ func main() {
 		err = genConfig(config.KernelExploit)
 	case debugCommand.FullCommand():
 		err = debugHandler(kcfg, *path, *debugKernel, *debugGDB,
-			*dockerTimeout)
+			*dockerTimeout, *kaslr, !*nosmep, !*nosmap)
 	case bootstrapCommand.FullCommand():
 		err = bootstrapHandler()
 	case logQueryCommand.FullCommand():
