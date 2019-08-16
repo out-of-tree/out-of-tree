@@ -135,6 +135,9 @@ func main() {
 	pewThreadsFlag := pewCommand.Flag("threads", "Build result path")
 	pewThreads := pewThreadsFlag.Default(strconv.Itoa(runtime.NumCPU())).Int()
 
+	pewTagFlag := pewCommand.Flag("tag", "Log tagging")
+	pewTag := pewTagFlag.String()
+
 	kernelCommand := app.Command("kernel", "Manipulate kernels")
 	kernelUseHost := kernelCommand.Flag("host", "Use also host kernels").Bool()
 	kernelListCommand := kernelCommand.Command("list", "List kernels")
@@ -180,6 +183,7 @@ func main() {
 	logQueryCommand := logCommand.Command("query", "Query logs")
 	logNum := logQueryCommand.Flag("num", "How much lines").Default("50").Int()
 	logRate := logQueryCommand.Flag("rate", "Show artifact success rate").Bool()
+	logTag := logQueryCommand.Flag("tag", "Filter tag").String()
 
 	logDumpCommand := logCommand.Command("dump",
 		"Show all info for log entry with ID")
@@ -245,7 +249,7 @@ func main() {
 	case pewCommand.FullCommand():
 		err = pewHandler(kcfg, *path, *pewKernel, *pewBinary,
 			*pewTest, *pewGuess, *qemuTimeout, *dockerTimeout,
-			*pewMax, *pewDist, *pewThreads, db)
+			*pewMax, *pewDist, *pewTag, *pewThreads, db)
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():
@@ -264,7 +268,7 @@ func main() {
 	case bootstrapCommand.FullCommand():
 		err = bootstrapHandler()
 	case logQueryCommand.FullCommand():
-		err = logHandler(db, *path, *logNum, *logRate)
+		err = logHandler(db, *path, *logTag, *logNum, *logRate)
 	case logDumpCommand.FullCommand():
 		err = logDumpHandler(db, *logDumpID)
 	}

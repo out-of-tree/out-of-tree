@@ -16,12 +16,14 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
-const CURRENT_DATABASE_VERSION = 1
+// Change on ANY database update
+const CURRENT_DATABASE_VERSION = 2
 
 const VERSION_FIELD = "db_version"
 
 type logEntry struct {
 	ID        int
+	Tag       string
 	Timestamp time.Time
 
 	qemu.QemuSystem
@@ -35,6 +37,7 @@ func createLogTable(db *sql.DB) (err error) {
 	CREATE TABLE IF NOT EXISTS log (
 		id		INTEGER PRIMARY KEY,
 		time		DATETIME DEFAULT CURRENT_TIMESTAMP,
+		tag		TEXT,
 
 		name		TEXT,
 		type		TEXT,
@@ -65,7 +68,7 @@ func createMetadataTable(db *sql.DB) (err error) {
 	_, err = db.Exec(`
 	CREATE TABLE IF NOT EXISTS metadata (
 		id	INTEGER PRIMARY KEY,
-		key	TEXT,
+		key	TEXT UNIQUE,
 		value	TEXT
 	)`)
 	return
@@ -96,7 +99,7 @@ func metaGetValue(db *sql.DB, key string) (value string, err error) {
 }
 
 func metaSetValue(db *sql.DB, key, value string) (err error) {
-	stmt, err := db.Prepare("INSERT INTO metadata " +
+	stmt, err := db.Prepare("INSERT OR REPLACE INTO metadata " +
 		"(key, value) VALUES ($1, $2)")
 	if err != nil {
 		return
@@ -118,9 +121,9 @@ func getVersion(db *sql.DB) (version int, err error) {
 }
 
 func addToLog(db *sql.DB, q *qemu.QemuSystem, ka config.Artifact,
-	ki config.KernelInfo, res *phasesResult) (err error) {
+	ki config.KernelInfo, res *phasesResult, tag string) (err error) {
 
-	stmt, err := db.Prepare("INSERT INTO log (name, type, " +
+	stmt, err := db.Prepare("INSERT INTO log (name, type, tag, " +
 		"distro_type, distro_release, kernel_release, " +
 		"build_output, build_ok, " +
 		"run_output, run_ok, " +
@@ -128,7 +131,7 @@ func addToLog(db *sql.DB, q *qemu.QemuSystem, ka config.Artifact,
 		"qemu_stdout, qemu_stderr, " +
 		"kernel_panic, timeout_kill) " +
 		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, " +
-		"$10, $11, $12, $13, $14, $15);")
+		"$10, $11, $12, $13, $14, $15, $16);")
 	if err != nil {
 		return
 	}
@@ -136,7 +139,7 @@ func addToLog(db *sql.DB, q *qemu.QemuSystem, ka config.Artifact,
 	defer stmt.Close()
 
 	_, err = stmt.Exec(
-		ka.Name, ka.Type,
+		ka.Name, ka.Type, tag,
 		ki.DistroType, ki.DistroRelease, ki.KernelRelease,
 		res.Build.Output, res.Build.Ok,
 		res.Run.Output, res.Run.Ok,
@@ -151,8 +154,8 @@ func addToLog(db *sql.DB, q *qemu.QemuSystem, ka config.Artifact,
 	return
 }
 
-func getAllLogs(db *sql.DB, num int) (les []logEntry, err error) {
-	stmt, err := db.Prepare("SELECT id, time, name, type, " +
+func getAllLogs(db *sql.DB, tag string, num int) (les []logEntry, err error) {
+	stmt, err := db.Prepare("SELECT id, time, name, type, tag, " +
 		"distro_type, distro_release, kernel_release, " +
 		"build_ok, run_ok, test_ok, kernel_panic, " +
 		"timeout_kill FROM log ORDER BY datetime(time) DESC " +
@@ -171,7 +174,7 @@ func getAllLogs(db *sql.DB, num int) (les []logEntry, err error) {
 	for rows.Next() {
 		le := logEntry{}
 		err = rows.Scan(&le.ID, &le.Timestamp,
-			&le.Name, &le.Type,
+			&le.Name, &le.Type, &le.Tag,
 			&le.DistroType, &le.DistroRelease, &le.KernelRelease,
 			&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 			&le.KernelPanic, &le.KilledByTimeout,
@@ -180,16 +183,18 @@ func getAllLogs(db *sql.DB, num int) (les []logEntry, err error) {
 			return
 		}
 
-		les = append(les, le)
+		if tag == "" || tag == le.Tag {
+			les = append(les, le)
+		}
 	}
 
 	return
 }
 
-func getAllArtifactLogs(db *sql.DB, num int, ka config.Artifact) (
+func getAllArtifactLogs(db *sql.DB, tag string, num int, ka config.Artifact) (
 	les []logEntry, err error) {
 
-	stmt, err := db.Prepare("SELECT id, time, name, type, " +
+	stmt, err := db.Prepare("SELECT id, time, name, type, tag, " +
 		"distro_type, distro_release, kernel_release, " +
 		"build_ok, run_ok, test_ok, kernel_panic, " +
 		"timeout_kill FROM log WHERE name=$1 AND type=$2 " +
@@ -208,7 +213,7 @@ func getAllArtifactLogs(db *sql.DB, num int, ka config.Artifact) (
 	for rows.Next() {
 		le := logEntry{}
 		err = rows.Scan(&le.ID, &le.Timestamp,
-			&le.Name, &le.Type,
+			&le.Name, &le.Type, &le.Tag,
 			&le.DistroType, &le.DistroRelease, &le.KernelRelease,
 			&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 			&le.KernelPanic, &le.KilledByTimeout,
@@ -217,14 +222,16 @@ func getAllArtifactLogs(db *sql.DB, num int, ka config.Artifact) (
 			return
 		}
 
-		les = append(les, le)
+		if tag == "" || tag == le.Tag {
+			les = append(les, le)
+		}
 	}
 
 	return
 }
 
 func getLogByID(db *sql.DB, id int) (le logEntry, err error) {
-	stmt, err := db.Prepare("SELECT id, time, name, type, " +
+	stmt, err := db.Prepare("SELECT id, time, name, type, tag, " +
 		"distro_type, distro_release, kernel_release, " +
 		"build_ok, run_ok, test_ok, " +
 		"build_output, run_output, test_output, " +
@@ -237,7 +244,7 @@ func getLogByID(db *sql.DB, id int) (le logEntry, err error) {
 	defer stmt.Close()
 
 	err = stmt.QueryRow(id).Scan(&le.ID, &le.Timestamp,
-		&le.Name, &le.Type,
+		&le.Name, &le.Type, &le.Tag,
 		&le.DistroType, &le.DistroRelease, &le.KernelRelease,
 		&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 		&le.Build.Output, &le.Run.Output, &le.Test.Output,
@@ -284,6 +291,20 @@ func openDatabase(path string) (db *sql.DB, err error) {
 	version, err := getVersion(db)
 	if err != nil {
 		return
+	}
+
+	if version == 1 {
+		_, err = db.Exec(`ALTER TABLE log ADD tag TEXT`)
+		if err != nil {
+			return
+		}
+
+		err = metaSetValue(db, VERSION_FIELD, "2")
+		if err != nil {
+			return
+		}
+
+		version = 2
 	}
 
 	if version != CURRENT_DATABASE_VERSION {

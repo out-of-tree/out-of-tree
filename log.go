@@ -21,13 +21,13 @@ func logLogEntry(l logEntry) {
 
 	colored := ""
 	if l.Type == config.KernelExploit {
-		colored = aurora.Sprintf("[%8d] [%s] %40s %40s: %s %s",
-			l.ID, l.Timestamp, artifactInfo, distroInfo,
+		colored = aurora.Sprintf("[%4d %4s] [%s] %40s %40s: %s %s",
+			l.ID, l.Tag, l.Timestamp, artifactInfo, distroInfo,
 			genOkFail("BUILD", l.Build.Ok),
 			genOkFail("LPE", l.Test.Ok))
 	} else {
-		colored = aurora.Sprintf("[%8d] [%s] %40s %40s: %s %s %s",
-			l.ID, l.Timestamp, artifactInfo, distroInfo,
+		colored = aurora.Sprintf("[%4d %4s] [%s] %40s %40s: %s %s %s",
+			l.ID, l.Tag, l.Timestamp, artifactInfo, distroInfo,
 			genOkFail("BUILD", l.Build.Ok),
 			genOkFail("INSMOD", l.Run.Ok),
 			genOkFail("TEST", l.Test.Ok))
@@ -47,14 +47,14 @@ func logLogEntry(l logEntry) {
 	}
 }
 
-func logHandler(db *sql.DB, path string, num int, rate bool) (err error) {
+func logHandler(db *sql.DB, path, tag string, num int, rate bool) (err error) {
 	var les []logEntry
 
 	ka, kaErr := config.ReadArtifactConfig(path + "/.out-of-tree.toml")
 	if kaErr == nil {
-		les, err = getAllArtifactLogs(db, num, ka)
+		les, err = getAllArtifactLogs(db, tag, num, ka)
 	} else {
-		les, err = getAllLogs(db, num)
+		les, err = getAllLogs(db, tag, num)
 	}
 	if err != nil {
 		return
@@ -69,7 +69,7 @@ func logHandler(db *sql.DB, path string, num int, rate bool) (err error) {
 
 		s = fmt.Sprintf("{[%s] %s} Overall s", ka.Type, ka.Name)
 
-		les, err = getAllArtifactLogs(db, math.MaxInt64, ka)
+		les, err = getAllArtifactLogs(db, tag, math.MaxInt64, ka)
 		if err != nil {
 			return
 		}
@@ -101,6 +101,7 @@ func logDumpHandler(db *sql.DB, id int) (err error) {
 
 	fmt.Println("ID:", l.ID)
 	fmt.Println("Date:", l.Timestamp)
+	fmt.Println("Tag:", l.Tag)
 	fmt.Println()
 
 	fmt.Println("Type:", l.Type.String())
