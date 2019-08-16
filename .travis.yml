@@ -20,6 +20,7 @@ services:
 
 env:
   - GO111MODULE=on
+  - GO111MODULE=off
 
 install: true
 
