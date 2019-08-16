@@ -72,6 +72,8 @@ func checkDockerPermissions() (err error) {
 }
 
 func main() {
+	log.SetFlags(log.Lshortfile)
+
 	rand.Seed(time.Now().UnixNano())
 
 	app := kingpin.New(
