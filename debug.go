@@ -142,9 +142,9 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 		return
 	}
 
-	remoteFile := "/tmp/artifact"
+	remoteFile := "/tmp/exploit"
 	if ka.Type == config.KernelModule {
-		remoteFile += ".ko"
+		remoteFile = "/tmp/module.ko"
 	}
 
 	err = q.CopyFile("user", outFile, remoteFile)
