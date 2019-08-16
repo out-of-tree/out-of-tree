@@ -6,7 +6,9 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
@@ -52,6 +54,7 @@ func logHandler(db *sql.DB, path, tag string, num int, rate bool) (err error) {
 
 	ka, kaErr := config.ReadArtifactConfig(path + "/.out-of-tree.toml")
 	if kaErr == nil {
+		log.Println(".out-of-tree.toml found, filter by artifact name")
 		les, err = getAllArtifactLogs(db, tag, num, ka)
 	} else {
 		les, err = getAllLogs(db, tag, num)
@@ -135,6 +138,68 @@ func logDumpHandler(db *sql.DB, id int) (err error) {
 
 	fmt.Printf("Qemu stderr:\n%s\n", l.Stderr)
 	fmt.Println()
+
+	return
+}
+
+type runstat struct {
+	All, BuildOK, RunOK, TestOK, Timeout, Panic int
+}
+
+func logJsonHandler(db *sql.DB, path, tag string) (err error) {
+	var les []logEntry
+
+	ka, kaErr := config.ReadArtifactConfig(path + "/.out-of-tree.toml")
+	if kaErr == nil {
+		les, err = getAllArtifactLogs(db, tag, -1, ka)
+	} else {
+		les, err = getAllLogs(db, tag, -1)
+	}
+	if err != nil {
+		return
+	}
+
+	distros := make(map[string]map[string]map[string]runstat)
+
+	for _, l := range les {
+		_, ok := distros[l.DistroType.String()]
+		if !ok {
+			distros[l.DistroType.String()] = make(map[string]map[string]runstat)
+		}
+
+		_, ok = distros[l.DistroType.String()][l.DistroRelease]
+		if !ok {
+			distros[l.DistroType.String()][l.DistroRelease] = make(map[string]runstat)
+		}
+
+		rs := distros[l.DistroType.String()][l.DistroRelease][l.KernelRelease]
+
+		rs.All += 1
+		if l.Build.Ok {
+			rs.BuildOK += 1
+		}
+		if l.Run.Ok {
+			rs.RunOK += 1
+		}
+		if l.Test.Ok {
+			rs.TestOK += 1
+		}
+		if l.KernelPanic {
+			rs.Panic += 1
+		}
+		if l.KilledByTimeout {
+			rs.Timeout += 1
+		}
+
+		distros[l.DistroType.String()][l.DistroRelease][l.KernelRelease] = rs
+	}
+
+	bytes, err := json.Marshal(&distros)
+	if err != nil {
+		return
+	}
+
+	fmt.Println(string(bytes))
 
 	return
 }

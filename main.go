@@ -195,6 +195,9 @@ func main() {
 		"Show all info for log entry with ID")
 	logDumpID := logDumpCommand.Arg("ID", "").Required().Int()
 
+	logJsonCommand := logCommand.Command("json", "Generate json statistics")
+	logJsonTag := logJsonCommand.Flag("tag", "Filter tag").Required().String()
+
 	err = checkRequiredUtils()
 	if err != nil {
 		log.Fatalln(err)
@@ -277,6 +280,8 @@ func main() {
 		err = logHandler(db, *path, *logTag, *logNum, *logRate)
 	case logDumpCommand.FullCommand():
 		err = logDumpHandler(db, *logDumpID)
+	case logJsonCommand.FullCommand():
+		err = logJsonHandler(db, *path, *logJsonTag)
 	}
 
 	if err != nil {
