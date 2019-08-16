@@ -348,6 +348,13 @@ func genHostKernels() (kcfg config.KernelConfig, err error) {
 			InitrdPath: kernelsBase + genInitrdPath(files, k),
 			RootFS:     genRootfsImage(dii),
 		}
+
+		vmlinux := "/usr/lib/debug/boot/vmlinux-" + k
+		log.Println("vmlinux", vmlinux)
+		if exists(vmlinux) {
+			ki.VmlinuxPath = vmlinux
+		}
+
 		kcfg.Kernels = append(kcfg.Kernels, ki)
 	}
 

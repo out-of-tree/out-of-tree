@@ -114,7 +114,7 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 			return aurora.BgGreen(aurora.Black(name))
 		}
 
-		return aurora.BgRed(aurora.Gray(aurora.Bold(name)))
+		return aurora.BgRed(aurora.Gray(name))
 	}
 
 	fmt.Printf("[*] %s %s %s\n", redgreen("KASLR", kaslr),
@@ -156,7 +156,7 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	fmt.Printf("[*] build result copied to %s\n", coloredRemoteFile)
 
 	fmt.Printf("\n%s\n", q.GetSshCommand())
-	fmt.Printf("gdb -ex 'target remote %s'\n\n", gdb)
+	fmt.Printf("gdb %s -ex 'target remote %s'\n\n", ki.VmlinuxPath, gdb)
 
 	err = interactive(q)
 	return

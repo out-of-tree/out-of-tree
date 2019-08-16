@@ -170,6 +170,9 @@ type KernelInfo struct {
 	KernelPath string
 	InitrdPath string
 	RootFS     string
+
+	// Debug symbols
+	VmlinuxPath string
 }
 
 type KernelConfig struct {
