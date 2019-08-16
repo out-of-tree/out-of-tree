@@ -163,6 +163,7 @@ type KernelInfo struct {
 	KernelRelease string
 
 	// Build-time information
+	KernelSource  string // module/exploit will be build on host
 	ContainerName string
 
 	// Runtime information

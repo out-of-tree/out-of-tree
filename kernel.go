@@ -18,8 +18,10 @@ import (
 	"strings"
 	"time"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
 	"github.com/naoina/toml"
+	"github.com/zcalusic/sysinfo"
+
+	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
 var KERNELS_ALL int64 = math.MaxInt64
@@ -304,16 +306,73 @@ func listDockerImages() (diis []dockerImageInfo, err error) {
 	return
 }
 
-func updateKernelsCfg() (err error) {
+func genHostKernels() (kcfg config.KernelConfig, err error) {
+	si := sysinfo.SysInfo{}
+	si.GetSysInfo()
+
+	distroType, err := config.NewDistroType(si.OS.Vendor)
+	if err != nil {
+		return
+	}
+
+	cmd := exec.Command("ls", "/lib/modules")
+	rawOutput, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(string(rawOutput), err)
+		return
+	}
+
+	kernelsBase := "/boot/"
+	files, err := ioutil.ReadDir(kernelsBase)
+	if err != nil {
+		return
+	}
+
+	// only for compatibility, docker is not really used
+	dii := dockerImageInfo{
+		ContainerName: config.KernelMask{
+			DistroType:    distroType,
+			DistroRelease: si.OS.Version,
+		}.DockerName(),
+	}
+
+	for _, k := range strings.Fields(string(rawOutput)) {
+		ki := config.KernelInfo{
+			DistroType:    distroType,
+			DistroRelease: si.OS.Version,
+			KernelRelease: k,
+
+			KernelSource: "/lib/modules/" + k + "/build",
+
+			KernelPath: kernelsBase + genKernelPath(files, k),
+			InitrdPath: kernelsBase + genInitrdPath(files, k),
+			RootFS:     genRootfsImage(dii),
+		}
+		kcfg.Kernels = append(kcfg.Kernels, ki)
+	}
+
+	return
+}
+
+func updateKernelsCfg(host bool) (err error) {
+	newkcfg := config.KernelConfig{}
+
+	if host {
+		// Get host kernels
+		newkcfg, err = genHostKernels()
+		if err != nil {
+			return
+		}
+	}
+
+	// Get docker kernels
 	dockerImages, err := listDockerImages()
 	if err != nil {
 		return
 	}
 
-	newkcfg := config.KernelConfig{}
-
 	for _, d := range dockerImages {
-		err = genKernels(d, &newkcfg)
+		err = genDockerKernels(d, &newkcfg)
 		if err != nil {
 			log.Println("gen kernels", d.ContainerName, ":", err)
 			continue
@@ -350,7 +409,7 @@ func updateKernelsCfg() (err error) {
 	return
 }
 
-func genKernels(dii dockerImageInfo, newkcfg *config.KernelConfig) (
+func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig) (
 	err error) {
 
 	name := dii.ContainerName
@@ -450,7 +509,7 @@ func generateKernels(km config.KernelMask, max int64) (err error) {
 	return
 }
 
-func kernelAutogenHandler(workPath string, max int64) (err error) {
+func kernelAutogenHandler(workPath string, max int64, host bool) (err error) {
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
 		return
@@ -468,11 +527,11 @@ func kernelAutogenHandler(workPath string, max int64) (err error) {
 		}
 	}
 
-	err = updateKernelsCfg()
+	err = updateKernelsCfg(host)
 	return
 }
 
-func kernelDockerRegenHandler() (err error) {
+func kernelDockerRegenHandler(host bool) (err error) {
 	dockerImages, err := listDockerImages()
 	if err != nil {
 		return
@@ -510,10 +569,10 @@ func kernelDockerRegenHandler() (err error) {
 		}
 	}
 
-	return updateKernelsCfg()
+	return updateKernelsCfg(host)
 }
 
-func kernelGenallHandler(distro, version string) (err error) {
+func kernelGenallHandler(distro, version string, host bool) (err error) {
 	distroType, err := config.NewDistroType(distro)
 	if err != nil {
 		return
@@ -529,5 +588,5 @@ func kernelGenallHandler(distro, version string) (err error) {
 		return
 	}
 
-	return updateKernelsCfg()
+	return updateKernelsCfg(host)
 }

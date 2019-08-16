@@ -72,10 +72,33 @@ func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 	}
 
 	kernel := "/lib/modules/" + ki.KernelRelease + "/build"
+	if ki.KernelSource != "" {
+		kernel = ki.KernelSource
+	}
 
-	output, err = dockerRun(dockerTimeout, ki.ContainerName,
-		tmpSourcePath, "make KERNEL="+kernel+" TARGET="+target+
-			" && chmod -R 777 /work")
+	if ki.ContainerName != "" {
+		output, err = dockerRun(dockerTimeout, ki.ContainerName,
+			tmpSourcePath, "make KERNEL="+kernel+" TARGET="+target+
+				" && chmod -R 777 /work")
+	} else {
+		command := "make KERNEL=" + kernel + " TARGET=" + target
+		cmd := exec.Command("bash", "-c", "cd "+tmpSourcePath+" && "+command)
+		timer := time.AfterFunc(dockerTimeout, func() {
+			cmd.Process.Kill()
+		})
+		defer timer.Stop()
+
+		var raw []byte
+		raw, err = cmd.CombinedOutput()
+		if err != nil {
+			e := fmt.Sprintf("error `%v` for cmd `%v` with output `%v`",
+				err, command, string(raw))
+			err = errors.New(e)
+			return
+		}
+
+		output = string(raw)
+	}
 	return
 }
 

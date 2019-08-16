@@ -131,6 +131,7 @@ func main() {
 	pewDist := pewDistFlag.Default(PATH_DEV_NULL).String()
 
 	kernelCommand := app.Command("kernel", "Manipulate kernels")
+	kernelUseHost := kernelCommand.Flag("host", "Use also host kernels").Bool()
 	kernelListCommand := kernelCommand.Command("list", "List kernels")
 	kernelAutogenCommand := kernelCommand.Command("autogen",
 		"Generate kernels based on a current config")
@@ -239,11 +240,11 @@ func main() {
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():
-		err = kernelAutogenHandler(*path, *kernelAutogenMax)
+		err = kernelAutogenHandler(*path, *kernelAutogenMax, *kernelUseHost)
 	case kernelDockerRegenCommand.FullCommand():
-		err = kernelDockerRegenHandler()
+		err = kernelDockerRegenHandler(*kernelUseHost)
 	case kernelGenallCommand.FullCommand():
-		err = kernelGenallHandler(*distro, *version)
+		err = kernelGenallHandler(*distro, *version, *kernelUseHost)
 	case genModuleCommand.FullCommand():
 		err = genConfig(config.KernelModule)
 	case genExploitCommand.FullCommand():
