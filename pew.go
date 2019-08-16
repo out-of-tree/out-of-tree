@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"os/user"
 	"runtime"
 	"strings"
 	"time"
@@ -73,12 +74,8 @@ func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 	kernel := "/lib/modules/" + ki.KernelRelease + "/build"
 
 	output, err = dockerRun(dockerTimeout, ki.ContainerName,
-		tmpSourcePath, "make KERNEL="+kernel+" TARGET="+target)
-	if err != nil {
-		err = errors.New("make execution error")
-		return
-	}
-
+		tmpSourcePath, "make KERNEL="+kernel+" TARGET="+target+
+			" && chmod -R 777 /work")
 	return
 }
 
@@ -247,7 +244,14 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	}
 	defer q.Stop()
 
-	tmp, err := ioutil.TempDir("/tmp/", "out-of-tree_")
+	usr, err := user.Current()
+	if err != nil {
+		return
+	}
+	tmpdir := usr.HomeDir + "/.out-of-tree/tmp"
+	os.MkdirAll(tmpdir, os.ModePerm)
+
+	tmp, err := ioutil.TempDir(tmpdir, "out-of-tree_")
 	if err != nil {
 		log.Println("Temporary directory creation error:", err)
 		return
@@ -261,7 +265,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		result.BuildArtifact, result.Build.Output, err = build(tmp, ka,
 			ki, dockerTimeout)
 		if err != nil {
-			log.Println(result.Build.Output)
+			log.Println(err)
 			return
 		}
 		result.Build.Ok = true
