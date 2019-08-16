@@ -198,6 +198,9 @@ func main() {
 	logJsonCommand := logCommand.Command("json", "Generate json statistics")
 	logJsonTag := logJsonCommand.Flag("tag", "Filter tag").Required().String()
 
+	logMarkdownCommand := logCommand.Command("markdown", "Generate markdown statistics")
+	logMarkdownTag := logMarkdownCommand.Flag("tag", "Filter tag").Required().String()
+
 	err = checkRequiredUtils()
 	if err != nil {
 		log.Fatalln(err)
@@ -282,6 +285,8 @@ func main() {
 		err = logDumpHandler(db, *logDumpID)
 	case logJsonCommand.FullCommand():
 		err = logJsonHandler(db, *path, *logJsonTag)
+	case logMarkdownCommand.FullCommand():
+		err = logMarkdownHandler(db, *path, *logMarkdownTag)
 	}
 
 	if err != nil {

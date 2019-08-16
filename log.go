@@ -10,9 +10,12 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"os"
+
+	"github.com/olekukonko/tablewriter"
+	"gopkg.in/logrusorgru/aurora.v1"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
-	"gopkg.in/logrusorgru/aurora.v1"
 )
 
 func logLogEntry(l logEntry) {
@@ -146,7 +149,9 @@ type runstat struct {
 	All, BuildOK, RunOK, TestOK, Timeout, Panic int
 }
 
-func logJsonHandler(db *sql.DB, path, tag string) (err error) {
+func getStats(db *sql.DB, path, tag string) (
+	distros map[string]map[string]map[string]runstat, err error) {
+
 	var les []logEntry
 
 	ka, kaErr := config.ReadArtifactConfig(path + "/.out-of-tree.toml")
@@ -159,7 +164,7 @@ func logJsonHandler(db *sql.DB, path, tag string) (err error) {
 		return
 	}
 
-	distros := make(map[string]map[string]map[string]runstat)
+	distros = make(map[string]map[string]map[string]runstat)
 
 	for _, l := range les {
 		_, ok := distros[l.DistroType.String()]
@@ -194,12 +199,47 @@ func logJsonHandler(db *sql.DB, path, tag string) (err error) {
 		distros[l.DistroType.String()][l.DistroRelease][l.KernelRelease] = rs
 	}
 
+	return
+}
+
+func logJsonHandler(db *sql.DB, path, tag string) (err error) {
+	distros, err := getStats(db, path, tag)
+	if err != nil {
+		return
+	}
+
 	bytes, err := json.Marshal(&distros)
 	if err != nil {
 		return
 	}
 
 	fmt.Println(string(bytes))
+	return
+}
 
+func logMarkdownHandler(db *sql.DB, path, tag string) (err error) {
+	distros, err := getStats(db, path, tag)
+	if err != nil {
+		return
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Distro", "Release", "Kernel", "Reliability"})
+	table.SetBorders(tablewriter.Border{
+		Left: true, Top: false, Right: true, Bottom: false})
+	table.SetCenterSeparator("|")
+
+	for distro, releases := range distros {
+		for release, kernels := range releases {
+			for kernel, stats := range kernels {
+				all := float64(stats.All)
+				ok := float64(stats.TestOK)
+				r := fmt.Sprintf("%6.02f%%", (ok/all)*100)
+				table.Append([]string{distro, release, kernel, r})
+			}
+		}
+	}
+
+	table.Render()
 	return
 }
