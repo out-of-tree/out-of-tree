@@ -34,7 +34,7 @@ type ArtifactType int
 const (
 	// KernelModule is any kind of kernel module
 	KernelModule ArtifactType = iota
-	// KernelExploit is the privelege escalation exploit
+	// KernelExploit is the privilege escalation exploit
 	KernelExploit
 )
 
