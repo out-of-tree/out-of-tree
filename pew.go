@@ -28,7 +28,7 @@ import (
 
 var somethingFailed = false
 
-const PATH_DEV_NULL = "/dev/null"
+const pathDevNull = "/dev/null"
 
 func dockerRun(timeout time.Duration, container, workdir, command string) (
 	output string, err error) {
@@ -101,7 +101,7 @@ func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 	return
 }
 
-func cleanDmesg(q *qemu.QemuSystem) (err error) {
+func cleanDmesg(q *qemu.System) (err error) {
 	start := time.Now()
 	for {
 		_, err = q.Command("root", "dmesg -c")
@@ -118,7 +118,7 @@ func cleanDmesg(q *qemu.QemuSystem) (err error) {
 	return
 }
 
-func testKernelModule(q *qemu.QemuSystem, ka config.Artifact,
+func testKernelModule(q *qemu.System, ka config.Artifact,
 	test string) (output string, err error) {
 
 	output, err = q.Command("root", test)
@@ -126,7 +126,7 @@ func testKernelModule(q *qemu.QemuSystem, ka config.Artifact,
 	return
 }
 
-func testKernelExploit(q *qemu.QemuSystem, ka config.Artifact,
+func testKernelExploit(q *qemu.System, ka config.Artifact,
 	test, exploit string) (output string, err error) {
 
 	output, err = q.Command("user", "chmod +x "+exploit)
@@ -188,7 +188,7 @@ func copyFile(sourcePath, destinationPath string) (err error) {
 	return destinationFile.Close()
 }
 
-func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
+func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 	res *phasesResult, dist, tag, binary string, db *sql.DB) {
 
 	// TODO merge (problem is it's not 100% same) with log.go:logLogEntry
@@ -226,7 +226,7 @@ func dumpResult(q *qemu.QemuSystem, ka config.Artifact, ki config.KernelInfo,
 		log.Println("[db] addToLog (", ka, ") error:", err)
 	}
 
-	if binary == "" && dist != PATH_DEV_NULL {
+	if binary == "" && dist != pathDevNull {
 		err = os.MkdirAll(dist, os.ModePerm)
 		if err != nil {
 			log.Println("os.MkdirAll (", ka, ") error:", err)
@@ -253,7 +253,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	defer swg.Done()
 
 	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
-	q, err := qemu.NewQemuSystem(qemu.X86_64, kernel, ki.RootFS)
+	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)
 	if err != nil {
 		log.Println("Qemu creation error:", err)
 		return

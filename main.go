@@ -136,7 +136,7 @@ func main() {
 	pewTest := pewTestFlag.String()
 
 	pewDistFlag := pewCommand.Flag("dist", "Build result path")
-	pewDist := pewDistFlag.Default(PATH_DEV_NULL).String()
+	pewDist := pewDistFlag.Default(pathDevNull).String()
 
 	pewThreadsFlag := pewCommand.Flag("threads", "Build result path")
 	pewThreads := pewThreadsFlag.Default(strconv.Itoa(runtime.NumCPU())).Int()

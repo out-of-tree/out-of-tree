@@ -17,16 +17,16 @@ import (
 )
 
 // Change on ANY database update
-const CURRENT_DATABASE_VERSION = 2
+const currentDatabaseVersion = 2
 
-const VERSION_FIELD = "db_version"
+const versionField = "db_version"
 
 type logEntry struct {
 	ID        int
 	Tag       string
 	Timestamp time.Time
 
-	qemu.QemuSystem
+	qemu.System
 	config.Artifact
 	config.KernelInfo
 	phasesResult
@@ -111,7 +111,7 @@ func metaSetValue(db *sql.DB, key, value string) (err error) {
 }
 
 func getVersion(db *sql.DB) (version int, err error) {
-	s, err := metaGetValue(db, VERSION_FIELD)
+	s, err := metaGetValue(db, versionField)
 	if err != nil {
 		return
 	}
@@ -120,7 +120,7 @@ func getVersion(db *sql.DB) (version int, err error) {
 	return
 }
 
-func addToLog(db *sql.DB, q *qemu.QemuSystem, ka config.Artifact,
+func addToLog(db *sql.DB, q *qemu.System, ka config.Artifact,
 	ki config.KernelInfo, res *phasesResult, tag string) (err error) {
 
 	stmt, err := db.Prepare("INSERT INTO log (name, type, tag, " +
@@ -276,15 +276,15 @@ func openDatabase(path string) (db *sql.DB, err error) {
 
 	db.SetMaxOpenConns(1)
 
-	exists, _ := metaChkValue(db, VERSION_FIELD)
+	exists, _ := metaChkValue(db, versionField)
 	if !exists {
 		err = createSchema(db)
 		if err != nil {
 			return
 		}
 
-		err = metaSetValue(db, VERSION_FIELD,
-			strconv.Itoa(CURRENT_DATABASE_VERSION))
+		err = metaSetValue(db, versionField,
+			strconv.Itoa(currentDatabaseVersion))
 		return
 	}
 
@@ -299,7 +299,7 @@ func openDatabase(path string) (db *sql.DB, err error) {
 			return
 		}
 
-		err = metaSetValue(db, VERSION_FIELD, "2")
+		err = metaSetValue(db, versionField, "2")
 		if err != nil {
 			return
 		}
@@ -307,9 +307,9 @@ func openDatabase(path string) (db *sql.DB, err error) {
 		version = 2
 	}
 
-	if version != CURRENT_DATABASE_VERSION {
+	if version != currentDatabaseVersion {
 		err = fmt.Errorf("Database is not supported (%d instead of %d)",
-			version, CURRENT_DATABASE_VERSION)
+			version, currentDatabaseVersion)
 		return
 	}
 

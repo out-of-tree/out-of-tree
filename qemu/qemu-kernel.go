@@ -44,9 +44,10 @@ func readUntilEOF(pipe io.ReadCloser, buf *[]byte) (err error) {
 type arch string
 
 const (
-	// X86_64 must be exactly same as in qemu-system-${HERE}
-	X86_64 arch = "x86_64"
-	I386        = "i386"
+	// X86x64 is the qemu-system-x86_64
+	X86x64 arch = "x86_64"
+	// X86x32 is the qemu-system-i386
+	X86x32 = "i386"
 	// TODO add other
 
 	unsupported = "unsupported" // for test purposes
@@ -59,8 +60,8 @@ type Kernel struct {
 	InitrdPath string
 }
 
-// QemuSystem describe qemu parameters and runned process
-type QemuSystem struct {
+// System describe qemu parameters and runned process
+type System struct {
 	arch      arch
 	kernel    Kernel
 	drivePath string
@@ -98,12 +99,12 @@ type QemuSystem struct {
 	exitErr error
 }
 
-// NewQemuSystem constructor
-func NewQemuSystem(arch arch, kernel Kernel, drivePath string) (q *QemuSystem, err error) {
+// NewSystem constructor
+func NewSystem(arch arch, kernel Kernel, drivePath string) (q *System, err error) {
 	if _, err = exec.LookPath("qemu-system-" + string(arch)); err != nil {
 		return
 	}
-	q = &QemuSystem{}
+	q = &System{}
 	q.arch = arch
 
 	if _, err = os.Stat(kernel.KernelPath); err != nil {
@@ -164,7 +165,7 @@ func kvmExists() bool {
 	return true
 }
 
-func (q *QemuSystem) panicWatcher() {
+func (q *System) panicWatcher() {
 	for {
 		time.Sleep(time.Second)
 		if bytes.Contains(q.Stdout, []byte("Kernel panic")) {
@@ -178,7 +179,7 @@ func (q *QemuSystem) panicWatcher() {
 }
 
 // Start qemu process
-func (q *QemuSystem) Start() (err error) {
+func (q *System) Start() (err error) {
 	rand.Seed(time.Now().UnixNano()) // Are you sure?
 	q.sshAddrPort = getFreeAddrPort()
 	hostfwd := fmt.Sprintf("hostfwd=tcp:%s-:22", q.sshAddrPort)
@@ -213,11 +214,11 @@ func (q *QemuSystem) Start() (err error) {
 		qemuArgs = append(qemuArgs, "-initrd", q.kernel.InitrdPath)
 	}
 
-	if (q.arch == X86_64 || q.arch == I386) && kvmExists() {
+	if (q.arch == X86x64 || q.arch == X86x32) && kvmExists() {
 		qemuArgs = append(qemuArgs, "-enable-kvm")
 	}
 
-	if q.arch == X86_64 && runtime.GOOS == "darwin" {
+	if q.arch == X86x64 && runtime.GOOS == "darwin" {
 		qemuArgs = append(qemuArgs, "-accel", "hvf", "-cpu", "host")
 	}
 
@@ -270,7 +271,7 @@ func (q *QemuSystem) Start() (err error) {
 }
 
 // Stop qemu process
-func (q *QemuSystem) Stop() {
+func (q *System) Stop() {
 	// 1  00/01   01  01  SOH  (Ctrl-A)  START OF HEADING
 	fmt.Fprintf(q.pipe.stdin, "%cx", 1)
 	// wait for die
@@ -282,7 +283,7 @@ func (q *QemuSystem) Stop() {
 	}
 }
 
-func (q QemuSystem) ssh(user string) (client *ssh.Client, err error) {
+func (q System) ssh(user string) (client *ssh.Client, err error) {
 	cfg := &ssh.ClientConfig{
 		User:            user,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
@@ -293,7 +294,7 @@ func (q QemuSystem) ssh(user string) (client *ssh.Client, err error) {
 }
 
 // Command executes shell commands on qemu system
-func (q QemuSystem) Command(user, cmd string) (output string, err error) {
+func (q System) Command(user, cmd string) (output string, err error) {
 	client, err := q.ssh(user)
 	if err != nil {
 		return
@@ -311,7 +312,7 @@ func (q QemuSystem) Command(user, cmd string) (output string, err error) {
 }
 
 // AsyncCommand executes command on qemu system but does not wait for exit
-func (q QemuSystem) AsyncCommand(user, cmd string) (err error) {
+func (q System) AsyncCommand(user, cmd string) (err error) {
 	client, err := q.ssh(user)
 	if err != nil {
 		return
@@ -328,7 +329,7 @@ func (q QemuSystem) AsyncCommand(user, cmd string) (err error) {
 }
 
 // CopyFile is copy file from local machine to remote through ssh/scp
-func (q *QemuSystem) CopyFile(user, localPath, remotePath string) (err error) {
+func (q *System) CopyFile(user, localPath, remotePath string) (err error) {
 	addrPort := strings.Split(q.sshAddrPort, ":")
 	addr := addrPort[0]
 	port := addrPort[1]
@@ -346,7 +347,7 @@ func (q *QemuSystem) CopyFile(user, localPath, remotePath string) (err error) {
 }
 
 // CopyAndInsmod copy kernel module to temporary file on qemu then insmod it
-func (q *QemuSystem) CopyAndInsmod(localKoPath string) (output string, err error) {
+func (q *System) CopyAndInsmod(localKoPath string) (output string, err error) {
 	remoteKoPath := fmt.Sprintf("/tmp/module_%d.ko", rand.Int())
 	err = q.CopyFile("root", localKoPath, remoteKoPath)
 	if err != nil {
@@ -357,7 +358,7 @@ func (q *QemuSystem) CopyAndInsmod(localKoPath string) (output string, err error
 }
 
 // CopyAndRun is copy local file to qemu vm then run it
-func (q *QemuSystem) CopyAndRun(user, path string) (output string, err error) {
+func (q *System) CopyAndRun(user, path string) (output string, err error) {
 	remotePath := fmt.Sprintf("/tmp/executable_%d", rand.Int())
 	err = q.CopyFile(user, path, remotePath)
 	if err != nil {
@@ -368,28 +369,28 @@ func (q *QemuSystem) CopyAndRun(user, path string) (output string, err error) {
 }
 
 // Debug is for enable qemu debug and set hostname and port for listen
-func (q *QemuSystem) Debug(conn string) {
+func (q *System) Debug(conn string) {
 	q.debug = true
 	q.gdb = conn
 }
 
 // SetKASLR is changing KASLR state through kernel boot args
-func (q *QemuSystem) SetKASLR(state bool) {
+func (q *System) SetKASLR(state bool) {
 	q.noKASLR = !state
 }
 
 // SetSMEP is changing SMEP state through kernel boot args
-func (q *QemuSystem) SetSMEP(state bool) {
+func (q *System) SetSMEP(state bool) {
 	q.noSMEP = !state
 }
 
 // SetSMAP is changing SMAP state through kernel boot args
-func (q *QemuSystem) SetSMAP(state bool) {
+func (q *System) SetSMAP(state bool) {
 	q.noSMAP = !state
 }
 
-// GetSshCommand returns command for connect to qemu machine over ssh
-func (q QemuSystem) GetSshCommand() (cmd string) {
+// GetSSHCommand returns command for connect to qemu machine over ssh
+func (q System) GetSSHCommand() (cmd string) {
 	addrPort := strings.Split(q.sshAddrPort, ":")
 	addr := addrPort[0]
 	port := addrPort[1]

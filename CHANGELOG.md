@@ -12,33 +12,22 @@
   base on `.out-of-tree.toml` definitions) and `pew` (automated runs)
   and allows to specify a maximum number of runs per each supported
   kernel in module/exploit definition.
-
 - New command `genall` -- generate all kernels for specified
   distro/version.
-
 - All logs stores in sqlite3 database. Implemented specific commands
   for making simple queries and export data to markdown and json.
-
 - Implemented success rate calculation for previous runs.
-
 - Save of build results supported by parameter `--dist` for `pew`.
-
 - Support for generating kernels info from host system.
-
 - Support for build on host.
-
 - Support for custom kernels.
-
 - Now debugging environment is automatically looking for debug kernel
   on the host system.
-
 - Added ability to enable/disable kaslr/smep/smap for debugging by
   command line flags.
-
 - New parameter `--threads=N` is added for `pew` and allows to specify
   maximum number of threads that will be used for parallel
   build/run/test.
-
 - Tagging for runs. Tags write to log and can be used for statistics.
 
 ### Changed
@@ -46,13 +35,10 @@
 - Now if there's no base image found — out-of-tree will try to use an
   image from closest previous version, e.g. image from Ubuntu 18.04
   for Ubuntu 18.10.
-
 - Kernel modules tests will not be failed if there are no tests
   exists.
-
 - Now *out-of-tree* will return negative error code if at least one of
   the stage was failed.
-
 - Project is switch to use Go modules.
 
 ### Removed
@@ -63,9 +49,7 @@
 ### Fixed
 
 - Command `timeout` is not required anymore.
-
 - Errors is more meaningful.
-
 - Temporary files is moved to `~/.out-of-tree/tmp/` to avoid docker mounting issues on some systems.
 
 ## [0.2.0] - 2019-12-01

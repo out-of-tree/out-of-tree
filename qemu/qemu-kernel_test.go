@@ -20,37 +20,37 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func TestQemuSystemNew_InvalidKernelPath(t *testing.T) {
+func TestSystemNew_InvalidKernelPath(t *testing.T) {
 	kernel := Kernel{Name: "Invalid", KernelPath: "/invalid/path"}
-	if _, err := NewQemuSystem(X86_64, kernel, "/bin/sh"); err == nil {
+	if _, err := NewSystem(X86_64, kernel, "/bin/sh"); err == nil {
 		t.Fatal(err)
 	}
 }
 
-func TestQemuSystemNew_InvalidQemuArch(t *testing.T) {
+func TestSystemNew_InvalidQemuArch(t *testing.T) {
 	kernel := Kernel{Name: "Valid path", KernelPath: testConfigVmlinuz}
-	if _, err := NewQemuSystem(unsupported, kernel, "/bin/sh"); err == nil {
+	if _, err := NewSystem(unsupported, kernel, "/bin/sh"); err == nil {
 		t.Fatal(err)
 	}
 }
 
-func TestQemuSystemNew_InvalidQemuDrivePath(t *testing.T) {
+func TestSystemNew_InvalidQemuDrivePath(t *testing.T) {
 	kernel := Kernel{Name: "Valid path", KernelPath: testConfigVmlinuz}
-	if _, err := NewQemuSystem(X86_64, kernel, "/invalid/path"); err == nil {
+	if _, err := NewSystem(X86_64, kernel, "/invalid/path"); err == nil {
 		t.Fatal(err)
 	}
 }
 
-func TestQemuSystemNew(t *testing.T) {
+func TestSystemNew(t *testing.T) {
 	kernel := Kernel{Name: "Valid path", KernelPath: testConfigVmlinuz}
-	if _, err := NewQemuSystem(X86_64, kernel, "/bin/sh"); err != nil {
+	if _, err := NewSystem(X86_64, kernel, "/bin/sh"); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestQemuSystemStart(t *testing.T) {
+func TestSystemStart(t *testing.T) {
 	kernel := Kernel{Name: "Test kernel", KernelPath: testConfigVmlinuz}
-	q, err := NewQemuSystem(X86_64, kernel, "/bin/sh")
+	q, err := NewSystem(X86_64, kernel, "/bin/sh")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,10 +71,10 @@ func TestGetFreeAddrPort(t *testing.T) {
 	ln.Close()
 }
 
-func TestQemuSystemStart_Timeout(t *testing.T) {
+func TestSystemStart_Timeout(t *testing.T) {
 	t.Parallel()
 	kernel := Kernel{Name: "Test kernel", KernelPath: testConfigVmlinuz}
-	q, err := NewQemuSystem(X86_64, kernel, "/bin/sh")
+	q, err := NewSystem(X86_64, kernel, "/bin/sh")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,14 +96,14 @@ func TestQemuSystemStart_Timeout(t *testing.T) {
 	}
 }
 
-func startTestQemu(t *testing.T, timeout time.Duration) (q *QemuSystem, err error) {
+func startTestQemu(t *testing.T, timeout time.Duration) (q *System, err error) {
 	t.Parallel()
 	kernel := Kernel{
 		Name:       "Test kernel",
 		KernelPath: testConfigVmlinuz,
 		InitrdPath: testConfigInitrd,
 	}
-	q, err = NewQemuSystem(X86_64, kernel, testConfigRootfs)
+	q, err = NewSystem(X86_64, kernel, testConfigRootfs)
 	if err != nil {
 		return
 	}
@@ -119,7 +119,7 @@ func startTestQemu(t *testing.T, timeout time.Duration) (q *QemuSystem, err erro
 	return
 }
 
-func TestQemuSystemCommand(t *testing.T) {
+func TestSystemCommand(t *testing.T) {
 	q, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -149,7 +149,7 @@ func TestQemuSystemCommand(t *testing.T) {
 	}
 }
 
-func TestQemuSystemCopyFile(t *testing.T) {
+func TestSystemCopyFile(t *testing.T) {
 	q, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -182,7 +182,7 @@ func TestQemuSystemCopyFile(t *testing.T) {
 	}
 }
 
-func TestQemuSystemCopyAndRun(t *testing.T) {
+func TestSystemCopyAndRun(t *testing.T) {
 	q, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -216,7 +216,7 @@ func TestQemuSystemCopyAndRun(t *testing.T) {
 	}
 }
 
-func TestQemuSystemCopyAndInsmod(t *testing.T) {
+func TestSystemCopyAndInsmod(t *testing.T) {
 	q, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -243,7 +243,7 @@ func TestQemuSystemCopyAndInsmod(t *testing.T) {
 	}
 }
 
-func TestQemuSystemKernelPanic(t *testing.T) {
+func TestSystemKernelPanic(t *testing.T) {
 	q, err := startTestQemu(t, 5*time.Minute)
 	if err != nil {
 		t.Fatal(err)
@@ -278,7 +278,7 @@ func TestQemuSystemKernelPanic(t *testing.T) {
 	}
 }
 
-func TestQemuSystemRun(t *testing.T) {
+func TestSystemRun(t *testing.T) {
 	q, err := startTestQemu(t, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -313,13 +313,13 @@ func openedPort(port int) bool {
 	return true
 }
 
-func TestQemuSystemDebug(t *testing.T) {
+func TestSystemDebug(t *testing.T) {
 	t.Parallel()
 	kernel := Kernel{
 		KernelPath: testConfigVmlinuz,
 		InitrdPath: testConfigInitrd,
 	}
-	q, err := NewQemuSystem(X86_64, kernel, testConfigRootfs)
+	q, err := NewSystem(X86_64, kernel, testConfigRootfs)
 	if err != nil {
 		return
 	}

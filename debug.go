@@ -41,7 +41,7 @@ func firstSupported(kcfg config.KernelConfig, ka config.Artifact,
 	return
 }
 
-func handleLine(q *qemu.QemuSystem) (err error) {
+func handleLine(q *qemu.System) (err error) {
 	fmt.Print("out-of-tree> ")
 	rawLine := "help"
 	fmt.Scanf("%s", &rawLine)
@@ -64,7 +64,7 @@ func handleLine(q *qemu.QemuSystem) (err error) {
 	case "c", "cleanup":
 		q.Stdout = []byte{}
 	case "s", "ssh":
-		fmt.Println(q.GetSshCommand())
+		fmt.Println(q.GetSSHCommand())
 	case "q", "quit":
 		return errors.New("end of session")
 	default:
@@ -73,7 +73,7 @@ func handleLine(q *qemu.QemuSystem) (err error) {
 	return
 }
 
-func interactive(q *qemu.QemuSystem) (err error) {
+func interactive(q *qemu.System) (err error) {
 	for {
 		err = handleLine(q)
 		if err != nil {
@@ -100,7 +100,7 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	}
 
 	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
-	q, err := qemu.NewQemuSystem(qemu.X86_64, kernel, ki.RootFS)
+	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)
 	if err != nil {
 		return
 	}
@@ -155,7 +155,7 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	coloredRemoteFile := aurora.BgGreen(aurora.Black(remoteFile))
 	fmt.Printf("[*] build result copied to %s\n", coloredRemoteFile)
 
-	fmt.Printf("\n%s\n", q.GetSshCommand())
+	fmt.Printf("\n%s\n", q.GetSSHCommand())
 	fmt.Printf("gdb %s -ex 'target remote %s'\n\n", ki.VmlinuxPath, gdb)
 
 	// TODO set substitute-path /build/.../linux-... /path/to/linux-source

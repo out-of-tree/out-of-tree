@@ -52,7 +52,7 @@ Minimal example:
 		KernelPath: "/path/to/vmlinuz",
 		InitrdPath: "/path/to/initrd", // if required
 	}
-	q, err := qemu.NewQemuSystem(qemu.X86_64, kernel, "/path/to/qcow2")
+	q, err := qemu.NewSystem(qemu.X86_64, kernel, "/path/to/qcow2")
 	if err != nil {
 		log.Fatal(err)
 	}
