@@ -42,6 +42,8 @@
 - Tagging for runs. Tags write to log and can be used for
   statistics.
 
+- Added non-regex way to set kernel version in .out-of-tree.toml (see examples).
+
 ### Changed
 
 - Now if there's no base image found — out-of-tree will try to use
