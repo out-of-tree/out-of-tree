@@ -72,19 +72,25 @@ Overview
 *out-of-tree* uses three stages for automated runs:
 
 - Build
+
   - Inside the docker container (default).
   - Binary version (de facto skip stage).
   - On host.
+
 - Run
+
   - Insmod for the kernel module.
   - This step is skipped for exploits.
+
 - Test
+
   - Run the test.sh script on the target machine.
   - Test script is run from *root* for the kernel module.
   - Test script is run from *user* for the kernel exploit.
   - Test script for the kernel module is fully custom (only return
     value is checked).
   - Test script for the kernel exploit receives two parameters:
+
     - Path to exploit
     - Path to file that must be created with root privileges.
 
