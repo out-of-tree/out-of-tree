@@ -90,6 +90,8 @@ The main purpose of the release is to simplify installation.
 - New command: **debug**. Creates interactive environment for kernel
   module/exploit development. Still work-in-progress.
 
+- No warning anymore if test.sh is not exists.
+
 ## [0.1.0] - 2019-11-20
 
 Initial release that was never tagged.

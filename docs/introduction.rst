@@ -94,6 +94,9 @@ Overview
     - Path to exploit
     - Path to file that must be created with root privileges.
 
+  - If there's no test.sh script then default
+    (``echo touch FILE | exploit``) one is used.
+
 Security
 --------
 

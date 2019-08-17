@@ -292,13 +292,11 @@ func copyTest(q *qemu.System, testPath string, ka config.Artifact) (
 	err = q.CopyFile("user", testPath, remoteTest)
 	if err != nil {
 		if ka.Type == config.KernelExploit {
-			log.Println("Use `echo touch FILE | exploit` for test")
 			q.Command("user",
 				"echo -e '#!/bin/sh\necho touch $2 | $1' "+
 					"> "+remoteTest+
 					" && chmod +x "+remoteTest)
 		} else {
-			log.Println("No test, use dummy")
 			q.Command("user", "echo '#!/bin/sh' "+
 				"> "+remoteTest+" && chmod +x "+remoteTest)
 		}
