@@ -22,7 +22,7 @@ func init() {
 
 func TestSystemNew_InvalidKernelPath(t *testing.T) {
 	kernel := Kernel{Name: "Invalid", KernelPath: "/invalid/path"}
-	if _, err := NewSystem(X86_64, kernel, "/bin/sh"); err == nil {
+	if _, err := NewSystem(X86x64, kernel, "/bin/sh"); err == nil {
 		t.Fatal(err)
 	}
 }
@@ -36,21 +36,21 @@ func TestSystemNew_InvalidQemuArch(t *testing.T) {
 
 func TestSystemNew_InvalidQemuDrivePath(t *testing.T) {
 	kernel := Kernel{Name: "Valid path", KernelPath: testConfigVmlinuz}
-	if _, err := NewSystem(X86_64, kernel, "/invalid/path"); err == nil {
+	if _, err := NewSystem(X86x64, kernel, "/invalid/path"); err == nil {
 		t.Fatal(err)
 	}
 }
 
 func TestSystemNew(t *testing.T) {
 	kernel := Kernel{Name: "Valid path", KernelPath: testConfigVmlinuz}
-	if _, err := NewSystem(X86_64, kernel, "/bin/sh"); err != nil {
+	if _, err := NewSystem(X86x64, kernel, "/bin/sh"); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestSystemStart(t *testing.T) {
 	kernel := Kernel{Name: "Test kernel", KernelPath: testConfigVmlinuz}
-	q, err := NewSystem(X86_64, kernel, "/bin/sh")
+	q, err := NewSystem(X86x64, kernel, "/bin/sh")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestGetFreeAddrPort(t *testing.T) {
 func TestSystemStart_Timeout(t *testing.T) {
 	t.Parallel()
 	kernel := Kernel{Name: "Test kernel", KernelPath: testConfigVmlinuz}
-	q, err := NewSystem(X86_64, kernel, "/bin/sh")
+	q, err := NewSystem(X86x64, kernel, "/bin/sh")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func startTestQemu(t *testing.T, timeout time.Duration) (q *System, err error) {
 		KernelPath: testConfigVmlinuz,
 		InitrdPath: testConfigInitrd,
 	}
-	q, err = NewSystem(X86_64, kernel, testConfigRootfs)
+	q, err = NewSystem(X86x64, kernel, testConfigRootfs)
 	if err != nil {
 		return
 	}
@@ -319,7 +319,7 @@ func TestSystemDebug(t *testing.T) {
 		KernelPath: testConfigVmlinuz,
 		InitrdPath: testConfigInitrd,
 	}
-	q, err := NewSystem(X86_64, kernel, testConfigRootfs)
+	q, err := NewSystem(X86x64, kernel, testConfigRootfs)
 	if err != nil {
 		return
 	}
