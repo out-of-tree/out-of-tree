@@ -178,6 +178,24 @@ func (q *System) panicWatcher() {
 	}
 }
 
+func (q System) cmdline() (s string) {
+	s = "root=/dev/sda ignore_loglevel console=ttyS0 rw"
+
+	if q.noKASLR {
+		s += " nokaslr"
+	}
+
+	if q.noSMEP {
+		s += " nosmep"
+	}
+
+	if q.noSMAP {
+		s += " nosmap"
+	}
+
+	return
+}
+
 // Start qemu process
 func (q *System) Start() (err error) {
 	rand.Seed(time.Now().UnixNano()) // Are you sure?
@@ -192,22 +210,8 @@ func (q *System) Start() (err error) {
 		"-netdev", "user,id=n1," + hostfwd,
 	}
 
-	cmdline := "root=/dev/sda ignore_loglevel console=ttyS0 rw"
-
 	if q.debug {
 		qemuArgs = append(qemuArgs, "-gdb", q.gdb)
-	}
-
-	if q.noKASLR {
-		cmdline += " nokaslr"
-	}
-
-	if q.noSMEP {
-		cmdline += " nosmep"
-	}
-
-	if q.noSMAP {
-		cmdline += " nosmap"
 	}
 
 	if q.kernel.InitrdPath != "" {
@@ -222,7 +226,7 @@ func (q *System) Start() (err error) {
 		qemuArgs = append(qemuArgs, "-accel", "hvf", "-cpu", "host")
 	}
 
-	qemuArgs = append(qemuArgs, "-append", cmdline)
+	qemuArgs = append(qemuArgs, "-append", q.cmdline())
 
 	q.cmd = exec.Command("qemu-system-"+string(q.arch), qemuArgs...)
 
