@@ -267,13 +267,13 @@ func genReleaseMask(km kernel) (mask string, err error) {
 	if err != nil {
 		return
 	}
-	mask += s + "."
+	mask += s + "[.]"
 
 	s, err = versionRegexp(km.Major)
 	if err != nil {
 		return
 	}
-	mask += s + "."
+	mask += s + "[.]"
 
 	s, err = versionRegexp(km.Minor)
 	if err != nil {
@@ -285,15 +285,15 @@ func genReleaseMask(km kernel) (mask string, err error) {
 	case 0:
 		// ok
 	case 1:
-		mask += "-" + strconv.Itoa(km.Patch[0])
+		mask += "-" + strconv.Itoa(km.Patch[0]) + "-"
 	case 2:
-		mask += "-" + rangeRegexp(km.Patch[0], km.Patch[1])
+		mask += "-" + rangeRegexp(km.Patch[0], km.Patch[1]) + "-"
 	default:
 		err = errors.New("version must contain one value or range")
 		return
 	}
 
-	mask += "-.*"
+	mask += ".*"
 	return
 }
 
