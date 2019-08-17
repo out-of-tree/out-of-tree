@@ -245,6 +245,69 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 	}
 }
 
+func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
+	res *phasesResult, remoteTest string) (err error) {
+
+	switch ka.Type {
+	case config.KernelModule:
+		res.Run.Output, err = q.CopyAndInsmod(res.BuildArtifact)
+		if err != nil {
+			log.Println(res.Run.Output, err)
+			return
+		}
+		res.Run.Ok = true
+
+		res.Test.Output, err = testKernelModule(q, ka, remoteTest)
+		if err != nil {
+			log.Println(res.Test.Output, err)
+			return
+		}
+		res.Test.Ok = true
+	case config.KernelExploit:
+		remoteExploit := fmt.Sprintf("/tmp/exploit_%d", rand.Int())
+		err = q.CopyFile("user", res.BuildArtifact, remoteExploit)
+		if err != nil {
+			return
+		}
+
+		res.Test.Output, err = testKernelExploit(q, ka, remoteTest,
+			remoteExploit)
+		if err != nil {
+			log.Println(res.Test.Output)
+			return
+		}
+		res.Run.Ok = true // does not really used
+		res.Test.Ok = true
+	default:
+		log.Println("Unsupported artifact type")
+	}
+
+	return
+}
+
+func copyTest(q *qemu.System, testPath string, ka config.Artifact) (
+	remoteTest string, err error) {
+
+	remoteTest = fmt.Sprintf("/tmp/test_%d", rand.Int())
+	err = q.CopyFile("user", testPath, remoteTest)
+	if err != nil {
+		if ka.Type == config.KernelExploit {
+			log.Println("Use `echo touch FILE | exploit` for test")
+			q.Command("user",
+				"echo -e '#!/bin/sh\necho touch $2 | $1' "+
+					"> "+remoteTest+
+					" && chmod +x "+remoteTest)
+		} else {
+			log.Println("No test, use dummy")
+			q.Command("user", "echo '#!/bin/sh' "+
+				"> "+remoteTest+" && chmod +x "+remoteTest)
+		}
+	}
+
+	_, err = q.Command("root", "chmod +x "+remoteTest)
+	return
+}
+
 func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	ki config.KernelInfo, binaryPath, testPath string,
 	qemuTimeout, dockerTimeout time.Duration, dist, tag string,
@@ -306,60 +369,12 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		testPath = result.BuildArtifact + "_test"
 	}
 
-	remoteTest := fmt.Sprintf("/tmp/test_%d", rand.Int())
-	err = q.CopyFile("user", testPath, remoteTest)
+	remoteTest, err := copyTest(q, testPath, ka)
 	if err != nil {
-		if ka.Type == config.KernelExploit {
-			log.Println("Use `echo touch FILE | exploit` for test")
-			q.Command("user",
-				"echo -e '#!/bin/sh\necho touch $2 | $1' "+
-					"> "+remoteTest+
-					" && chmod +x "+remoteTest)
-		} else {
-			log.Println("No test, use dummy")
-			q.Command("user", "echo '#!/bin/sh' "+
-				"> "+remoteTest+" && chmod +x "+remoteTest)
-		}
-	} else {
-		_, err = q.Command("root", "chmod +x "+remoteTest)
-		if err != nil {
-			return
-		}
+		return
 	}
 
-	switch ka.Type {
-	case config.KernelModule:
-		result.Run.Output, err = q.CopyAndInsmod(result.BuildArtifact)
-		if err != nil {
-			log.Println(result.Run.Output, err)
-			return
-		}
-		result.Run.Ok = true
-
-		result.Test.Output, err = testKernelModule(q, ka, remoteTest)
-		if err != nil {
-			log.Println(result.Test.Output, err)
-			return
-		}
-		result.Test.Ok = true
-	case config.KernelExploit:
-		remoteExploit := fmt.Sprintf("/tmp/exploit_%d", rand.Int())
-		err = q.CopyFile("user", result.BuildArtifact, remoteExploit)
-		if err != nil {
-			return
-		}
-
-		result.Test.Output, err = testKernelExploit(q, ka, remoteTest,
-			remoteExploit)
-		if err != nil {
-			log.Println(result.Test.Output)
-			return
-		}
-		result.Run.Ok = true // does not really used
-		result.Test.Ok = true
-	default:
-		log.Println("Unsupported artifact type")
-	}
+	copyArtifactAndTest(q, ka, &result, remoteTest)
 }
 
 func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
