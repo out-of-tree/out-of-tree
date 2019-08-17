@@ -14,18 +14,21 @@ import (
 	"github.com/naoina/toml"
 )
 
+// KernelMask defines the kernel
 type KernelMask struct {
 	DistroType    DistroType
 	DistroRelease string // 18.04/7.4.1708/9.1
 	ReleaseMask   string
 }
 
+// DockerName is returns stable name for docker container
 func (km KernelMask) DockerName() string {
 	distro := strings.ToLower(km.DistroType.String())
 	release := strings.Replace(km.DistroRelease, ".", "__", -1)
 	return fmt.Sprintf("out_of_tree_%s_%s", distro, release)
 }
 
+// ArtifactType is the kernel module or exploit
 type ArtifactType int
 
 const (
@@ -37,6 +40,7 @@ func (at ArtifactType) String() string {
 	return [...]string{"module", "exploit"}[at]
 }
 
+// UnmarshalTOML is for support github.com/naoina/toml
 func (at *ArtifactType) UnmarshalTOML(data []byte) (err error) {
 	stype := strings.Trim(string(data), `"`)
 	stypelower := strings.ToLower(stype)
@@ -50,6 +54,7 @@ func (at *ArtifactType) UnmarshalTOML(data []byte) (err error) {
 	return
 }
 
+// MarshalTOML is for support github.com/naoina/toml
 func (at ArtifactType) MarshalTOML() (data []byte, err error) {
 	s := ""
 	switch at {
@@ -64,6 +69,7 @@ func (at ArtifactType) MarshalTOML() (data []byte, err error) {
 	return
 }
 
+// Artifact is for .out-of-tree.toml
 type Artifact struct {
 	Name             string
 	Type             ArtifactType
@@ -89,6 +95,7 @@ func (ka Artifact) checkSupport(ki KernelInfo, km KernelMask) (
 	return
 }
 
+// Supported returns true if given kernel is supported by artifact
 func (ka Artifact) Supported(ki KernelInfo) (supported bool, err error) {
 	for _, km := range ka.SupportedKernels {
 		supported, err = ka.checkSupport(ki, km)
@@ -100,6 +107,7 @@ func (ka Artifact) Supported(ki KernelInfo) (supported bool, err error) {
 	return
 }
 
+// DistroType is enum with all supported distros
 type DistroType int
 
 const (
@@ -110,6 +118,7 @@ const (
 
 var DistroTypeStrings = [...]string{"Ubuntu", "CentOS", "Debian"}
 
+// NewDistroType is create new Distro object
 func NewDistroType(dType string) (dt DistroType, err error) {
 	err = dt.UnmarshalTOML([]byte(dType))
 	return
@@ -119,6 +128,7 @@ func (dt DistroType) String() string {
 	return DistroTypeStrings[dt]
 }
 
+// UnmarshalTOML is for support github.com/naoina/toml
 func (dt *DistroType) UnmarshalTOML(data []byte) (err error) {
 	sDistro := strings.Trim(string(data), `"`)
 	if strings.EqualFold(sDistro, "Ubuntu") {
@@ -133,6 +143,7 @@ func (dt *DistroType) UnmarshalTOML(data []byte) (err error) {
 	return
 }
 
+// MarshalTOML is for support github.com/naoina/toml
 func (dt DistroType) MarshalTOML() (data []byte, err error) {
 	s := ""
 	switch dt {
@@ -175,6 +186,7 @@ type KernelInfo struct {
 	VmlinuxPath string
 }
 
+// KernelConfig is the ~/.out-of-tree/kernels.toml configuration description
 type KernelConfig struct {
 	Kernels []KernelInfo
 }
@@ -190,6 +202,7 @@ func readFileAll(path string) (buf []byte, err error) {
 	return
 }
 
+// ReadKernelConfig is for read kernels.toml
 func ReadKernelConfig(path string) (kernelCfg KernelConfig, err error) {
 	buf, err := readFileAll(path)
 	if err != nil {
@@ -204,6 +217,7 @@ func ReadKernelConfig(path string) (kernelCfg KernelConfig, err error) {
 	return
 }
 
+// ReadArtifactConfig is for read .out-of-tree.toml
 func ReadArtifactConfig(path string) (artifactCfg Artifact, err error) {
 	buf, err := readFileAll(path)
 	if err != nil {

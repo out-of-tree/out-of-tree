@@ -24,7 +24,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
-var KERNELS_ALL int64 = math.MaxInt64
+const KERNELS_ALL int64 = math.MaxInt64
 
 func kernelListHandler(kcfg config.KernelConfig) (err error) {
 	if len(kcfg.Kernels) == 0 {

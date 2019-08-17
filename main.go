@@ -195,8 +195,8 @@ func main() {
 		"Show all info for log entry with ID")
 	logDumpID := logDumpCommand.Arg("ID", "").Required().Int()
 
-	logJsonCommand := logCommand.Command("json", "Generate json statistics")
-	logJsonTag := logJsonCommand.Flag("tag", "Filter tag").Required().String()
+	logJSONCommand := logCommand.Command("json", "Generate json statistics")
+	logJSONTag := logJSONCommand.Flag("tag", "Filter tag").Required().String()
 
 	logMarkdownCommand := logCommand.Command("markdown", "Generate markdown statistics")
 	logMarkdownTag := logMarkdownCommand.Flag("tag", "Filter tag").Required().String()
@@ -283,8 +283,8 @@ func main() {
 		err = logHandler(db, *path, *logTag, *logNum, *logRate)
 	case logDumpCommand.FullCommand():
 		err = logDumpHandler(db, *logDumpID)
-	case logJsonCommand.FullCommand():
-		err = logJsonHandler(db, *path, *logJsonTag)
+	case logJSONCommand.FullCommand():
+		err = logJSONHandler(db, *path, *logJSONTag)
 	case logMarkdownCommand.FullCommand():
 		err = logMarkdownHandler(db, *path, *logMarkdownTag)
 	}

@@ -88,7 +88,7 @@ func logHandler(db *sql.DB, path, tag string, num int, rate bool) (err error) {
 	success := 0
 	for _, l := range les {
 		if l.Test.Ok {
-			success += 1
+			success++
 		}
 	}
 
@@ -179,21 +179,21 @@ func getStats(db *sql.DB, path, tag string) (
 
 		rs := distros[l.DistroType.String()][l.DistroRelease][l.KernelRelease]
 
-		rs.All += 1
+		rs.All++
 		if l.Build.Ok {
-			rs.BuildOK += 1
+			rs.BuildOK++
 		}
 		if l.Run.Ok {
-			rs.RunOK += 1
+			rs.RunOK++
 		}
 		if l.Test.Ok {
-			rs.TestOK += 1
+			rs.TestOK++
 		}
 		if l.KernelPanic {
-			rs.Panic += 1
+			rs.Panic++
 		}
 		if l.KilledByTimeout {
-			rs.Timeout += 1
+			rs.Timeout++
 		}
 
 		distros[l.DistroType.String()][l.DistroRelease][l.KernelRelease] = rs
@@ -202,7 +202,7 @@ func getStats(db *sql.DB, path, tag string) (
 	return
 }
 
-func logJsonHandler(db *sql.DB, path, tag string) (err error) {
+func logJSONHandler(db *sql.DB, path, tag string) (err error) {
 	distros, err := getStats(db, path, tag)
 	if err != nil {
 		return
