@@ -32,7 +32,9 @@ func (km KernelMask) DockerName() string {
 type ArtifactType int
 
 const (
+	// KernelModule is any kind of kernel module
 	KernelModule ArtifactType = iota
+	// KernelExploit is the privelege escalation exploit
 	KernelExploit
 )
 
@@ -111,11 +113,15 @@ func (ka Artifact) Supported(ki KernelInfo) (supported bool, err error) {
 type DistroType int
 
 const (
+	// Ubuntu https://ubuntu.com/
 	Ubuntu DistroType = iota
+	// CentOS https://www.centos.org/
 	CentOS
+	// Debian https://www.debian.org/
 	Debian
 )
 
+// DistroTypeStrings is the string version of enum DistroType
 var DistroTypeStrings = [...]string{"Ubuntu", "CentOS", "Debian"}
 
 // NewDistroType is create new Distro object
@@ -160,12 +166,14 @@ func (dt DistroType) MarshalTOML() (data []byte, err error) {
 	return
 }
 
+// ByRootFS is sorting by .RootFS lexicographically
 type ByRootFS []KernelInfo
 
 func (a ByRootFS) Len() int           { return len(a) }
 func (a ByRootFS) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByRootFS) Less(i, j int) bool { return a[i].RootFS < a[j].RootFS }
 
+// KernelInfo defines kernels.toml entries
 type KernelInfo struct {
 	DistroType    DistroType
 	DistroRelease string // 18.04/7.4.1708/9.1

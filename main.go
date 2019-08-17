@@ -118,7 +118,7 @@ func main() {
 	pewCommand := app.Command("pew", "Build, run and test module/exploit")
 
 	pewMax := pewCommand.Flag("max", "Test no more than X kernels").
-		PlaceHolder("X").Default(fmt.Sprint(KERNELS_ALL)).Int64()
+		PlaceHolder("X").Default(fmt.Sprint(kernelsAll)).Int64()
 
 	pewRuns := pewCommand.Flag("runs", "Runs per each kernel").
 		Default("1").Int64()
@@ -153,7 +153,7 @@ func main() {
 		"Download random kernels from set defined by regex in "+
 			"release_mask, but no more than X for each of "+
 			"release_mask").PlaceHolder("X").Default(
-		fmt.Sprint(KERNELS_ALL)).Int64()
+		fmt.Sprint(kernelsAll)).Int64()
 	kernelDockerRegenCommand := kernelCommand.Command("docker-regen",
 		"Regenerate kernels config from out_of_tree_* docker images")
 	kernelGenallCommand := kernelCommand.Command("genall",

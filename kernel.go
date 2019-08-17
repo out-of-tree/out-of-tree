@@ -24,7 +24,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
-const KERNELS_ALL int64 = math.MaxInt64
+const kernelsAll int64 = math.MaxInt64
 
 func kernelListHandler(kcfg config.KernelConfig) (err error) {
 	if len(kcfg.Kernels) == 0 {
@@ -496,7 +496,7 @@ func generateKernels(km config.KernelMask, max int64) (err error) {
 
 		err = dockerImageAppend(km, pkg)
 		if err == nil {
-			max -= 1
+			max--
 		} else {
 			log.Println("dockerImageAppend", err)
 		}
@@ -590,7 +590,7 @@ func kernelGenallHandler(distro, version string, host bool) (err error) {
 		DistroRelease: version,
 		ReleaseMask:   ".*",
 	}
-	err = generateKernels(km, KERNELS_ALL)
+	err = generateKernels(km, kernelsAll)
 	if err != nil {
 		return
 	}

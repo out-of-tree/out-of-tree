@@ -392,7 +392,7 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 
 		if supported {
 			found = true
-			max -= 1
+			max--
 			for i := int64(0); i < runs; i++ {
 				swg.Add()
 				go whatever(&swg, ka, kernel, binaryPath,
