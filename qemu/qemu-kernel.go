@@ -162,6 +162,15 @@ func kvmExists() bool {
 	if _, err := os.Stat("/dev/kvm"); err != nil {
 		return false
 	}
+
+	file, err := os.OpenFile("/dev/kvm", os.O_WRONLY, 0666)
+	if err != nil {
+		if os.IsPermission(err) {
+			return false
+		}
+	}
+	file.Close()
+
 	return true
 }
 
