@@ -59,6 +59,9 @@
 
 - Project is switch to use Go modules.
 
+- Now test.sh is used by default if copying is not implemented in
+  Makefile.
+
 ### Removed
 
 - *Kernel factory* is removed completely in favor of incremental
