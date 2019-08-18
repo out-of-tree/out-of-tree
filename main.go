@@ -201,6 +201,13 @@ func main() {
 	logMarkdownCommand := logCommand.Command("markdown", "Generate markdown statistics")
 	logMarkdownTag := logMarkdownCommand.Flag("tag", "Filter tag").Required().String()
 
+	packCommand := app.Command("pack", "Exploit pack test")
+	packAutogen := packCommand.Flag("autogen", "Kernel autogeneration").Bool()
+	packExploitRuns := packCommand.Flag("exploit-runs",
+		"Amount of runs of each exploit").Default("4").Int64()
+	packKernelRuns := packCommand.Flag("kernel-runs",
+		"Amount of runs of each kernel").Default("1").Int64()
+
 	err = checkRequiredUtils()
 	if err != nil {
 		log.Fatalln(err)
@@ -287,6 +294,9 @@ func main() {
 		err = logJSONHandler(db, *path, *logJSONTag)
 	case logMarkdownCommand.FullCommand():
 		err = logMarkdownHandler(db, *path, *logMarkdownTag)
+	case packCommand.FullCommand():
+		err = packHandler(db, *path, kcfg, *packAutogen,
+			*packExploitRuns, *packKernelRuns)
 	}
 
 	if err != nil {

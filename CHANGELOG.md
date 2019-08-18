@@ -45,6 +45,8 @@
 - Added non-regex way to set kernel version in .out-of-tree.toml (see
   examples).
 
+- New command `pack` that perform tests in subdirectories.
+
 ### Changed
 
 - Now if there's no base image found — out-of-tree will try to use
