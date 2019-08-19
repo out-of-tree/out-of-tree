@@ -96,6 +96,12 @@ func (d *Duration) UnmarshalTOML(data []byte) (err error) {
 	return
 }
 
+// MarshalTOML for Duration
+func (d Duration) MarshalTOML() (data []byte, err error) {
+	data = []byte(`"` + d.Duration.String() + `"`)
+	return
+}
+
 // Artifact is for .out-of-tree.toml
 type Artifact struct {
 	Name             string
