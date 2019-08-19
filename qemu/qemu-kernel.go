@@ -213,7 +213,6 @@ func (q *System) Start() (err error) {
 	qemuArgs := []string{"-snapshot", "-nographic",
 		"-hda", q.drivePath,
 		"-kernel", q.kernel.KernelPath,
-		"-cpu", "host",
 		"-smp", fmt.Sprintf("%d", q.Cpus),
 		"-m", fmt.Sprintf("%d", q.Memory),
 		"-device", "e1000,netdev=n1",
@@ -229,11 +228,11 @@ func (q *System) Start() (err error) {
 	}
 
 	if (q.arch == X86x64 || q.arch == X86x32) && kvmExists() {
-		qemuArgs = append(qemuArgs, "-enable-kvm")
+		qemuArgs = append(qemuArgs, "-enable-kvm", "-cpu", "host")
 	}
 
 	if q.arch == X86x64 && runtime.GOOS == "darwin" {
-		qemuArgs = append(qemuArgs, "-accel", "hvf")
+		qemuArgs = append(qemuArgs, "-accel", "hvf", "-cpu", "host")
 	}
 
 	qemuArgs = append(qemuArgs, "-append", q.cmdline())
