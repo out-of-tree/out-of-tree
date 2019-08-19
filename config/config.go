@@ -110,15 +110,15 @@ type Artifact struct {
 	SupportedKernels []KernelMask
 
 	Qemu struct {
-		CPUs    int
+		Cpus    int
 		Memory  int
 		Timeout Duration
 	}
 
 	Mitigations struct {
-		DisableSMEP  bool
-		DisableSMAP  bool
-		DisableKASLR bool
+		DisableSmep  bool
+		DisableSmap  bool
+		DisableKaslr bool
 	}
 }
 

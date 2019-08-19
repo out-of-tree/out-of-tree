@@ -307,16 +307,16 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	if ka.Qemu.Timeout.Duration != 0 {
 		q.Timeout = ka.Qemu.Timeout.Duration
 	}
-	if ka.Qemu.CPUs != 0 {
-		q.Cpus = ka.Qemu.CPUs
+	if ka.Qemu.Cpus != 0 {
+		q.Cpus = ka.Qemu.Cpus
 	}
 	if ka.Qemu.Memory != 0 {
 		q.Memory = ka.Qemu.Memory
 	}
 
-	q.SetKASLR(!ka.Mitigations.DisableKASLR)
-	q.SetSMEP(!ka.Mitigations.DisableSMEP)
-	q.SetSMAP(!ka.Mitigations.DisableSMAP)
+	q.SetKASLR(!ka.Mitigations.DisableKaslr)
+	q.SetSMEP(!ka.Mitigations.DisableSmep)
+	q.SetSMAP(!ka.Mitigations.DisableSmap)
 
 	err = q.Start()
 	if err != nil {
