@@ -105,6 +105,16 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 		return
 	}
 
+	if ka.Qemu.Cpus != 0 {
+		q.Cpus = ka.Qemu.Cpus
+	}
+	if ka.Qemu.Memory != 0 {
+		q.Memory = ka.Qemu.Memory
+	}
+
+	fmt.Printf("[*] SMP: %d CPUs\n", q.Cpus)
+	fmt.Printf("[*] Memory: %d MB\n", q.Memory)
+
 	q.SetKASLR(kaslr)
 
 	if !smep {
