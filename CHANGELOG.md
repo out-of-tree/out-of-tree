@@ -66,6 +66,8 @@
 
 - dmesg is not cleaned before the start of module/exploit anymore.
 
+- qemu/kvm will use all host cpu features.
+
 ### Removed
 
 - *Kernel factory* is removed completely in favor of incremental
