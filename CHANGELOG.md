@@ -47,6 +47,11 @@
 
 - New command `pack` that perform tests in subdirectories.
 
+- Added ability to disable kaslr/smep/smap for in artifact definition.
+
+- Added ability to change amount of memory/CPUs and set qemu timeout
+  in artifact definition (`.out-of-tree.toml`).
+
 ### Changed
 
 - Now if there's no base image found — out-of-tree will try to use

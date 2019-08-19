@@ -304,6 +304,20 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	}
 	q.Timeout = qemuTimeout
 
+	if ka.Qemu.Timeout.Duration != 0 {
+		q.Timeout = ka.Qemu.Timeout.Duration
+	}
+	if ka.Qemu.CPUs != 0 {
+		q.Cpus = ka.Qemu.CPUs
+	}
+	if ka.Qemu.Memory != 0 {
+		q.Memory = ka.Qemu.Memory
+	}
+
+	q.SetKASLR(!ka.Mitigations.DisableKASLR)
+	q.SetSMEP(!ka.Mitigations.DisableSMEP)
+	q.SetSMAP(!ka.Mitigations.DisableSMAP)
+
 	err = q.Start()
 	if err != nil {
 		log.Println("Qemu start error:", err)

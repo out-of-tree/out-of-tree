@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/naoina/toml"
 )
@@ -83,12 +84,36 @@ func (at ArtifactType) MarshalTOML() (data []byte, err error) {
 	return
 }
 
+// Duration type with toml unmarshalling support
+type Duration struct {
+	time.Duration
+}
+
+// UnmarshalTOML for Duration
+func (d *Duration) UnmarshalTOML(data []byte) (err error) {
+	duration := strings.Replace(string(data), "\"", "", -1)
+	d.Duration, err = time.ParseDuration(duration)
+	return
+}
+
 // Artifact is for .out-of-tree.toml
 type Artifact struct {
 	Name             string
 	Type             ArtifactType
 	SourcePath       string
 	SupportedKernels []KernelMask
+
+	Qemu struct {
+		CPUs    int
+		Memory  int
+		Timeout Duration
+	}
+
+	Mitigations struct {
+		DisableSMEP  bool
+		DisableSMAP  bool
+		DisableKASLR bool
+	}
 }
 
 func (ka Artifact) checkSupport(ki KernelInfo, km KernelMask) (
