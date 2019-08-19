@@ -402,6 +402,21 @@ func (q *System) SetSMAP(state bool) {
 	q.noSMAP = !state
 }
 
+// GetKASLR is retrieve KASLR settings
+func (q *System) GetKASLR() bool {
+	return !q.noKASLR
+}
+
+// GetSMEP is retrieve SMEP settings
+func (q *System) GetSMEP() bool {
+	return !q.noSMEP
+}
+
+// GetSMAP is retrieve SMAP settings
+func (q *System) GetSMAP() bool {
+	return !q.noSMAP
+}
+
 // GetSSHCommand returns command for connect to qemu machine over ssh
 func (q System) GetSSHCommand() (cmd string) {
 	addrPort := strings.Split(q.sshAddrPort, ":")

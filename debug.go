@@ -106,8 +106,18 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	}
 
 	q.SetKASLR(kaslr)
-	q.SetSMEP(smep)
-	q.SetSMAP(smap)
+
+	if !smep {
+		q.SetSMEP(false)
+	} else {
+		q.SetSMEP(!ka.Mitigations.DisableSmep)
+	}
+
+	if !smap {
+		q.SetSMAP(false)
+	} else {
+		q.SetSMAP(!ka.Mitigations.DisableSmap)
+	}
 
 	redgreen := func(name string, enabled bool) aurora.Value {
 		if enabled {
@@ -117,8 +127,10 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 		return aurora.BgRed(aurora.Gray(name))
 	}
 
-	fmt.Printf("[*] %s %s %s\n", redgreen("KASLR", kaslr),
-		redgreen("SMEP", smep), redgreen("SMAP", smap))
+	fmt.Printf("[*] %s %s %s\n",
+		redgreen("KASLR", q.GetKASLR()),
+		redgreen("SMEP", q.GetSMEP()),
+		redgreen("SMAP", q.GetSMAP()))
 
 	q.Debug(gdb)
 	coloredGdbAddress := aurora.BgGreen(aurora.Black(gdb))
