@@ -64,6 +64,8 @@
 - Now test.sh is used by default if copying is not implemented in
   Makefile.
 
+- dmesg is not cleaned before the start of module/exploit anymore.
+
 ### Removed
 
 - *Kernel factory* is removed completely in favor of incremental

@@ -101,23 +101,6 @@ func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 	return
 }
 
-func cleanDmesg(q *qemu.System) (err error) {
-	start := time.Now()
-	for {
-		_, err = q.Command("root", "dmesg -c")
-		if err == nil {
-			break
-		}
-		time.Sleep(time.Second)
-
-		if time.Now().After(start.Add(time.Minute)) {
-			err = errors.New("Can't connect to qemu")
-			break
-		}
-	}
-	return
-}
-
 func testKernelModule(q *qemu.System, ka config.Artifact,
 	test string) (output string, err error) {
 
@@ -356,11 +339,6 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	} else {
 		result.BuildArtifact = binaryPath
 		result.Build.Ok = true
-	}
-
-	err = cleanDmesg(q)
-	if err != nil {
-		return
 	}
 
 	if testPath == "" {
