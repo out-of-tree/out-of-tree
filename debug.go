@@ -83,7 +83,8 @@ func interactive(q *qemu.System) (err error) {
 }
 
 func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
-	dockerTimeout time.Duration, kaslr, smep, smap bool) (err error) {
+	dockerTimeout time.Duration, yekaslr, yesmep, yesmap,
+	nokaslr, nosmep, nosmap bool) (err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -115,18 +116,26 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	fmt.Printf("[*] SMP: %d CPUs\n", q.Cpus)
 	fmt.Printf("[*] Memory: %d MB\n", q.Memory)
 
-	q.SetKASLR(kaslr)
+	q.SetKASLR(false) // set KASLR to false by default because of gdb
+	q.SetSMEP(!ka.Mitigations.DisableSmep)
+	q.SetSMAP(!ka.Mitigations.DisableSmap)
 
-	if !smep {
-		q.SetSMEP(false)
-	} else {
-		q.SetSMEP(!ka.Mitigations.DisableSmep)
+	if yekaslr {
+		q.SetKASLR(true)
+	} else if nokaslr {
+		q.SetKASLR(false)
 	}
 
-	if !smap {
+	if yesmep {
+		q.SetSMEP(true)
+	} else if nosmep {
+		q.SetSMEP(false)
+	}
+
+	if yesmap {
+		q.SetSMAP(true)
+	} else if nosmap {
 		q.SetSMAP(false)
-	} else {
-		q.SetSMAP(!ka.Mitigations.DisableSmap)
 	}
 
 	redgreen := func(name string, enabled bool) aurora.Value {

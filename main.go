@@ -177,9 +177,13 @@ func main() {
 	debugFlagGDB := debugCommand.Flag("gdb", "Set gdb listen address")
 	debugGDB := debugFlagGDB.Default("tcp::1234").String()
 
-	kaslr := debugCommand.Flag("enable-kaslr", "Enable KASLR").Default("false").Bool()
-	nosmep := debugCommand.Flag("disable-smep", "Disable SMEP").Default("false").Bool()
-	nosmap := debugCommand.Flag("disable-smap", "Disable SMAP").Default("false").Bool()
+	yekaslr := debugCommand.Flag("enable-kaslr", "Enable KASLR").Bool()
+	yesmep := debugCommand.Flag("enable-smep", "Enable SMEP").Bool()
+	yesmap := debugCommand.Flag("enable-smap", "Enable SMAP").Bool()
+
+	nokaslr := debugCommand.Flag("disable-kaslr", "Disable KASLR").Bool()
+	nosmep := debugCommand.Flag("disable-smep", "Disable SMEP").Bool()
+	nosmap := debugCommand.Flag("disable-smap", "Disable SMAP").Bool()
 
 	bootstrapCommand := app.Command("bootstrap",
 		"Create directories && download images")
@@ -238,6 +242,18 @@ func main() {
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
+	if *yekaslr && *nokaslr {
+		log.Fatalln("Only one of disable/enable can be used at once")
+	}
+
+	if *yesmep && *nosmep {
+		log.Fatalln("Only one of disable/enable can be used at once")
+	}
+
+	if *yesmap && *nosmap {
+		log.Fatalln("Only one of disable/enable can be used at once")
+	}
+
 	kcfg, err := config.ReadKernelConfig(*kcfgPath)
 	if err != nil {
 		log.Println(err)
@@ -283,7 +299,8 @@ func main() {
 		err = genConfig(config.KernelExploit)
 	case debugCommand.FullCommand():
 		err = debugHandler(kcfg, *path, *debugKernel, *debugGDB,
-			*dockerTimeout, *kaslr, !*nosmep, !*nosmap)
+			*dockerTimeout, *yekaslr, *yesmep, *yesmap,
+			*nokaslr, *nosmep, *nosmap)
 	case bootstrapCommand.FullCommand():
 		err = bootstrapHandler()
 	case logQueryCommand.FullCommand():
