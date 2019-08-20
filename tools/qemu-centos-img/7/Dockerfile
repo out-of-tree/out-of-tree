@@ -47,7 +47,7 @@ ENV IMAGE=/shared/out_of_tree_centos_7.img
 
 RUN mkdir $IMAGEDIR
 
-# Must be runned with --privileged because of /dev/loop
+# Must be is run with --privileged because of /dev/loop
 CMD qemu-img create $IMAGE 2G && \
 	mkfs.ext4 -F $IMAGE && \
 	mount -o loop $IMAGE $IMAGEDIR && \
