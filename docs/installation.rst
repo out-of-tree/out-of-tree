@@ -55,10 +55,6 @@ Build *out-of-tree*::
   security implications. Check *Docker* documentation for more
   information.
 
-Bootstrap::
-
-  $ out-of-tree bootstrap
-
 Test that everything works::
 
   $ cd $GOPATH/src/code.dumpstack.io/tools/out-of-tree/examples/kernel-exploit

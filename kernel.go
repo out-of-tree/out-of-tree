@@ -259,13 +259,24 @@ func genInitrdPath(files []os.FileInfo, kname string) string {
 	return "unknown"
 }
 
-func genRootfsImage(d dockerImageInfo) string {
+func genRootfsImage(d dockerImageInfo, download bool) (rootfs string, err error) {
 	usr, err := user.Current()
 	if err != nil {
-		return fmt.Sprintln(err)
+		return
 	}
 	imageFile := d.ContainerName + ".img"
-	return usr.HomeDir + "/.out-of-tree/images/" + imageFile
+
+	imagesPath := usr.HomeDir + "/.out-of-tree/images/"
+	os.MkdirAll(imagesPath, os.ModePerm)
+
+	rootfs = imagesPath + imageFile
+	if !exists(rootfs) {
+		if download {
+			log.Println(imageFile, "not exists, start downloading...")
+			err = downloadImage(imagesPath, imageFile)
+		}
+	}
+	return
 }
 
 type dockerImageInfo struct {
@@ -309,7 +320,7 @@ func listDockerImages() (diis []dockerImageInfo, err error) {
 	return
 }
 
-func genHostKernels() (kcfg config.KernelConfig, err error) {
+func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 	si := sysinfo.SysInfo{}
 	si.GetSysInfo()
 
@@ -339,6 +350,11 @@ func genHostKernels() (kcfg config.KernelConfig, err error) {
 		}.DockerName(),
 	}
 
+	rootfs, err := genRootfsImage(dii, download)
+	if err != nil {
+		return
+	}
+
 	for _, k := range strings.Fields(string(rawOutput)) {
 		ki := config.KernelInfo{
 			DistroType:    distroType,
@@ -349,7 +365,7 @@ func genHostKernels() (kcfg config.KernelConfig, err error) {
 
 			KernelPath: kernelsBase + genKernelPath(files, k),
 			InitrdPath: kernelsBase + genInitrdPath(files, k),
-			RootFS:     genRootfsImage(dii),
+			RootFS:     rootfs,
 		}
 
 		vmlinux := "/usr/lib/debug/boot/vmlinux-" + k
@@ -364,12 +380,12 @@ func genHostKernels() (kcfg config.KernelConfig, err error) {
 	return
 }
 
-func updateKernelsCfg(host bool) (err error) {
+func updateKernelsCfg(host, download bool) (err error) {
 	newkcfg := config.KernelConfig{}
 
 	if host {
 		// Get host kernels
-		newkcfg, err = genHostKernels()
+		newkcfg, err = genHostKernels(download)
 		if err != nil {
 			return
 		}
@@ -382,7 +398,7 @@ func updateKernelsCfg(host bool) (err error) {
 	}
 
 	for _, d := range dockerImages {
-		err = genDockerKernels(d, &newkcfg)
+		err = genDockerKernels(d, &newkcfg, download)
 		if err != nil {
 			log.Println("gen kernels", d.ContainerName, ":", err)
 			continue
@@ -419,8 +435,8 @@ func updateKernelsCfg(host bool) (err error) {
 	return
 }
 
-func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig) (
-	err error) {
+func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
+	download bool) (err error) {
 
 	name := dii.ContainerName
 	cmd := exec.Command("docker", "run", name, "ls", "/lib/modules")
@@ -440,6 +456,11 @@ func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig) (
 		return
 	}
 
+	rootfs, err := genRootfsImage(dii, download)
+	if err != nil {
+		return
+	}
+
 	for _, k := range strings.Fields(string(rawOutput)) {
 		ki := config.KernelInfo{
 			DistroType:    dii.DistroType,
@@ -449,7 +470,7 @@ func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig) (
 
 			KernelPath: kernelsBase + genKernelPath(files, k),
 			InitrdPath: kernelsBase + genInitrdPath(files, k),
-			RootFS:     genRootfsImage(dii),
+			RootFS:     rootfs,
 		}
 		newkcfg.Kernels = append(newkcfg.Kernels, ki)
 	}
@@ -475,8 +496,15 @@ func shuffle(a []string) []string {
 	return a
 }
 
-func generateKernels(km config.KernelMask, max int64) (err error) {
+func generateKernels(km config.KernelMask, max int64, download bool) (err error) {
 	log.Println("Generating for kernel mask", km)
+
+	_, err = genRootfsImage(dockerImageInfo{ContainerName: km.DockerName()},
+		download)
+	if err != nil {
+		return
+	}
+
 	err = generateBaseDockerImage(km)
 	if err != nil {
 		return
@@ -519,7 +547,7 @@ func generateKernels(km config.KernelMask, max int64) (err error) {
 	return
 }
 
-func kernelAutogenHandler(workPath string, max int64, host bool) (err error) {
+func kernelAutogenHandler(workPath string, max int64, host, download bool) (err error) {
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
 		return
@@ -531,17 +559,17 @@ func kernelAutogenHandler(workPath string, max int64, host bool) (err error) {
 			return
 		}
 
-		err = generateKernels(sk, max)
+		err = generateKernels(sk, max, download)
 		if err != nil {
 			return
 		}
 	}
 
-	err = updateKernelsCfg(host)
+	err = updateKernelsCfg(host, download)
 	return
 }
 
-func kernelDockerRegenHandler(host bool) (err error) {
+func kernelDockerRegenHandler(host, download bool) (err error) {
 	dockerImages, err := listDockerImages()
 	if err != nil {
 		return
@@ -579,10 +607,10 @@ func kernelDockerRegenHandler(host bool) (err error) {
 		}
 	}
 
-	return updateKernelsCfg(host)
+	return updateKernelsCfg(host, download)
 }
 
-func kernelGenallHandler(distro, version string, host bool) (err error) {
+func kernelGenallHandler(distro, version string, host, download bool) (err error) {
 	distroType, err := config.NewDistroType(distro)
 	if err != nil {
 		return
@@ -593,10 +621,10 @@ func kernelGenallHandler(distro, version string, host bool) (err error) {
 		DistroRelease: version,
 		ReleaseMask:   ".*",
 	}
-	err = generateKernels(km, kernelsAll)
+	err = generateKernels(km, kernelsAll, download)
 	if err != nil {
 		return
 	}
 
-	return updateKernelsCfg(host)
+	return updateKernelsCfg(host, download)
 }

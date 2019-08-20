@@ -39,7 +39,6 @@ Also check out [docker post-installation steps](https://docs.docker.com/install/
 ## Build from source
 
     $ go get -u code.dumpstack.io/tools/out-of-tree
-    $ out-of-tree bootstrap
 
 Then you can check it on kernel module example:
 

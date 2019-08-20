@@ -53,6 +53,9 @@
 - Added ability to change amount of memory/CPUs and set qemu timeout
   in artifact definition (`.out-of-tree.toml`).
 
+- Now images downloading while `kernel autogen`, bootstrap is not
+  required anymore.
+
 ### Changed
 
 - Now if there's no base image found — out-of-tree will try to use
@@ -78,6 +81,9 @@
 
 - *Kernel factory* is removed completely in favor of incremental
   Dockerfiles.
+
+- `bootstrap` is not doing anything anymore. It'll be removed in next
+  release.
 
 ### Fixed
 

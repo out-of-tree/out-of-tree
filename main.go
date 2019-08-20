@@ -145,6 +145,8 @@ func main() {
 	pewTag := pewTagFlag.String()
 
 	kernelCommand := app.Command("kernel", "Manipulate kernels")
+	kernelNoDownload := kernelCommand.Flag("no-download",
+		"Do not download qemu image while kernel generation").Bool()
 	kernelUseHost := kernelCommand.Flag("host", "Use also host kernels").Bool()
 	kernelListCommand := kernelCommand.Command("list", "List kernels")
 	kernelAutogenCommand := kernelCommand.Command("autogen",
@@ -187,8 +189,7 @@ func main() {
 	nosmap := debugCommand.Flag("disable-smap", "Disable SMAP").Bool()
 	nokpti := debugCommand.Flag("disable-kpti", "Disable KPTI").Bool()
 
-	bootstrapCommand := app.Command("bootstrap",
-		"Create directories && download images")
+	bootstrapCommand := app.Command("bootstrap", "Apparently nothing")
 
 	logCommand := app.Command("log", "Logs")
 
@@ -209,6 +210,8 @@ func main() {
 
 	packCommand := app.Command("pack", "Exploit pack test")
 	packAutogen := packCommand.Flag("autogen", "Kernel autogeneration").Bool()
+	packNoDownload := packCommand.Flag("no-download",
+		"Do not download qemu image while kernel generation").Bool()
 	packExploitRuns := packCommand.Flag("exploit-runs",
 		"Amount of runs of each exploit").Default("4").Int64()
 	packKernelRuns := packCommand.Flag("kernel-runs",
@@ -226,12 +229,6 @@ func main() {
 		log.Println("\t1. Add user to group docker;")
 		log.Println("\t2. Run out-of-tree with sudo.")
 		os.Exit(1)
-	}
-
-	if !exists(usr.HomeDir + "/.out-of-tree/images") {
-		log.Println("No ~/.out-of-tree/images: " +
-			"Probably you need to run `out-of-tree bootstrap`" +
-			" for downloading basic images")
 	}
 
 	if !exists(usr.HomeDir + "/.out-of-tree/kernels.toml") {
@@ -290,11 +287,13 @@ func main() {
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():
-		err = kernelAutogenHandler(*path, *kernelAutogenMax, *kernelUseHost)
+		err = kernelAutogenHandler(*path, *kernelAutogenMax,
+			*kernelUseHost, !*kernelNoDownload)
 	case kernelDockerRegenCommand.FullCommand():
-		err = kernelDockerRegenHandler(*kernelUseHost)
+		err = kernelDockerRegenHandler(*kernelUseHost, !*kernelNoDownload)
 	case kernelGenallCommand.FullCommand():
-		err = kernelGenallHandler(*distro, *version, *kernelUseHost)
+		err = kernelGenallHandler(*distro, *version,
+			*kernelUseHost, !*kernelNoDownload)
 	case genModuleCommand.FullCommand():
 		err = genConfig(config.KernelModule)
 	case genExploitCommand.FullCommand():
@@ -304,7 +303,10 @@ func main() {
 			*dockerTimeout, *yekaslr, *yesmep, *yesmap, *yekpti,
 			*nokaslr, *nosmep, *nosmap, *nokpti)
 	case bootstrapCommand.FullCommand():
-		err = bootstrapHandler()
+		fmt.Println("bootstrap is no more required, " +
+			"now images downloading on-demand")
+		fmt.Println("please, remove it from any automation scripts, " +
+			"because it'll be removed in the next release")
 	case logQueryCommand.FullCommand():
 		err = logHandler(db, *path, *logTag, *logNum, *logRate)
 	case logDumpCommand.FullCommand():
@@ -315,7 +317,7 @@ func main() {
 		err = logMarkdownHandler(db, *path, *logMarkdownTag)
 	case packCommand.FullCommand():
 		err = packHandler(db, *path, kcfg, *packAutogen,
-			*packExploitRuns, *packKernelRuns)
+			!*packNoDownload, *packExploitRuns, *packKernelRuns)
 	}
 
 	if err != nil {

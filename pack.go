@@ -16,7 +16,7 @@ import (
 )
 
 func packHandler(db *sql.DB, path string, kcfg config.KernelConfig,
-	autogen bool, exploitRuns, kernelRuns int64) (err error) {
+	autogen, download bool, exploitRuns, kernelRuns int64) (err error) {
 
 	dockerTimeout := time.Minute
 	qemuTimeout := time.Minute
@@ -39,7 +39,7 @@ func packHandler(db *sql.DB, path string, kcfg config.KernelConfig,
 
 		if autogen {
 			var perRegex int64 = 1
-			err = kernelAutogenHandler(workPath, perRegex, false)
+			err = kernelAutogenHandler(workPath, perRegex, false, download)
 			if err != nil {
 				return
 			}
