@@ -56,6 +56,8 @@
 - Now images downloading while `kernel autogen`, bootstrap is not
   required anymore.
 
+- Support CentOS kernels.
+
 ### Changed
 
 - Now if there's no base image found — out-of-tree will try to use
