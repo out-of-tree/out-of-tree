@@ -66,6 +66,28 @@ func matchDebianHeadersPkg(container, mask string, generic bool) (
 	return
 }
 
+func matchCentOSDevelPkg(container, mask string, generic bool) (
+	pkgs []string, err error) {
+
+	cmd := "yum search kernel-devel --show-duplicates | " +
+		"grep '^kernel-devel' | cut -d ' ' -f 1"
+	output, err := dockerRun(time.Minute, container, "/tmp", cmd)
+	if err != nil {
+		return
+	}
+
+	r, err := regexp.Compile("kernel-devel-" + mask)
+	if err != nil {
+		return
+	}
+
+	for _, k := range r.FindAll([]byte(output), -1) {
+		pkgs = append(pkgs, string(k))
+	}
+
+	return
+}
+
 func dockerImagePath(sk config.KernelMask) (path string, err error) {
 	usr, err := user.Current()
 	if err != nil {
@@ -74,6 +96,16 @@ func dockerImagePath(sk config.KernelMask) (path string, err error) {
 
 	path = usr.HomeDir + "/.out-of-tree/"
 	path += sk.DistroType.String() + "/" + sk.DistroRelease
+	return
+}
+
+func vsyscallAvailable() (available bool, err error) {
+	buf, err := ioutil.ReadFile("/proc/self/maps")
+	if err != nil {
+		return
+	}
+
+	available = strings.Contains(string(buf), "[vsyscall]")
 	return
 }
 
@@ -101,6 +133,11 @@ func generateBaseDockerImage(sk config.KernelMask) (err error) {
 		sk.DistroRelease,
 	)
 
+	vsyscall, err := vsyscallAvailable()
+	if err != nil {
+		return
+	}
+
 	switch sk.DistroType {
 	case config.Ubuntu:
 		d += "ENV DEBIAN_FRONTEND=noninteractive\n"
@@ -111,6 +148,24 @@ func generateBaseDockerImage(sk config.KernelMask) (err error) {
 			d += "RUN apt-get install -y libseccomp-dev\n"
 		}
 		d += "RUN mkdir /lib/modules\n"
+	case config.CentOS:
+		if sk.DistroRelease < "7" && !vsyscall {
+			log.Println("Old CentOS requires `vsyscall=emulate` " +
+				"on the latest kernels")
+			log.Println("Check out `A note about vsyscall` " +
+				"at https://hub.docker.com/_/centos")
+			log.Println("See also https://lwn.net/Articles/446528/")
+			err = fmt.Errorf("vsyscall is not available")
+			return
+		}
+
+		// enable rpms from old minor releases
+		d += "RUN sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Vault.repo\n"
+		// do not remove old kernels
+		d += "RUN sed -i 's;installonly_limit=;installonly_limit=100500;' /etc/yum.conf\n"
+		d += "RUN yum -y update\n"
+		d += "RUN yum -y groupinstall 'Development Tools'\n"
+		d += "RUN yum -y install deltarpm\n"
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
@@ -156,12 +211,32 @@ func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
 		return
 	}
 
-	imagepkg := strings.Replace(pkgname, "headers", "image", -1)
+	var s string
 
-	log.Printf("Start adding kernel %s for %s:%s",
-		imagepkg, sk.DistroType.String(), sk.DistroRelease)
+	switch sk.DistroType {
+	case config.Ubuntu:
+		imagepkg := strings.Replace(pkgname, "headers", "image", -1)
 
-	s := fmt.Sprintf("RUN apt-get install -y %s %s\n", imagepkg, pkgname)
+		log.Printf("Start adding kernel %s for %s:%s",
+			imagepkg, sk.DistroType.String(), sk.DistroRelease)
+
+		s = fmt.Sprintf("RUN apt-get install -y %s %s\n", imagepkg,
+			pkgname)
+	case config.CentOS:
+		imagepkg := strings.Replace(pkgname, "-devel", "", -1)
+
+		log.Printf("Start adding kernel %s for %s:%s",
+			imagepkg, sk.DistroType.String(), sk.DistroRelease)
+
+		version := strings.Replace(pkgname, "kernel-devel-", "", -1)
+
+		s = fmt.Sprintf("RUN yum -y install %s %s\n", imagepkg,
+			pkgname)
+		s += fmt.Sprintf("RUN dracut --add-drivers 'e1000 ext4' -f "+
+			"/boot/initramfs-%s.img %s\n", version, version)
+	default:
+		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
+	}
 
 	err = ioutil.WriteFile(imagePath+"/Dockerfile",
 		append(raw, []byte(s)...), 0644)
@@ -239,7 +314,7 @@ func copyKernels(name string) (err error) {
 
 func genKernelPath(files []os.FileInfo, kname string) string {
 	for _, file := range files {
-		if strings.Contains(file.Name(), "vmlinuz") {
+		if strings.HasPrefix(file.Name(), "vmlinuz") {
 			if strings.Contains(file.Name(), kname) {
 				return file.Name()
 			}
@@ -250,7 +325,9 @@ func genKernelPath(files []os.FileInfo, kname string) string {
 
 func genInitrdPath(files []os.FileInfo, kname string) string {
 	for _, file := range files {
-		if strings.Contains(file.Name(), "initrd") {
+		if strings.HasPrefix(file.Name(), "initrd") ||
+			strings.HasPrefix(file.Name(), "initramfs") {
+
 			if strings.Contains(file.Name(), kname) {
 				return file.Name()
 			}
@@ -511,8 +588,16 @@ func generateKernels(km config.KernelMask, max int64, download bool) (err error)
 	}
 
 	var pkgs []string
-	pkgs, err = matchDebianHeadersPkg(km.DockerName(),
-		km.ReleaseMask, true)
+	switch km.DistroType {
+	case config.Ubuntu:
+		pkgs, err = matchDebianHeadersPkg(km.DockerName(),
+			km.ReleaseMask, true)
+	case config.CentOS:
+		pkgs, err = matchCentOSDevelPkg(km.DockerName(),
+			km.ReleaseMask, true)
+	default:
+		err = fmt.Errorf("%s not yet supported", km.DistroType.String())
+	}
 	if err != nil {
 		return
 	}
