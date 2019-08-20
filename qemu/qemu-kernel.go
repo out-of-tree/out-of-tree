@@ -75,6 +75,7 @@ type System struct {
 	noKASLR bool
 	noSMEP  bool
 	noSMAP  bool
+	noKPTI  bool
 
 	// Timeout works after Start invocation
 	Timeout         time.Duration
@@ -200,6 +201,10 @@ func (q System) cmdline() (s string) {
 
 	if q.noSMAP {
 		s += " nosmap"
+	}
+
+	if q.noKPTI {
+		s += " nokpti"
 	}
 
 	return
@@ -402,6 +407,11 @@ func (q *System) SetSMAP(state bool) {
 	q.noSMAP = !state
 }
 
+// SetKPTI is changing KPTI state through kernel boot args
+func (q *System) SetKPTI(state bool) {
+	q.noKPTI = !state
+}
+
 // GetKASLR is retrieve KASLR settings
 func (q *System) GetKASLR() bool {
 	return !q.noKASLR
@@ -415,6 +425,11 @@ func (q *System) GetSMEP() bool {
 // GetSMAP is retrieve SMAP settings
 func (q *System) GetSMAP() bool {
 	return !q.noSMAP
+}
+
+// GetKPTI is retrieve KPTI settings
+func (q *System) GetKPTI() bool {
+	return !q.noKPTI
 }
 
 // GetSSHCommand returns command for connect to qemu machine over ssh

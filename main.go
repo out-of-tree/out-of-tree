@@ -180,10 +180,12 @@ func main() {
 	yekaslr := debugCommand.Flag("enable-kaslr", "Enable KASLR").Bool()
 	yesmep := debugCommand.Flag("enable-smep", "Enable SMEP").Bool()
 	yesmap := debugCommand.Flag("enable-smap", "Enable SMAP").Bool()
+	yekpti := debugCommand.Flag("enable-kpti", "Enable KPTI").Bool()
 
 	nokaslr := debugCommand.Flag("disable-kaslr", "Disable KASLR").Bool()
 	nosmep := debugCommand.Flag("disable-smep", "Disable SMEP").Bool()
 	nosmap := debugCommand.Flag("disable-smap", "Disable SMAP").Bool()
+	nokpti := debugCommand.Flag("disable-kpti", "Disable KPTI").Bool()
 
 	bootstrapCommand := app.Command("bootstrap",
 		"Create directories && download images")
@@ -299,8 +301,8 @@ func main() {
 		err = genConfig(config.KernelExploit)
 	case debugCommand.FullCommand():
 		err = debugHandler(kcfg, *path, *debugKernel, *debugGDB,
-			*dockerTimeout, *yekaslr, *yesmep, *yesmap,
-			*nokaslr, *nosmep, *nosmap)
+			*dockerTimeout, *yekaslr, *yesmep, *yesmap, *yekpti,
+			*nokaslr, *nosmep, *nosmap, *nokpti)
 	case bootstrapCommand.FullCommand():
 		err = bootstrapHandler()
 	case logQueryCommand.FullCommand():

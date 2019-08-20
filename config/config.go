@@ -119,6 +119,7 @@ type Artifact struct {
 		DisableSmep  bool
 		DisableSmap  bool
 		DisableKaslr bool
+		DisableKpti  bool
 	}
 }
 

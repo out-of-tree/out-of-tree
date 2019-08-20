@@ -83,8 +83,8 @@ func interactive(q *qemu.System) (err error) {
 }
 
 func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
-	dockerTimeout time.Duration, yekaslr, yesmep, yesmap,
-	nokaslr, nosmep, nosmap bool) (err error) {
+	dockerTimeout time.Duration, yekaslr, yesmep, yesmap, yekpti,
+	nokaslr, nosmep, nosmap, nokpti bool) (err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -113,12 +113,10 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 		q.Memory = ka.Qemu.Memory
 	}
 
-	fmt.Printf("[*] SMP: %d CPUs\n", q.Cpus)
-	fmt.Printf("[*] Memory: %d MB\n", q.Memory)
-
 	q.SetKASLR(false) // set KASLR to false by default because of gdb
 	q.SetSMEP(!ka.Mitigations.DisableSmep)
 	q.SetSMAP(!ka.Mitigations.DisableSmap)
+	q.SetKPTI(!ka.Mitigations.DisableKpti)
 
 	if yekaslr {
 		q.SetKASLR(true)
@@ -138,6 +136,12 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 		q.SetSMAP(false)
 	}
 
+	if yekpti {
+		q.SetKPTI(true)
+	} else if nokpti {
+		q.SetKPTI(false)
+	}
+
 	redgreen := func(name string, enabled bool) aurora.Value {
 		if enabled {
 			return aurora.BgGreen(aurora.Black(name))
@@ -146,10 +150,14 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 		return aurora.BgRed(aurora.Gray(name))
 	}
 
-	fmt.Printf("[*] %s %s %s\n",
+	fmt.Printf("[*] %s %s %s %s\n",
 		redgreen("KASLR", q.GetKASLR()),
 		redgreen("SMEP", q.GetSMEP()),
-		redgreen("SMAP", q.GetSMAP()))
+		redgreen("SMAP", q.GetSMAP()),
+		redgreen("KPTI", q.GetKPTI()))
+
+	fmt.Printf("[*] SMP: %d CPUs\n", q.Cpus)
+	fmt.Printf("[*] Memory: %d MB\n", q.Memory)
 
 	q.Debug(gdb)
 	coloredGdbAddress := aurora.BgGreen(aurora.Black(gdb))

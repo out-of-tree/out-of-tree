@@ -32,8 +32,8 @@
 - Now debugging environment is automatically looking for debug
   kernel on the host system.
 
-- Added ability to enable/disable kaslr/smep/smap for debugging by
-  command line flags.
+- Added ability to enable/disable kaslr/smep/smap/kpti for debugging
+  by command line flags.
 
 - New parameter `--threads=N` is added for `pew` and allows to
   specify maximum number of threads that will be used for parallel
@@ -47,7 +47,8 @@
 
 - New command `pack` that perform tests in subdirectories.
 
-- Added ability to disable kaslr/smep/smap for in artifact definition.
+- Added ability to disable kaslr/smep/smap/kpti for in artifact
+  definition.
 
 - Added ability to change amount of memory/CPUs and set qemu timeout
   in artifact definition (`.out-of-tree.toml`).
