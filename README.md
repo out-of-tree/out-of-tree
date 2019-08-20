@@ -80,6 +80,13 @@ Generate all kernels
 
     $ out-of-tree kernel genall --distro Ubuntu --ver 16.04
 
+
+## Troubleshooting
+
+If anything happens that you cannot solve -- just remove `$HOME/.out-of-tree`.
+
+But it'll be better if you'll write the bug report.
+
 ## Development
 
 Read [Qemu API](qemu/README.md).
