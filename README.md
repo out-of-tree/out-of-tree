@@ -9,6 +9,8 @@
 
 out-of-tree kernel {module, exploit} development tool
 
+out-of-tree is for automating some routine actions for creating development environments for debugging kernel modules and exploits, generating reliability statistics for exploits, and also provides the ability to easily integrate into CI (Continuous Integration).
+
 ![Screenshot](https://cloudflare-ipfs.com/ipfs/Qmb88fgdDjbWkxz91sWsgmoZZNfVThnCtj37u3mF2s3T3T)
 
 ## Requirements
