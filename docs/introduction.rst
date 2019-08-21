@@ -54,7 +54,7 @@ Overview
 
     $ out-of-tree debug --kernel 'Ubuntu:4.15.0-58-generic'
     [*] KASLR SMEP SMAP
-    [*] gdb runned on tcp::1234
+    [*] gdb is listening on tcp::1234
     [*] build result copied to /tmp/exploit
 
     ssh -o StrictHostKeyChecking=no -p 29308 root@127.133.45.236

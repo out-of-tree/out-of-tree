@@ -161,7 +161,7 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 
 	q.Debug(gdb)
 	coloredGdbAddress := aurora.BgGreen(aurora.Black(gdb))
-	fmt.Printf("[*] gdb runned on %s\n", coloredGdbAddress)
+	fmt.Printf("[*] gdb is listening on %s\n", coloredGdbAddress)
 
 	err = q.Start()
 	if err != nil {
