@@ -60,7 +60,7 @@ type Kernel struct {
 	InitrdPath string
 }
 
-// System describe qemu parameters and is run process
+// System describe qemu parameters and runned process
 type System struct {
 	arch      arch
 	kernel    Kernel
@@ -86,7 +86,7 @@ type System struct {
 	Died        bool
 	sshAddrPort string
 
-	// accessible while qemu is is run
+	// accessible while qemu is runned
 	cmd  *exec.Cmd
 	pipe struct {
 		stdin  io.WriteCloser
