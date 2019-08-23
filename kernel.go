@@ -147,7 +147,7 @@ func generateBaseDockerImage(sk config.KernelMask) (err error) {
 		if sk.DistroRelease >= "14.04" {
 			d += "RUN apt-get install -y libseccomp-dev\n"
 		}
-		d += "RUN mkdir /lib/modules\n"
+		d += "RUN mkdir -p /lib/modules\n"
 	case config.CentOS:
 		if sk.DistroRelease < "7" && !vsyscall {
 			log.Println("Old CentOS requires `vsyscall=emulate` " +
