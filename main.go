@@ -95,25 +95,27 @@ func main() {
 	}
 	os.MkdirAll(usr.HomeDir+"/.out-of-tree", os.ModePerm)
 
-	defaultKcfgPath := usr.HomeDir + "/.out-of-tree/kernels.toml"
+	confPath := usr.HomeDir + "/.out-of-tree/out-of-tree.toml"
+	conf, err := config.ReadOutOfTreeConf(confPath)
+	if err != nil {
+		return
+	}
 
 	kcfgPathFlag := app.Flag("kernels", "Path to main kernels config")
-	kcfgPath := kcfgPathFlag.Default(defaultKcfgPath).String()
+	kcfgPath := kcfgPathFlag.Default(conf.Kernels).String()
 
-	defaultDbPath := usr.HomeDir + "/.out-of-tree/db.sqlite"
 	dbPathFlag := app.Flag("db", "Path to database")
-	dbPath := dbPathFlag.Default(defaultDbPath).String()
+	dbPath := dbPathFlag.Default(conf.Database).String()
 
-	defaultUserKcfgPath := usr.HomeDir + "/.out-of-tree/kernels.user.toml"
 	userKcfgPathFlag := app.Flag("user-kernels", "User kernels config")
 	userKcfgPathEnv := userKcfgPathFlag.Envar("OUT_OF_TREE_KCFG")
-	userKcfgPath := userKcfgPathEnv.Default(defaultUserKcfgPath).String()
+	userKcfgPath := userKcfgPathEnv.Default(conf.UserKernels).String()
 
 	qemuTimeoutFlag := app.Flag("qemu-timeout", "Timeout for qemu")
-	qemuTimeout := qemuTimeoutFlag.Default("1m").Duration()
+	qemuTimeout := qemuTimeoutFlag.Default(conf.Qemu.Timeout).Duration()
 
 	dockerTimeoutFlag := app.Flag("docker-timeout", "Timeout for docker")
-	dockerTimeout := dockerTimeoutFlag.Default("1m").Duration()
+	dockerTimeout := dockerTimeoutFlag.Default(conf.Docker.Timeout).Duration()
 
 	pewCommand := app.Command("pew", "Build, run and test module/exploit")
 
