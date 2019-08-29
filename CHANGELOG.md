@@ -4,6 +4,22 @@
 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Global configuration file (~/.out-of-tree/out-of-tree.toml) allow to
+  set up default values for settings.
+
+- rootfs generator for Ubuntu 14.04.
+
+### Fixed
+
+- Spelling in output.
+
+- Now kernel generation will not fail if there are no directory
+  /lib/modules inside the container.
+
 ## [1.0.0] 2019-08-20
 
 ### Added
