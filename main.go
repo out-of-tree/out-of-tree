@@ -117,6 +117,9 @@ func main() {
 	dockerTimeoutFlag := app.Flag("docker-timeout", "Timeout for docker")
 	dockerTimeout := dockerTimeoutFlag.Default(conf.Docker.Timeout).Duration()
 
+	dockerRegistryFlag := app.Flag("docker-registry", "Registry for docker")
+	dockerRegistry := dockerRegistryFlag.Default(conf.Docker.Registry).String()
+
 	pewCommand := app.Command("pew", "Build, run and test module/exploit")
 
 	pewMax := pewCommand.Flag("max", "Test no more than X kernels").
@@ -289,12 +292,12 @@ func main() {
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():
-		err = kernelAutogenHandler(*path, *kernelAutogenMax,
-			*kernelUseHost, !*kernelNoDownload)
+		err = kernelAutogenHandler(*path, *dockerRegistry,
+			*kernelAutogenMax, *kernelUseHost, !*kernelNoDownload)
 	case kernelDockerRegenCommand.FullCommand():
 		err = kernelDockerRegenHandler(*kernelUseHost, !*kernelNoDownload)
 	case kernelGenallCommand.FullCommand():
-		err = kernelGenallHandler(*distro, *version,
+		err = kernelGenallHandler(*distro, *version, *dockerRegistry,
 			*kernelUseHost, !*kernelNoDownload)
 	case genModuleCommand.FullCommand():
 		err = genConfig(config.KernelModule)
@@ -318,7 +321,7 @@ func main() {
 	case logMarkdownCommand.FullCommand():
 		err = logMarkdownHandler(db, *path, *logMarkdownTag)
 	case packCommand.FullCommand():
-		err = packHandler(db, *path, kcfg, *packAutogen,
+		err = packHandler(db, *path, *dockerRegistry, kcfg, *packAutogen,
 			!*packNoDownload, *packExploitRuns, *packKernelRuns)
 	}
 

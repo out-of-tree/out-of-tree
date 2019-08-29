@@ -13,6 +13,8 @@
 
 - rootfs generator for Ubuntu 14.04.
 
+- Parameter for setting up docker registry server.
+
 ### Fixed
 
 - Spelling in output.
