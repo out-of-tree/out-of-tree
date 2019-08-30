@@ -84,7 +84,7 @@ func main() {
 	)
 
 	app.Author("Mikhail Klementev <root@dumpstack.io>")
-	app.Version("1.0.1")
+	app.Version("1.1.0")
 
 	pathFlag := app.Flag("path", "Path to work directory")
 	path := pathFlag.Default(".").ExistingDir()
