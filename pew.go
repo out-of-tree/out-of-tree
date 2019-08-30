@@ -391,7 +391,8 @@ func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
 }
 
 func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
-	testPath string, qemuTimeout, dockerTimeout time.Duration,
+	testPath string, stop time.Time,
+	qemuTimeout, dockerTimeout time.Duration,
 	max, runs int64, dist, tag string, threads int,
 	db *sql.DB) (err error) {
 
@@ -413,6 +414,9 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 			found = true
 			max--
 			for i := int64(0); i < runs; i++ {
+				if !stop.IsZero() && time.Now().After(stop) {
+					break
+				}
 				swg.Add()
 				go whatever(&swg, ka, kernel, binaryPath,
 					testPath, qemuTimeout, dockerTimeout,
@@ -468,9 +472,10 @@ func genAllKernels() (sk []config.KernelMask, err error) {
 	return
 }
 
+// TODO: Now too many parameters, move all of them to some structure
 func pewHandler(kcfg config.KernelConfig,
 	workPath, ovrrdKrnl, binary, test string, guess bool,
-	qemuTimeout, dockerTimeout time.Duration,
+	stop time.Time, qemuTimeout, dockerTimeout time.Duration,
 	max, runs int64, dist, tag string, threads int,
 	db *sql.DB) (err error) {
 
@@ -500,7 +505,8 @@ func pewHandler(kcfg config.KernelConfig,
 		}
 	}
 
-	err = performCI(ka, kcfg, binary, test, qemuTimeout, dockerTimeout,
+	err = performCI(ka, kcfg, binary, test,
+		stop, qemuTimeout, dockerTimeout,
 		max, runs, dist, tag, threads, db)
 	if err != nil {
 		return

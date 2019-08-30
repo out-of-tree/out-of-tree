@@ -15,7 +15,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
-func packHandler(db *sql.DB, path, registry string,
+func packHandler(db *sql.DB, path, registry string, stop time.Time,
 	commands []config.DockerCommand, kcfg config.KernelConfig,
 	autogen, download bool, exploitRuns, kernelRuns int64) (err error) {
 
@@ -50,7 +50,7 @@ func packHandler(db *sql.DB, path, registry string,
 		log.Println(f.Name())
 
 		pewHandler(kcfg, workPath, "", "", "", false,
-			dockerTimeout, qemuTimeout,
+			stop, dockerTimeout, qemuTimeout,
 			kernelRuns, exploitRuns, pathDevNull, tag, threads, db)
 	}
 

@@ -111,6 +111,9 @@ func main() {
 	userKcfgPathEnv := userKcfgPathFlag.Envar("OUT_OF_TREE_KCFG")
 	userKcfgPath := userKcfgPathEnv.Default(conf.UserKernels).String()
 
+	timeoutFlag := app.Flag("timeout", "Timeout after tool will not spawn new tests")
+	timeout := timeoutFlag.Duration()
+
 	qemuTimeoutFlag := app.Flag("qemu-timeout", "Timeout for qemu")
 	qemuTimeout := qemuTimeoutFlag.Default(conf.Qemu.Timeout).Duration()
 
@@ -287,10 +290,15 @@ func main() {
 	}
 	defer db.Close()
 
+	stop := time.Time{} // never stop
+	if *timeout != 0 {
+		stop = time.Now().Add(*timeout)
+	}
+
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case pewCommand.FullCommand():
 		err = pewHandler(kcfg, *path, *pewKernel, *pewBinary,
-			*pewTest, *pewGuess, *qemuTimeout, *dockerTimeout,
+			*pewTest, *pewGuess, stop, *qemuTimeout, *dockerTimeout,
 			*pewMax, *pewRuns, *pewDist, *pewTag, *pewThreads, db)
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
@@ -326,7 +334,7 @@ func main() {
 	case logMarkdownCommand.FullCommand():
 		err = logMarkdownHandler(db, *path, *logMarkdownTag)
 	case packCommand.FullCommand():
-		err = packHandler(db, *path, *dockerRegistry,
+		err = packHandler(db, *path, *dockerRegistry, stop,
 			conf.Docker.Commands, kcfg, *packAutogen,
 			!*packNoDownload, *packExploitRuns, *packKernelRuns)
 	}

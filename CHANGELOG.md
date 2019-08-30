@@ -18,6 +18,11 @@
 - Support for (distro-specific) custom docker commands that will be
   executed before the base template.
 
+- Parameter for setting up a reliability threshold for exit code.
+
+- Parameter for setting up global timeout, after which no new tasks
+  will be started.
+
 ### Fixed
 
 - Spelling in output.
