@@ -26,7 +26,17 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
-var somethingFailed = false
+type runstate struct {
+	Overall, Success float64
+}
+
+var (
+	state runstate
+)
+
+func successRate(state runstate) float64 {
+	return state.Success / state.Overall
+}
 
 const pathDevNull = "/dev/null"
 
@@ -134,11 +144,12 @@ func testKernelExploit(q *qemu.System, ka config.Artifact,
 }
 
 func genOkFail(name string, ok bool) (aurv aurora.Value) {
+	state.Overall += 1
 	if ok {
+		state.Success += 1
 		s := " " + name + " SUCCESS "
 		aurv = aurora.BgGreen(aurora.Black(s))
 	} else {
-		somethingFailed = true
 		s := " " + name + " FAILURE "
 		aurv = aurora.BgRed(aurora.Gray(aurora.Bold(s)))
 	}

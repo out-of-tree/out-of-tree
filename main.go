@@ -120,6 +120,9 @@ func main() {
 	dockerRegistryFlag := app.Flag("docker-registry", "Registry for docker")
 	dockerRegistry := dockerRegistryFlag.Default(conf.Docker.Registry).String()
 
+	thresholdFlag := app.Flag("threshold", "Reliablity threshold for exit code")
+	threshold := thresholdFlag.Default("1.00").Float64()
+
 	pewCommand := app.Command("pew", "Build, run and test module/exploit")
 
 	pewMax := pewCommand.Flag("max", "Test no more than X kernels").
@@ -332,7 +335,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	if somethingFailed {
+	if successRate(state) < *threshold {
 		os.Exit(1)
 	}
 }
