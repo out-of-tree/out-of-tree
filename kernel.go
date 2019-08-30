@@ -109,7 +109,9 @@ func vsyscallAvailable() (available bool, err error) {
 	return
 }
 
-func generateBaseDockerImage(registry string, sk config.KernelMask) (err error) {
+func generateBaseDockerImage(registry string, commands []config.DockerCommand,
+	sk config.KernelMask) (err error) {
+
 	imagePath, err := dockerImagePath(sk)
 	if err != nil {
 		return
@@ -141,6 +143,21 @@ func generateBaseDockerImage(registry string, sk config.KernelMask) (err error) 
 	vsyscall, err := vsyscallAvailable()
 	if err != nil {
 		return
+	}
+
+	for _, c := range commands {
+		switch c.DistroType {
+		case config.Ubuntu:
+			d += "RUN " + c.Command + "\n"
+		case config.CentOS:
+			d += "RUN " + c.Command + "\n"
+		case config.Debian:
+			d += "RUN " + c.Command + "\n"
+		default:
+			err = fmt.Errorf("%s not yet supported",
+				sk.DistroType.String())
+			return
+		}
 	}
 
 	switch sk.DistroType {
@@ -578,7 +595,8 @@ func shuffle(a []string) []string {
 	return a
 }
 
-func generateKernels(km config.KernelMask, registry string, max int64,
+func generateKernels(km config.KernelMask, registry string,
+	commands []config.DockerCommand, max int64,
 	download bool) (err error) {
 
 	log.Println("Generating for kernel mask", km)
@@ -589,7 +607,7 @@ func generateKernels(km config.KernelMask, registry string, max int64,
 		return
 	}
 
-	err = generateBaseDockerImage(registry, km)
+	err = generateBaseDockerImage(registry, commands, km)
 	if err != nil {
 		return
 	}
@@ -639,8 +657,9 @@ func generateKernels(km config.KernelMask, registry string, max int64,
 	return
 }
 
-func kernelAutogenHandler(workPath, registry string, max int64, host,
-	download bool) (err error) {
+func kernelAutogenHandler(workPath, registry string,
+	commands []config.DockerCommand,
+	max int64, host, download bool) (err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -653,7 +672,7 @@ func kernelAutogenHandler(workPath, registry string, max int64, host,
 			return
 		}
 
-		err = generateKernels(sk, registry, max, download)
+		err = generateKernels(sk, registry, commands, max, download)
 		if err != nil {
 			return
 		}
@@ -704,8 +723,8 @@ func kernelDockerRegenHandler(host, download bool) (err error) {
 	return updateKernelsCfg(host, download)
 }
 
-func kernelGenallHandler(distro, version, registry string, host,
-	download bool) (err error) {
+func kernelGenallHandler(distro, version, registry string,
+	commands []config.DockerCommand, host, download bool) (err error) {
 
 	distroType, err := config.NewDistroType(distro)
 	if err != nil {
@@ -717,7 +736,7 @@ func kernelGenallHandler(distro, version, registry string, host,
 		DistroRelease: version,
 		ReleaseMask:   ".*",
 	}
-	err = generateKernels(km, registry, kernelsAll, download)
+	err = generateKernels(km, registry, commands, kernelsAll, download)
 	if err != nil {
 		return
 	}

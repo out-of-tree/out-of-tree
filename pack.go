@@ -15,7 +15,8 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
-func packHandler(db *sql.DB, path, registry string, kcfg config.KernelConfig,
+func packHandler(db *sql.DB, path, registry string,
+	commands []config.DockerCommand, kcfg config.KernelConfig,
 	autogen, download bool, exploitRuns, kernelRuns int64) (err error) {
 
 	dockerTimeout := time.Minute
@@ -40,7 +41,7 @@ func packHandler(db *sql.DB, path, registry string, kcfg config.KernelConfig,
 		if autogen {
 			var perRegex int64 = 1
 			err = kernelAutogenHandler(workPath, registry,
-				perRegex, false, download)
+				commands, perRegex, false, download)
 			if err != nil {
 				return
 			}

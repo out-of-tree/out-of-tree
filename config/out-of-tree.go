@@ -10,6 +10,11 @@ import (
 	"github.com/naoina/toml"
 )
 
+type DockerCommand struct {
+	DistroType DistroType
+	Command    string
+}
+
 type OutOfTree struct {
 	Kernels     string
 	UserKernels string
@@ -23,6 +28,10 @@ type OutOfTree struct {
 	Docker struct {
 		Timeout  string
 		Registry string
+
+		// Commands that will be executed before
+		// the base layer of Dockerfile
+		Commands []DockerCommand
 	}
 }
 

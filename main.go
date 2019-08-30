@@ -293,11 +293,13 @@ func main() {
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():
 		err = kernelAutogenHandler(*path, *dockerRegistry,
-			*kernelAutogenMax, *kernelUseHost, !*kernelNoDownload)
+			conf.Docker.Commands, *kernelAutogenMax,
+			*kernelUseHost, !*kernelNoDownload)
 	case kernelDockerRegenCommand.FullCommand():
 		err = kernelDockerRegenHandler(*kernelUseHost, !*kernelNoDownload)
 	case kernelGenallCommand.FullCommand():
-		err = kernelGenallHandler(*distro, *version, *dockerRegistry,
+		err = kernelGenallHandler(*distro, *version,
+			*dockerRegistry, conf.Docker.Commands,
 			*kernelUseHost, !*kernelNoDownload)
 	case genModuleCommand.FullCommand():
 		err = genConfig(config.KernelModule)
@@ -321,7 +323,8 @@ func main() {
 	case logMarkdownCommand.FullCommand():
 		err = logMarkdownHandler(db, *path, *logMarkdownTag)
 	case packCommand.FullCommand():
-		err = packHandler(db, *path, *dockerRegistry, kcfg, *packAutogen,
+		err = packHandler(db, *path, *dockerRegistry,
+			conf.Docker.Commands, kcfg, *packAutogen,
 			!*packNoDownload, *packExploitRuns, *packKernelRuns)
 	}
 

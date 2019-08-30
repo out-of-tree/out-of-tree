@@ -15,6 +15,9 @@
 
 - Parameter for setting up docker registry server.
 
+- Support for (distro-specific) custom docker commands that will be
+  executed before the base template.
+
 ### Fixed
 
 - Spelling in output.
