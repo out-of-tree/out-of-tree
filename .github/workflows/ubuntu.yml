@@ -1,0 +1,23 @@
+name: Ubuntu
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: go build
+
+    - name: Install dependencies for tests
+      run: |
+        sudo apt-get update
+        sudo apt-get install qemu
+
+    - name: Bootstrap
+      run: ./tools/qemu-debian-img/bootstrap.sh
+
+    - name: Test
+      run: go test -parallel 1 -v ./...
