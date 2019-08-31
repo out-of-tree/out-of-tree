@@ -1,4 +1,4 @@
-name: macos
+name: macOS
 
 on: [push]
 
@@ -7,5 +7,6 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v1
-    - name: build
+
+    - name: Build
       run: go build
