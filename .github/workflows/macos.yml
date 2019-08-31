@@ -1,0 +1,11 @@
+name: macos
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: macOS-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: build
+      run: go build
