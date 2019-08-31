@@ -26,7 +26,8 @@ ENV RELEASE=bionic
 RUN mkdir $IMAGEDIR
 
 # Must be executed with --privileged because of /dev/loop
-CMD debootstrap --include=openssh-server $RELEASE $TMPDIR $REPOSITORY && \
+CMD debootstrap --include=openssh-server,policykit-1 \
+	$RELEASE $TMPDIR $REPOSITORY && \
 	/shared/setup.sh $TMPDIR && \
 	qemu-img create $IMAGE 2G && \
 	mkfs.ext4 -F $IMAGE && \
