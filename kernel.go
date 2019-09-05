@@ -162,6 +162,13 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	switch sk.DistroType {
 	case config.Ubuntu:
 		d += "ENV DEBIAN_FRONTEND=noninteractive\n"
+		if sk.DistroRelease >= "16.04" {
+			from := "http://.*ubuntu/"
+			to := "mirror://mirrors.ubuntu.com/mirrors.txt"
+			file := "/etc/apt/sources.list"
+			s := fmt.Sprintf("sed -i 's;%s;%s;' %s", from, to, file)
+			d += "RUN " + s + "\n"
+		}
 		d += "RUN apt-get update\n"
 		d += "RUN apt-get install -y build-essential libelf-dev\n"
 		d += "RUN apt-get install -y wget git\n"

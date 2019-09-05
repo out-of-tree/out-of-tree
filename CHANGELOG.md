@@ -4,6 +4,17 @@
 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] 2019-09-05
+
+### Added
+
+- Added policykit-1 to rootfs for Ubuntu.
+
+### Fixed
+
+- Avoided slow mirrors with use of mirror://mirrors.ubuntu.com for
+  Ubuntu 16.04 and newer.
+
 ## [1.1.1] 2019-08-31
 
 ### Fixed
