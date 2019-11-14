@@ -51,7 +51,8 @@ func packHandler(db *sql.DB, path, registry string, stop time.Time,
 
 		pewHandler(kcfg, workPath, "", "", "", false,
 			stop, dockerTimeout, qemuTimeout,
-			kernelRuns, exploitRuns, pathDevNull, tag, threads, db)
+			kernelRuns, exploitRuns, pathDevNull,
+			tag, threads, db, false)
 	}
 
 	return

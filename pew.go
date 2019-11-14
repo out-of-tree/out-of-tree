@@ -303,7 +303,7 @@ func copyTest(q *qemu.System, testPath string, ka config.Artifact) (
 func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	ki config.KernelInfo, binaryPath, testPath string,
 	qemuTimeout, dockerTimeout time.Duration, dist, tag string,
-	db *sql.DB) {
+	db *sql.DB, verbose bool) {
 
 	defer swg.Done()
 
@@ -336,6 +336,18 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		return
 	}
 	defer q.Stop()
+
+	if verbose {
+		go func() {
+			for !q.Died {
+				time.Sleep(time.Minute)
+				log.Println(ka.Name, ki.DistroType,
+					ki.DistroRelease, ki.KernelRelease,
+					"still alive")
+
+			}
+		}()
+	}
 
 	usr, err := user.Current()
 	if err != nil {
@@ -395,7 +407,7 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 	testPath string, stop time.Time,
 	qemuTimeout, dockerTimeout time.Duration,
 	max, runs int64, dist, tag string, threads int,
-	db *sql.DB) (err error) {
+	db *sql.DB, verbose bool) (err error) {
 
 	found := false
 
@@ -421,7 +433,7 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 				swg.Add()
 				go whatever(&swg, ka, kernel, binaryPath,
 					testPath, qemuTimeout, dockerTimeout,
-					dist, tag, db)
+					dist, tag, db, verbose)
 			}
 		}
 	}
@@ -478,7 +490,7 @@ func pewHandler(kcfg config.KernelConfig,
 	workPath, ovrrdKrnl, binary, test string, guess bool,
 	stop time.Time, qemuTimeout, dockerTimeout time.Duration,
 	max, runs int64, dist, tag string, threads int,
-	db *sql.DB) (err error) {
+	db *sql.DB, verbose bool) (err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
@@ -508,7 +520,7 @@ func pewHandler(kcfg config.KernelConfig,
 
 	err = performCI(ka, kcfg, binary, test,
 		stop, qemuTimeout, dockerTimeout,
-		max, runs, dist, tag, threads, db)
+		max, runs, dist, tag, threads, db, verbose)
 	if err != nil {
 		return
 	}

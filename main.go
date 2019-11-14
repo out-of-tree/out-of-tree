@@ -155,6 +155,9 @@ func main() {
 	pewTagFlag := pewCommand.Flag("tag", "Log tagging")
 	pewTag := pewTagFlag.String()
 
+	pewVerboseFlag := pewCommand.Flag("verbose", "Show more information")
+	pewVerbose := pewVerboseFlag.Bool()
+
 	kernelCommand := app.Command("kernel", "Manipulate kernels")
 	kernelNoDownload := kernelCommand.Flag("no-download",
 		"Do not download qemu image while kernel generation").Bool()
@@ -303,7 +306,8 @@ func main() {
 	case pewCommand.FullCommand():
 		err = pewHandler(kcfg, *path, *pewKernel, *pewBinary,
 			*pewTest, *pewGuess, stop, *qemuTimeout, *dockerTimeout,
-			*pewMax, *pewRuns, *pewDist, *pewTag, *pewThreads, db)
+			*pewMax, *pewRuns, *pewDist, *pewTag, *pewThreads,
+			db, *pewVerbose)
 	case kernelListCommand.FullCommand():
 		err = kernelListHandler(kcfg)
 	case kernelAutogenCommand.FullCommand():

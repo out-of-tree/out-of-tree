@@ -6,6 +6,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Flag for Verbose output. Right now only qemu status messages is
+  implemented.
+
 ### Fixed
 
 - Kpti settings was not affected for regular runs.
