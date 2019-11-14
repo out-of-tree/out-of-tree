@@ -264,6 +264,10 @@ func main() {
 		log.Fatalln("Only one of disable/enable can be used at once")
 	}
 
+	if *yekpti && *nokpti {
+		log.Fatalln("Only one of disable/enable can be used at once")
+	}
+
 	kcfg, err := config.ReadKernelConfig(*kcfgPath)
 	if err != nil {
 		log.Println(err)

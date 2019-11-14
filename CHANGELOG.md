@@ -4,6 +4,12 @@
 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Kpti settings was not affected for regular runs.
+
 ## [1.1.2] 2019-09-05
 
 ### Added

@@ -328,6 +328,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	q.SetKASLR(!ka.Mitigations.DisableKaslr)
 	q.SetSMEP(!ka.Mitigations.DisableSmep)
 	q.SetSMAP(!ka.Mitigations.DisableSmap)
+	q.SetKPTI(!ka.Mitigations.DisableKpti)
 
 	err = q.Start()
 	if err != nil {
