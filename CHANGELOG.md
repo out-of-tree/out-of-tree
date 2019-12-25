@@ -4,6 +4,12 @@
 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] 2019-12-25
+
+### Fixed
+
+- macOS support.
+
 ## [1.2.0] 2019-11-15
 
 ### Added
