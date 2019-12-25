@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"os/user"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -99,6 +100,14 @@ func dockerImagePath(sk config.KernelMask) (path string, err error) {
 }
 
 func vsyscallAvailable() (available bool, err error) {
+	if runtime.GOOS != "linux" {
+		// Docker for non-Linux systems is not using the host
+		// kernel but uses kernel inside a virtual machine, so
+		// it builds by the Docker team with vsyscall support.
+		available = true
+		return
+	}
+
 	buf, err := ioutil.ReadFile("/proc/self/maps")
 	if err != nil {
 		return
