@@ -4,6 +4,33 @@ on: [push]
 
 jobs:
   build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: go build
+
+  test-unit:
+    name: Unit Testing
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install dependencies for tests
+      run: |
+        sudo apt-get update
+        sudo apt-get install qemu
+
+    - name: Bootstrap
+      run: ./tools/qemu-debian-img/bootstrap.sh
+
+    - name: Unit Testing
+      run: go test -parallel 1 -v ./...
+
+  test-end-to-end:
+    name: End-to-End Testing
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -16,8 +43,14 @@ jobs:
         sudo apt-get update
         sudo apt-get install qemu
 
-    - name: Bootstrap
-      run: ./tools/qemu-debian-img/bootstrap.sh
+    - name: End-to-End Testing [Kernel Module]
+      run: |
+        cd examples/kernel-module
+        ../../out-of-tree kernel autogen --max=1
+        ../../out-of-tree pew --qemu-timeout=10m
 
-    - name: Test
-      run: go test -parallel 1 -v ./...
+    - name: End-to-End Testing [Kernel Exploit]
+      run: |
+        cd examples/kernel-exploit
+        ../../out-of-tree kernel autogen --max=1
+        ../../out-of-tree pew --threshold=0 --qemu-timeout=10m
