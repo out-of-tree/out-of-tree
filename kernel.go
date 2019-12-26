@@ -273,6 +273,7 @@ func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
 			"/boot/initramfs-%s.img %s\n", version, version)
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
+		return
 	}
 
 	err = ioutil.WriteFile(imagePath+"/Dockerfile",
