@@ -31,43 +31,6 @@ out-of-tree is for automating some routine actions for creating development envi
 
 Read [documentation](https://out-of-tree.readthedocs.io) for further info.
 
-## Build from source
-
-### Requirements
-
-[Qemu](https://www.qemu.org), [docker](https://docker.com) and [golang](https://golang.org) is required.
-
-Also do not forget to set GOPATH and PATH e.g.:
-
-    $ echo 'export GOPATH=$HOME' >> ~/.bashrc
-    $ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
-    $ source ~/.bashrc
-
-#### Gentoo
-
-    # emerge app-emulation/qemu app-emulation/docker dev-lang/go
-
-#### macOS
-
-    $ brew install go qemu
-    $ brew cask install docker
-
-#### Fedora
-
-    $ sudo dnf install go qemu moby-engine
-
-Also check out [docker post-installation steps](https://docs.docker.com/install/linux/linux-postinstall/).
-
-### Build
-
-    $ go get -u code.dumpstack.io/tools/out-of-tree
-
-Then you can check it on kernel module example:
-
-    $ cd $GOPATH/src/code.dumpstack.io/tools/out-of-tree/examples/kernel-module
-    $ out-of-tree kernel autogen # generate kernels based on .out-of-tree.toml
-    $ out-of-tree pew
-
 ## Examples
 
 Run by absolute path
@@ -101,7 +64,6 @@ Use custom kernels config
 Generate all kernels
 
     $ out-of-tree kernel genall --distro Ubuntu --ver 16.04
-
 
 ## Troubleshooting
 

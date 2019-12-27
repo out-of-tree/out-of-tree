@@ -36,6 +36,20 @@ There's a minimal configuration that you need to apply::
     ];
   }
 
+Gentoo
+------
+
+Install dependencies::
+
+  $ sudo emerge app-emulation/qemu app-emulation/docker dev-lang/go
+
+Fedora
+------
+
+Install dependencies::
+
+  $ sudo dnf install go qemu moby-engine
+
 Common
 ======
 
