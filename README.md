@@ -15,15 +15,16 @@ out-of-tree is for automating some routine actions for creating development envi
 
 ## Installation
 
-Note that before installation, you should install and configure docker by yourself.
-
 ### GNU/Linux (with [Nix](https://nixos.org/nix/))
 
+    $ curl -fsSL https://get.docker.com | sh
     $ curl https://nixos.org/nix/install | sh
     $ nix-env -iA nixpkgs.out-of-tree
 
 ### macOS
 
+    $ brew cask install docker
+    $ open --background -a Docker && sleep 1m
     $ brew tap jollheef/repo
     $ brew install out-of-tree
 
