@@ -29,7 +29,7 @@ out-of-tree is for automating some routine actions for creating development envi
     $ brew tap jollheef/repo
     $ brew install out-of-tree
 
-Read [documentation](https://out-of-tree.readthedocs.io/en/latest/introduction.html) for further info.
+Read [documentation](https://out-of-tree.readthedocs.io) for further info.
 
 ## Build from source
 
