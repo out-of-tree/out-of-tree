@@ -18,6 +18,7 @@ out-of-tree is for automating some routine actions for creating development envi
 ### GNU/Linux (with [Nix](https://nixos.org/nix/))
 
     $ curl -fsSL https://get.docker.com | sh
+	$ sudo usermod -aG docker user && newgrp docker
     $ curl https://nixos.org/nix/install | sh
     $ nix-env -iA nixpkgs.out-of-tree
 
@@ -27,6 +28,8 @@ out-of-tree is for automating some routine actions for creating development envi
     $ open --background -a Docker && sleep 1m
     $ brew tap jollheef/repo
     $ brew install out-of-tree
+
+Read [documentation](https://out-of-tree.readthedocs.io) for further info.
 
 ## Build from source
 
