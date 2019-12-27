@@ -1,4 +1,4 @@
-Installation
+Installation (from source)
 ============
 
 OS/Distro-specific
