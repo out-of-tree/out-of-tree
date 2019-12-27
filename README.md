@@ -15,6 +15,8 @@ out-of-tree is for automating some routine actions for creating development envi
 
 ## Installation
 
+Note that before installation, you should install and configure docker by yourself.
+
 ### GNU/Linux (with [Nix](https://nixos.org/nix/))
 
     $ curl https://nixos.org/nix/install | sh
