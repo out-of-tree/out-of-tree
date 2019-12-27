@@ -13,7 +13,21 @@ out-of-tree is for automating some routine actions for creating development envi
 
 ![Screenshot](https://cloudflare-ipfs.com/ipfs/Qmb88fgdDjbWkxz91sWsgmoZZNfVThnCtj37u3mF2s3T3T)
 
-## Requirements
+## Installation
+
+### GNU/Linux (with [Nix](https://nixos.org/nix/))
+
+    $ curl https://nixos.org/nix/install | sh
+    $ nix-env -iA nixpkgs.out-of-tree
+
+### macOS
+
+    $ brew tap jollheef/repo
+    $ brew install out-of-tree
+
+## Build from source
+
+### Requirements
 
 [Qemu](https://www.qemu.org), [docker](https://docker.com) and [golang](https://golang.org) is required.
 
@@ -23,22 +37,22 @@ Also do not forget to set GOPATH and PATH e.g.:
     $ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
     $ source ~/.bashrc
 
-### Gentoo
+#### Gentoo
 
     # emerge app-emulation/qemu app-emulation/docker dev-lang/go
 
-### macOS
+#### macOS
 
     $ brew install go qemu
     $ brew cask install docker
 
-### Fedora
+#### Fedora
 
     $ sudo dnf install go qemu moby-engine
 
 Also check out [docker post-installation steps](https://docs.docker.com/install/linux/linux-postinstall/).
 
-## Build from source
+### Build
 
     $ go get -u code.dumpstack.io/tools/out-of-tree
 
