@@ -116,6 +116,7 @@ func startTestQemu(t *testing.T, timeout time.Duration) (q *System, err error) {
 		return
 	}
 
+	time.Sleep(time.Second)
 	return
 }
 
@@ -323,6 +324,8 @@ func TestSystemDebug(t *testing.T) {
 	if err != nil {
 		return
 	}
+
+	time.Sleep(time.Second)
 
 	port := 45256
 
