@@ -1,0 +1,24 @@
+version: 2
+jobs:
+  build:
+    macos:
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: brew install go qemu
+      - run:
+          name: Build
+          command: go build
+      - run:
+          name: End-to-End Testing [Kernel Module]
+          command: |
+            cd examples/kernel-module
+            ../../out-of-tree kernel autogen --max=1
+            ../../out-of-tree pew --qemu-timeout=10m
+      - run:
+          name: End-to-End Testing [Kernel Exploit]
+          command: |
+            cd examples/kernel-exploit
+            ../../out-of-tree kernel autogen --max=1
+            ../../out-of-tree pew --threshold=0 --qemu-timeout=10m
