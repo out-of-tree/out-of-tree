@@ -21,6 +21,8 @@ out-of-tree is for automating some routine actions for creating development envi
     $ curl https://nixos.org/nix/install | sh
     $ nix-env -iA nixpkgs.out-of-tree
 
+Note that adding a user to group *docker* has serious security implications. Check Docker documentation for more information.
+
 ### macOS
 
     $ brew cask install docker
