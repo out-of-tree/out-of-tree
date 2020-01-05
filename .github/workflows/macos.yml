@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   build:
+    name: Build on macOS
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v1
