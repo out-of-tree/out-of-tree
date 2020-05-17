@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/logrusorgru/aurora.v1"
+	"gopkg.in/logrusorgru/aurora.v2"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
@@ -147,7 +147,7 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 			return aurora.BgGreen(aurora.Black(name))
 		}
 
-		return aurora.BgRed(aurora.Gray(name))
+		return aurora.BgRed(aurora.White(name))
 	}
 
 	fmt.Printf("[*] %s %s %s %s\n",

@@ -20,5 +20,5 @@ require (
 	github.com/zcalusic/sysinfo v0.0.0-20190429151633-fbadb57345c2
 	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
-	gopkg.in/logrusorgru/aurora.v1 v1.0.0-20181002194514-a7b3b318ed4e
+	gopkg.in/logrusorgru/aurora.v2 v2.0.0-20190417123914-21d75270181e
 )

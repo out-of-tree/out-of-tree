@@ -20,7 +20,7 @@ import (
 
 	"github.com/otiai10/copy"
 	"github.com/remeh/sizedwaitgroup"
-	"gopkg.in/logrusorgru/aurora.v1"
+	"gopkg.in/logrusorgru/aurora.v2"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
@@ -151,7 +151,7 @@ func genOkFail(name string, ok bool) (aurv aurora.Value) {
 		aurv = aurora.BgGreen(aurora.Black(s))
 	} else {
 		s := " " + name + " FAILURE "
-		aurv = aurora.BgRed(aurora.Gray(aurora.Bold(s)))
+		aurv = aurora.BgRed(aurora.White(aurora.Bold(s)))
 	}
 	return
 }
