@@ -1,5 +1,7 @@
 module code.dumpstack.io/tools/out-of-tree
 
+go 1.14
+
 replace code.dumpstack.io/tools/out-of-tree/qemu => ./qemu
 
 replace code.dumpstack.io/tools/out-of-tree/config => ./config
