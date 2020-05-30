@@ -69,7 +69,7 @@ func matchDebianHeadersPkg(container, mask string, generic bool) (
 func matchCentOSDevelPkg(container, mask string, generic bool) (
 	pkgs []string, err error) {
 
-	cmd := "yum search kernel-devel --show-duplicates | " +
+	cmd := "yum search kernel-devel --showduplicates | " +
 		"grep '^kernel-devel' | cut -d ' ' -f 1"
 	output, err := dockerRun(time.Minute, container, "/tmp", cmd)
 	if err != nil {
