@@ -201,6 +201,16 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		// do not remove old kernels
 		d += "RUN sed -i 's;installonly_limit=;installonly_limit=100500;' /etc/yum.conf\n"
 		d += "RUN yum -y update\n"
+
+		if sk.DistroRelease == "8" {
+			// FIXME CentOS Vault repository list for 8 is empty
+			// at the time of this fix; check for it and use a
+			// workaround if it's still empty
+			d += `RUN grep enabled /etc/yum.repos.d/CentOS-Vault.repo` +
+				` || echo -e '[8.0.1905]\nbaseurl=http://vault.centos.org/8.0.1905/BaseOS/$basearch/os/'` +
+				` >> /etc/yum.repos.d/CentOS-Vault.repo` + "\n"
+		}
+
 		d += "RUN yum -y groupinstall 'Development Tools'\n"
 
 		if sk.DistroRelease < "8" {
