@@ -206,7 +206,8 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		if sk.DistroRelease < "8" {
 			d += "RUN yum -y install deltarpm\n"
 		} else {
-			d += "RUN yum -y install drpm\n"
+			d += "RUN yum -y install drpm grub2-tools-minimal " +
+				"elfutils-libelf-devel\n"
 		}
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
