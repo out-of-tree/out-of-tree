@@ -4,6 +4,12 @@
 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] 2020-05-30
+
+### Added
+
+- Support for Ubuntu 20.04 and CentOS 8.
+
 ## [1.2.1] 2019-12-25
 
 ### Fixed
