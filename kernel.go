@@ -202,7 +202,12 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		d += "RUN sed -i 's;installonly_limit=;installonly_limit=100500;' /etc/yum.conf\n"
 		d += "RUN yum -y update\n"
 		d += "RUN yum -y groupinstall 'Development Tools'\n"
-		d += "RUN yum -y install deltarpm\n"
+
+		if sk.DistroRelease < "8" {
+			d += "RUN yum -y install deltarpm\n"
+		} else {
+			d += "RUN yum -y install drpm\n"
+		}
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
