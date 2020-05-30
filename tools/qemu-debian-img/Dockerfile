@@ -4,24 +4,24 @@
 #
 # Usage:
 #
-#     $ docker build -t gen-ubuntu1804-image .
-#     $ docker run --privileged -v $(pwd):/shared -t gen-ubuntu1804-image
+#     $ docker build -t gen-ubuntu2004-image .
+#     $ docker run --privileged -v $(pwd):/shared -t gen-ubuntu2004-image
 #
-# ubuntu1804.img will be created in current directory. You can change $(pwd) to
+# ubuntu2004.img will be created in current directory. You can change $(pwd) to
 # different directory to use different destination for image.
 #
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update
-RUN apt install -y debootstrap qemu
+RUN apt install -y debootstrap qemu-utils
 RUN apt install -y linux-image-generic
 
 ENV TMPDIR=/tmp/ubuntu
 ENV IMAGEDIR=/tmp/image
-ENV IMAGE=/shared/ubuntu1804.img
+ENV IMAGE=/shared/ubuntu2004.img
 ENV REPOSITORY=http://archive.ubuntu.com/ubuntu
-ENV RELEASE=bionic
+ENV RELEASE=focal
 
 RUN mkdir $IMAGEDIR
 

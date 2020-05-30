@@ -4,7 +4,7 @@
 
 package qemu
 
-const testConfigVmlinuz = "../tools/qemu-debian-img/ubuntu1804.vmlinuz"
-const testConfigInitrd = "../tools/qemu-debian-img/ubuntu1804.initrd"
-const testConfigRootfs = "../tools/qemu-debian-img/ubuntu1804.img"
-const testConfigSampleKo = "../tools/qemu-debian-img/ubuntu1804.ko"
+const testConfigVmlinuz = "../tools/qemu-debian-img/ubuntu2004.vmlinuz"
+const testConfigInitrd = "../tools/qemu-debian-img/ubuntu2004.initrd"
+const testConfigRootfs = "../tools/qemu-debian-img/ubuntu2004.img"
+const testConfigSampleKo = "../tools/qemu-debian-img/ubuntu2004.ko"
