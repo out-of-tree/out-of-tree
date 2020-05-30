@@ -40,11 +40,11 @@ Run by absolute path
 
 Test only with one kernel:
 
-    $ out-of-tree pew --kernel='Ubuntu:4.10.0-30-generic'
+    $ out-of-tree pew --kernel='Ubuntu:5.4.0-29-generic
 
 Run debug environment:
 
-    $ out-of-tree debug --kernel='Ubuntu:4.10.0-30-generic'
+    $ out-of-tree debug --kernel='Ubuntu:5.4.0-29-generic
 
 Test binary module/exploit with implicit defined test ($BINARY_test)
 
@@ -64,7 +64,7 @@ Use custom kernels config
 
 Generate all kernels
 
-    $ out-of-tree kernel genall --distro Ubuntu --ver 16.04
+    $ out-of-tree kernel genall --distro Ubuntu --ver 20.04
 
 ## Troubleshooting
 
@@ -75,9 +75,3 @@ But it'll be better if you'll write the bug report.
 ## Development
 
 Read [Qemu API](qemu/README.md).
-
-### Generate images
-
-    $ cd $GOPATH/src/code.dumpstack.io/tools/out-of-tree/tools/qemu-debian-img/
-    $ docker run --privileged -v $(pwd):/shared -e IMAGE=/shared/ubuntu1404.img -e RELEASE=trusty -t gen-ubuntu1804-image
-    $ docker run --privileged -v $(pwd):/shared -e IMAGE=/shared/ubuntu1604.img -e RELEASE=xenial -t gen-ubuntu1804-image
