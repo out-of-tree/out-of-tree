@@ -113,6 +113,10 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 		q.Memory = ka.Qemu.Memory
 	}
 
+	if ka.Docker.Timeout.Duration != 0 {
+		dockerTimeout = ka.Docker.Timeout.Duration
+	}
+
 	q.SetKASLR(false) // set KASLR to false by default because of gdb
 	q.SetSMEP(!ka.Mitigations.DisableSmep)
 	q.SetSMAP(!ka.Mitigations.DisableSmap)

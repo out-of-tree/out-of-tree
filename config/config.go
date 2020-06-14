@@ -115,6 +115,10 @@ type Artifact struct {
 		Timeout Duration
 	}
 
+	Docker struct {
+		Timeout Duration
+	}
+
 	Mitigations struct {
 		DisableSmep  bool
 		DisableSmap  bool

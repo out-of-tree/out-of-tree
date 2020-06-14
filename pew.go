@@ -325,6 +325,10 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		q.Memory = ka.Qemu.Memory
 	}
 
+	if ka.Docker.Timeout.Duration != 0 {
+		dockerTimeout = ka.Docker.Timeout.Duration
+	}
+
 	q.SetKASLR(!ka.Mitigations.DisableKaslr)
 	q.SetSMEP(!ka.Mitigations.DisableSmep)
 	q.SetSMAP(!ka.Mitigations.DisableSmap)
