@@ -100,7 +100,12 @@ func logHandler(db *sql.DB, path, tag string, num int, rate bool) (err error) {
 }
 
 func logDumpHandler(db *sql.DB, id int) (err error) {
-	l, err := getLogByID(db, id)
+	var l logEntry
+	if id > 0 {
+		l, err = getLogByID(db, id)
+	} else {
+		l, err = getLastLog(db)
+	}
 	if err != nil {
 		return
 	}

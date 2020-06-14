@@ -217,7 +217,7 @@ func main() {
 
 	logDumpCommand := logCommand.Command("dump",
 		"Show all info for log entry with ID")
-	logDumpID := logDumpCommand.Arg("ID", "").Required().Int()
+	logDumpID := logDumpCommand.Arg("ID", "").Default("-1").Int()
 
 	logJSONCommand := logCommand.Command("json", "Generate json statistics")
 	logJSONTag := logJSONCommand.Flag("tag", "Filter tag").Required().String()

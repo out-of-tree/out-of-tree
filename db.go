@@ -254,6 +254,24 @@ func getLogByID(db *sql.DB, id int) (le logEntry, err error) {
 	return
 }
 
+func getLastLog(db *sql.DB) (le logEntry, err error) {
+	err = db.QueryRow("SELECT MAX(id), time, name, type, tag, "+
+		"distro_type, distro_release, kernel_release, "+
+		"build_ok, run_ok, test_ok, "+
+		"build_output, run_output, test_output, "+
+		"qemu_stdout, qemu_stderr, "+
+		"kernel_panic, timeout_kill "+
+		"FROM log").Scan(&le.ID, &le.Timestamp,
+		&le.Name, &le.Type, &le.Tag,
+		&le.DistroType, &le.DistroRelease, &le.KernelRelease,
+		&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
+		&le.Build.Output, &le.Run.Output, &le.Test.Output,
+		&le.Stdout, &le.Stderr,
+		&le.KernelPanic, &le.KilledByTimeout,
+	)
+	return
+}
+
 func createSchema(db *sql.DB) (err error) {
 	err = createMetadataTable(db)
 	if err != nil {

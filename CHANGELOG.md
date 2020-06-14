@@ -22,6 +22,9 @@
 - Flag `--disable-preload` to ignore `[[preload]]` section of
   configuration file.
 
+- Now `out-of-tree log dump` will show the last log if no ID
+  specified.
+
 ## [1.3.0] 2020-05-30
 
 ### Added
