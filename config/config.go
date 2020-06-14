@@ -102,6 +102,12 @@ func (d Duration) MarshalTOML() (data []byte, err error) {
 	return
 }
 
+type PreloadModule struct {
+	Repo             string
+	Path             string
+	TimeoutAfterLoad Duration
+}
+
 // Artifact is for .out-of-tree.toml
 type Artifact struct {
 	Name             string
@@ -125,6 +131,8 @@ type Artifact struct {
 		DisableKaslr bool
 		DisableKpti  bool
 	}
+
+	Preload []PreloadModule
 }
 
 func (ka Artifact) checkSupport(ki KernelInfo, km KernelMask) (

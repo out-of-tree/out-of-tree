@@ -395,6 +395,12 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		return
 	}
 
+	err = preloadModules(q, ka, ki, dockerTimeout)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	copyArtifactAndTest(q, ka, &result, remoteTest)
 }
 

@@ -1,0 +1,12 @@
+name = "out-of-tree preload"
+type = "module"
+
+[[supported_kernels]]
+distro_type = "Ubuntu"
+distro_release = "18.04"
+release_mask = ".*"
+
+[[preload]]
+repo = "https://github.com/jollheef/lkrg"
+#path = "/local/path/to/lkrg"
+timeout_after_load = "1s"

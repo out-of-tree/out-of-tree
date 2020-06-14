@@ -11,6 +11,17 @@
 - Parameter `--docker-timeout` may also be set in the artifact
   configuration file.
 
+- Preload modules before inserting module or run exploit. Modules can
+  be specified by git repository path in the `repo` parameter of
+  section `[[preload]]`. Also, there is a `path` parameter for local
+  projects. Note that `repo` is using a cache that uses last commit
+  hash to check is project needs to be rebuilt, so it's not suitable
+  for local development (except if you will commit each time before
+  run out-of-tree).
+
+- Flag `--disable-preload` to ignore `[[preload]]` section of
+  configuration file.
+
 ## [1.3.0] 2020-05-30
 
 ### Added
@@ -169,7 +180,7 @@
 - Temporary files is moved to `~/.out-of-tree/tmp/` to avoid docker
   mounting issues on some systems.
 
-## [0.2.0] - 2019-12-01
+## [0.2.0] - 2018-12-01
 
 The main purpose of the release is to simplify installation.
 
@@ -191,7 +202,7 @@ The main purpose of the release is to simplify installation.
 
 - No warning anymore if test.sh is not exists.
 
-## [0.1.0] - 2019-11-20
+## [0.1.0] - 2018-11-20
 
 Initial release that was never tagged.
 

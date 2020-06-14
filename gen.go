@@ -22,6 +22,9 @@ func genConfig(at config.ArtifactType) (err error) {
 		DistroRelease: "18.04",
 		ReleaseMask:   ".*",
 	})
+	a.Preload = append(a.Preload, config.PreloadModule{
+		Repo: "Repo name (e.g. https://github.com/jollheef/lkrg)",
+	})
 
 	buf, err := toml.Marshal(&a)
 	if err != nil {

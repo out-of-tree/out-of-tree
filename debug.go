@@ -179,6 +179,12 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	}
 	defer os.RemoveAll(tmp)
 
+	err = preloadModules(q, ka, ki, dockerTimeout)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	outFile, output, err := build(tmp, ka, ki, dockerTimeout)
 	if err != nil {
 		log.Println(err, output)

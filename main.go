@@ -126,6 +126,9 @@ func main() {
 	thresholdFlag := app.Flag("threshold", "Reliablity threshold for exit code")
 	threshold := thresholdFlag.Default("1.00").Float64()
 
+	disablePreloadFlag := app.Flag("disable-preload", "Disable module preload")
+	disablePreload = disablePreloadFlag.Bool()
+
 	pewCommand := app.Command("pew", "Build, run and test module/exploit")
 
 	pewMax := pewCommand.Flag("max", "Test no more than X kernels").
