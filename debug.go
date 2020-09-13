@@ -201,6 +201,15 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 		return
 	}
 
+	// Copy all test files to the remote machine
+	for _,f := range ka.TestFiles {
+		err = q.CopyFile(f.User,f.Local,f.Remote)
+		if err != nil {
+			log.Println("error copy err:", err, f.Local, f.Remote)
+			return
+		}
+	}
+
 	coloredRemoteFile := aurora.BgGreen(aurora.Black(remoteFile))
 	fmt.Printf("[*] build result copied to %s\n", coloredRemoteFile)
 
