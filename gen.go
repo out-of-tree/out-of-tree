@@ -23,7 +23,7 @@ func genConfig(at config.ArtifactType) (err error) {
 		ReleaseMask:   ".*",
 	})
 	a.Preload = append(a.Preload, config.PreloadModule{
-		Repo: "Repo name (e.g. https://github.com/jollheef/lkrg)",
+		Repo: "Repo name (e.g. https://github.com/openwall/lkrg)",
 	})
 
 	buf, err := toml.Marshal(&a)
