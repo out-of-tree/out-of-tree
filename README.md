@@ -1,8 +1,6 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/aba4aad2046b4d1a9a99cf98e22c018b)](https://app.codacy.com/app/jollheef/out-of-tree?utm_source=github.com&utm_medium=referral&utm_content=jollheef/out-of-tree&utm_campaign=Badge_Grade_Dashboard)
 [![Go Report Card](https://goreportcard.com/badge/code.dumpstack.io/tools/out-of-tree)](https://goreportcard.com/report/code.dumpstack.io/tools/out-of-tree)
 [![Documentation Status](https://readthedocs.org/projects/out-of-tree/badge/?version=latest)](https://out-of-tree.readthedocs.io/en/latest/?badge=latest)
-[![Donate](https://img.shields.io/badge/donate-paypal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=R8W2UQPZ5X5JE&source=url)
-[![Donate](https://img.shields.io/badge/donate-bitcoin-green.svg)](https://blockchair.com/bitcoin/address/bc1q23fyuq7kmngrgqgp6yq9hk8a5q460f39m8nv87)
 
 # [out-of-tree](https://out-of-tree.io)
 
@@ -64,13 +62,7 @@ Use custom kernels config
 
 Generate all kernels
 
-    $ out-of-tree kernel genall --distro Ubuntu --ver 20.04
-
-## Troubleshooting
-
-If anything happens that you cannot solve -- just remove `$HOME/.out-of-tree`.
-
-But it'll be better if you'll write the bug report.
+    $ out-of-tree kernel genall --distro Ubuntu --ver 22.04
 
 ## Development
 

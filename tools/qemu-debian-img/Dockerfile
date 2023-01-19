@@ -4,13 +4,13 @@
 #
 # Usage:
 #
-#     $ docker build -t gen-ubuntu2004-image .
-#     $ docker run --privileged -v $(pwd):/shared -t gen-ubuntu2004-image
+#     $ docker build -t gen-ubuntu2204-image .
+#     $ docker run --privileged -v $(pwd):/shared -t gen-ubuntu2204-image
 #
-# ubuntu2004.img will be created in current directory. You can change $(pwd) to
+# ubuntu2204.img will be created in current directory. You can change $(pwd) to
 # different directory to use different destination for image.
 #
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update
@@ -19,9 +19,9 @@ RUN apt install -y linux-image-generic
 
 ENV TMPDIR=/tmp/ubuntu
 ENV IMAGEDIR=/tmp/image
-ENV IMAGE=/shared/ubuntu2004.img
+ENV IMAGE=/shared/ubuntu2204.img
 ENV REPOSITORY=http://archive.ubuntu.com/ubuntu
-ENV RELEASE=focal
+ENV RELEASE=jammy
 
 RUN mkdir $IMAGEDIR
 
