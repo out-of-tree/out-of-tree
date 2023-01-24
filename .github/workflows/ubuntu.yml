@@ -21,7 +21,7 @@ jobs:
     - name: Install dependencies for tests
       run: |
         sudo apt-get update
-        sudo apt-get install qemu
+        sudo apt-get install qemu-system-x86
 
     - name: Bootstrap
       run: ./tools/qemu-debian-img/bootstrap.sh
@@ -41,7 +41,7 @@ jobs:
     - name: Install dependencies for tests
       run: |
         sudo apt-get update
-        sudo apt-get install qemu
+        sudo apt-get install qemu-system-x86
 
     - name: End-to-End Testing [Kernel Module]
       run: |
