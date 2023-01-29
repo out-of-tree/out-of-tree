@@ -252,8 +252,8 @@ func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
 		res.Run.Ok = true
 
 		// Copy all test files to the remote machine
-		for _,f := range ka.TestFiles {
-			err = q.CopyFile(f.User,f.Local,f.Remote)
+		for _, f := range ka.TestFiles {
+			err = q.CopyFile(f.User, f.Local, f.Remote)
 			if err != nil {
 				log.Println("error copy err:", err, f.Local, f.Remote)
 				return
