@@ -395,7 +395,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	if testPath == "" {
 		testPath = result.BuildArtifact + "_test"
 		if !exists(testPath) {
-			testPath = tmp + "/" + "test.sh"
+			testPath = tmp + "/source/" + "test.sh"
 		}
 	}
 
