@@ -343,7 +343,10 @@ func copyKernels(name string) (err error) {
 	what := r.FindAll(rawOutput, -1)
 	for _, w := range what {
 		containerID = strings.Fields(string(w))[0]
-		break
+		_, err = exec.Command("which", "podman").CombinedOutput()
+		if err != nil {
+			break
+		}
 	}
 
 	usr, err := user.Current()
