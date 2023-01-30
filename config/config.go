@@ -110,16 +110,16 @@ type PreloadModule struct {
 
 // Extra test files to copy over
 type FileTransfer struct {
-	User    string
-	Local   string
-	Remote  string
+	User   string
+	Local  string
+	Remote string
 }
 
 // Artifact is for .out-of-tree.toml
 type Artifact struct {
 	Name             string
 	Type             ArtifactType
-	TestFiles	 []FileTransfer
+	TestFiles        []FileTransfer
 	SourcePath       string
 	SupportedKernels []KernelMask
 
