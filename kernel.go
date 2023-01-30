@@ -128,7 +128,13 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 
 	d := "# BASE\n"
 
-	if exists(dockerPath) {
+	cmd := exec.Command("docker", "images", "-q", sk.DockerName())
+	rawOutput, err := cmd.CombinedOutput()
+	if err != nil {
+		return
+	}
+
+	if exists(dockerPath) && string(rawOutput) != "" {
 		log.Printf("Base image for %s:%s found",
 			sk.DistroType.String(), sk.DistroRelease)
 		return
@@ -231,8 +237,8 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		return
 	}
 
-	cmd := exec.Command("docker", "build", "-t", sk.DockerName(), imagePath)
-	rawOutput, err := cmd.CombinedOutput()
+	cmd = exec.Command("docker", "build", "-t", sk.DockerName(), imagePath)
+	rawOutput, err = cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("Base image for %s:%s generating error, see log",
 			sk.DistroType.String(), sk.DistroRelease)
