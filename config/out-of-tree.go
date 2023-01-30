@@ -5,8 +5,13 @@
 package config
 
 import (
+	"errors"
+	"os"
 	"os/user"
+	"time"
 
+	"github.com/alecthomas/kong"
+	"github.com/mitchellh/go-homedir"
 	"github.com/naoina/toml"
 )
 
@@ -22,17 +27,41 @@ type OutOfTree struct {
 	Database string
 
 	Qemu struct {
-		Timeout string
+		Timeout Duration
 	}
 
 	Docker struct {
-		Timeout  string
+		Timeout  Duration
 		Registry string
 
 		// Commands that will be executed before
 		// the base layer of Dockerfile
 		Commands []DockerCommand
 	}
+}
+
+func (c *OutOfTree) Decode(ctx *kong.DecodeContext) (err error) {
+	if ctx.Value.Set {
+		return
+	}
+
+	s, err := homedir.Expand(ctx.Scan.Pop().String())
+	if err != nil {
+		return
+	}
+
+	defaultValue, err := homedir.Expand(ctx.Value.Default)
+	if err != nil {
+		return
+	}
+
+	_, err = os.Stat(s)
+	if s != defaultValue && errors.Is(err, os.ErrNotExist) {
+		return errors.New("'" + s + "' does not exist")
+	}
+
+	*c, err = ReadOutOfTreeConf(s)
+	return
 }
 
 func ReadOutOfTreeConf(path string) (c OutOfTree, err error) {
@@ -65,12 +94,12 @@ func ReadOutOfTreeConf(path string) (c OutOfTree, err error) {
 		c.Database = usr.HomeDir + "/.out-of-tree/db.sqlite"
 	}
 
-	if c.Qemu.Timeout == "" {
-		c.Qemu.Timeout = "1m"
+	if c.Qemu.Timeout.Duration == 0 {
+		c.Qemu.Timeout.Duration = time.Minute
 	}
 
-	if c.Docker.Timeout == "" {
-		c.Docker.Timeout = "1m"
+	if c.Docker.Timeout.Duration == 0 {
+		c.Docker.Timeout.Duration = time.Minute
 	}
 
 	return
