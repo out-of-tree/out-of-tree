@@ -4,6 +4,19 @@
 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Command line interface has been changed to alecthomas/kong
+  (breaking).
+
+- Compatibility with Podman.
+
+- Added support for Ubuntu 22.04.
+
+- Adding TestFiles to artifact config, transfers extra test files to VM.
+
 ## [1.4.0]
 
 ### Added
