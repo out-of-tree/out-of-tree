@@ -1,4 +1,4 @@
-// Copyright 2019 Mikhail Klementev. All rights reserved.
+// Copyright 2023 Mikhail Klementev. All rights reserved.
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
@@ -18,56 +18,41 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
-func logLogEntry(l logEntry) {
-	distroInfo := fmt.Sprintf("%s-%s {%s}", l.DistroType,
-		l.DistroRelease, l.KernelRelease)
-
-	artifactInfo := fmt.Sprintf("{[%s] %s}", l.Type, l.Name)
-
-	colored := ""
-	if l.Type == config.KernelExploit {
-		colored = aurora.Sprintf("[%4d %4s] [%s] %40s %40s: %s %s",
-			l.ID, l.Tag, l.Timestamp, artifactInfo, distroInfo,
-			genOkFail("BUILD", l.Build.Ok),
-			genOkFail("LPE", l.Test.Ok))
-	} else {
-		colored = aurora.Sprintf("[%4d %4s] [%s] %40s %40s: %s %s %s",
-			l.ID, l.Tag, l.Timestamp, artifactInfo, distroInfo,
-			genOkFail("BUILD", l.Build.Ok),
-			genOkFail("INSMOD", l.Run.Ok),
-			genOkFail("TEST", l.Test.Ok))
-	}
-
-	additional := ""
-	if l.KernelPanic {
-		additional = "(panic)"
-	} else if l.KilledByTimeout {
-		additional = "(timeout)"
-	}
-
-	if additional != "" {
-		fmt.Println(colored, additional)
-	} else {
-		fmt.Println(colored)
-	}
+type LogCmd struct {
+	Query    LogQueryCmd    `cmd:"" help:"query logs"`
+	Dump     LogDumpCmd     `cmd:"" help:"show all info for log entry with ID"`
+	Json     LogJsonCmd     `cmd:"" help:"generate json statistics"`
+	Makrdown LogMarkdownCmd `cmd:"" help:"generate markdown statistics"`
 }
 
-func logHandler(db *sql.DB, path, tag string, num int, rate bool) (err error) {
+type LogQueryCmd struct {
+	Num  int    `help:"how much lines" default:"50"`
+	Rate bool   `help:"show artifact success rate"`
+	Tag  string `help:"filter tag"`
+}
+
+func (cmd *LogQueryCmd) Run(g *Globals) (err error) {
+	db, err := openDatabase(g.Config.Database)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer db.Close()
+
 	var les []logEntry
 
-	ka, kaErr := config.ReadArtifactConfig(path + "/.out-of-tree.toml")
+	ka, kaErr := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
 	if kaErr == nil {
 		log.Println(".out-of-tree.toml found, filter by artifact name")
-		les, err = getAllArtifactLogs(db, tag, num, ka)
+		les, err = getAllArtifactLogs(db, cmd.Tag, cmd.Num, ka)
 	} else {
-		les, err = getAllLogs(db, tag, num)
+		les, err = getAllLogs(db, cmd.Tag, cmd.Num)
 	}
 	if err != nil {
 		return
 	}
 
 	s := "\nS"
-	if rate {
+	if cmd.Rate {
 		if kaErr != nil {
 			err = kaErr
 			return
@@ -75,7 +60,7 @@ func logHandler(db *sql.DB, path, tag string, num int, rate bool) (err error) {
 
 		s = fmt.Sprintf("{[%s] %s} Overall s", ka.Type, ka.Name)
 
-		les, err = getAllArtifactLogs(db, tag, math.MaxInt64, ka)
+		les, err = getAllArtifactLogs(db, cmd.Tag, math.MaxInt64, ka)
 		if err != nil {
 			return
 		}
@@ -99,10 +84,20 @@ func logHandler(db *sql.DB, path, tag string, num int, rate bool) (err error) {
 	return
 }
 
-func logDumpHandler(db *sql.DB, id int) (err error) {
+type LogDumpCmd struct {
+	ID int `help:"id" default:"-1"`
+}
+
+func (cmd *LogDumpCmd) Run(g *Globals) (err error) {
+	db, err := openDatabase(g.Config.Database)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer db.Close()
+
 	var l logEntry
-	if id > 0 {
-		l, err = getLogByID(db, id)
+	if cmd.ID > 0 {
+		l, err = getLogByID(db, cmd.ID)
 	} else {
 		l, err = getLastLog(db)
 	}
@@ -148,6 +143,102 @@ func logDumpHandler(db *sql.DB, id int) (err error) {
 	fmt.Println()
 
 	return
+}
+
+type LogJsonCmd struct {
+	Tag string `required:"" help:"filter tag"`
+}
+
+func (cmd *LogJsonCmd) Run(g *Globals) (err error) {
+	db, err := openDatabase(g.Config.Database)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer db.Close()
+
+	distros, err := getStats(db, g.WorkDir, cmd.Tag)
+	if err != nil {
+		return
+	}
+
+	bytes, err := json.Marshal(&distros)
+	if err != nil {
+		return
+	}
+
+	fmt.Println(string(bytes))
+	return
+}
+
+type LogMarkdownCmd struct {
+	Tag string `required:"" help:"filter tag"`
+}
+
+func (cmd *LogMarkdownCmd) Run(g *Globals) (err error) {
+	db, err := openDatabase(g.Config.Database)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer db.Close()
+
+	distros, err := getStats(db, g.WorkDir, cmd.Tag)
+	if err != nil {
+		return
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Distro", "Release", "Kernel", "Reliability"})
+	table.SetBorders(tablewriter.Border{
+		Left: true, Top: false, Right: true, Bottom: false})
+	table.SetCenterSeparator("|")
+
+	for distro, releases := range distros {
+		for release, kernels := range releases {
+			for kernel, stats := range kernels {
+				all := float64(stats.All)
+				ok := float64(stats.TestOK)
+				r := fmt.Sprintf("%6.02f%%", (ok/all)*100)
+				table.Append([]string{distro, release, kernel, r})
+			}
+		}
+	}
+
+	table.Render()
+	return
+}
+
+func logLogEntry(l logEntry) {
+	distroInfo := fmt.Sprintf("%s-%s {%s}", l.DistroType,
+		l.DistroRelease, l.KernelRelease)
+
+	artifactInfo := fmt.Sprintf("{[%s] %s}", l.Type, l.Name)
+
+	colored := ""
+	if l.Type == config.KernelExploit {
+		colored = aurora.Sprintf("[%4d %4s] [%s] %40s %40s: %s %s",
+			l.ID, l.Tag, l.Timestamp, artifactInfo, distroInfo,
+			genOkFail("BUILD", l.Build.Ok),
+			genOkFail("LPE", l.Test.Ok))
+	} else {
+		colored = aurora.Sprintf("[%4d %4s] [%s] %40s %40s: %s %s %s",
+			l.ID, l.Tag, l.Timestamp, artifactInfo, distroInfo,
+			genOkFail("BUILD", l.Build.Ok),
+			genOkFail("INSMOD", l.Run.Ok),
+			genOkFail("TEST", l.Test.Ok))
+	}
+
+	additional := ""
+	if l.KernelPanic {
+		additional = "(panic)"
+	} else if l.KilledByTimeout {
+		additional = "(timeout)"
+	}
+
+	if additional != "" {
+		fmt.Println(colored, additional)
+	} else {
+		fmt.Println(colored)
+	}
 }
 
 type runstat struct {
@@ -204,47 +295,5 @@ func getStats(db *sql.DB, path, tag string) (
 		distros[l.DistroType.String()][l.DistroRelease][l.KernelRelease] = rs
 	}
 
-	return
-}
-
-func logJSONHandler(db *sql.DB, path, tag string) (err error) {
-	distros, err := getStats(db, path, tag)
-	if err != nil {
-		return
-	}
-
-	bytes, err := json.Marshal(&distros)
-	if err != nil {
-		return
-	}
-
-	fmt.Println(string(bytes))
-	return
-}
-
-func logMarkdownHandler(db *sql.DB, path, tag string) (err error) {
-	distros, err := getStats(db, path, tag)
-	if err != nil {
-		return
-	}
-
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Distro", "Release", "Kernel", "Reliability"})
-	table.SetBorders(tablewriter.Border{
-		Left: true, Top: false, Right: true, Bottom: false})
-	table.SetCenterSeparator("|")
-
-	for distro, releases := range distros {
-		for release, kernels := range releases {
-			for kernel, stats := range kernels {
-				all := float64(stats.All)
-				ok := float64(stats.TestOK)
-				r := fmt.Sprintf("%6.02f%%", (ok/all)*100)
-				table.Append([]string{distro, release, kernel, r})
-			}
-		}
-	}
-
-	table.Render()
 	return
 }

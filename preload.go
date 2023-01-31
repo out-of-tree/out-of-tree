@@ -21,14 +21,8 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
-var disablePreload *bool
-
 func preloadModules(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 	dockerTimeout time.Duration) (err error) {
-
-	if *disablePreload {
-		return
-	}
 
 	for _, pm := range ka.Preload {
 		err = preload(q, ki, pm, dockerTimeout)

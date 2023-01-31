@@ -19,6 +19,33 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
+type DebugCmd struct {
+	Kernel string `help:"regexp (first match)" required:""`
+	Gdb    string `help:"gdb listen address" default:"tcp::1234"`
+
+	Kaslr bool `help:"Enable KASLR"`
+	Smep  bool `help:"Enable SMEP"`
+	Smap  bool `help:"Enable SMAP"`
+	Kpti  bool `help:"Enable KPTI"`
+
+	NoKaslr bool `help:"Disable KASLR"`
+	NoSmep  bool `help:"Disable SMEP"`
+	NoSmap  bool `help:"Disable SMAP"`
+	NoKpti  bool `help:"Disable KPTI"`
+}
+
+func (cmd *DebugCmd) Run(g *Globals) (err error) {
+	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return debugHandler(kcfg, g.WorkDir, cmd.Kernel, cmd.Gdb,
+		g.Config.Docker.Timeout.Duration,
+		cmd.Kaslr, cmd.Smep, cmd.Smap, cmd.Kpti,
+		cmd.NoKaslr, cmd.NoSmep, cmd.NoSmap, cmd.NoKpti)
+}
+
 func firstSupported(kcfg config.KernelConfig, ka config.Artifact,
 	kernel string) (ki config.KernelInfo, err error) {
 
@@ -202,8 +229,8 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	}
 
 	// Copy all test files to the remote machine
-	for _,f := range ka.TestFiles {
-		err = q.CopyFile(f.User,f.Local,f.Remote)
+	for _, f := range ka.TestFiles {
+		err = q.CopyFile(f.User, f.Local, f.Remote)
 		if err != nil {
 			log.Println("error copy err:", err, f.Local, f.Remote)
 			return

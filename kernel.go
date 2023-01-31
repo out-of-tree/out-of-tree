@@ -24,16 +24,131 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
-const kernelsAll int64 = math.MaxInt64
+type KernelCmd struct {
+	NoDownload bool `help:"do not download qemu image while kernel generation"`
+	UseHost    bool `help:"also use host kernels"`
 
-func kernelListHandler(kcfg config.KernelConfig) (err error) {
+	List        KernelListCmd        `cmd:"" help:"list kernels"`
+	Autogen     KernelAutogenCmd     `cmd:"" help:"generate kernels based on the current config"`
+	DockerRegen KernelDockerRegenCmd `cmd:"" help:"regenerate kernels config from out_of_tree_* docker images"`
+	Genall      KernelGenallCmd      `cmd:"" help:"generate all kernels for distro"`
+}
+
+type KernelListCmd struct{}
+
+func (cmd *KernelListCmd) Run(g *Globals) (err error) {
+	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
+	if err != nil {
+		return
+	}
+
 	if len(kcfg.Kernels) == 0 {
 		return errors.New("No kernels found")
 	}
+
 	for _, k := range kcfg.Kernels {
 		fmt.Println(k.DistroType, k.DistroRelease, k.KernelRelease)
 	}
+
 	return
+}
+
+type KernelAutogenCmd struct {
+	Max int64 `help:"download random kernels from set defined by regex in release_mask, but no more than X for each of release_mask" default:"100500"`
+}
+
+func kernelAutogenHandler(workPath, registry string,
+	commands []config.DockerCommand,
+	max int64, host, download bool) (err error) {
+	return errors.New("MEH")
+}
+
+func (cmd *KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
+	ka, err := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
+	if err != nil {
+		return
+	}
+
+	for _, sk := range ka.SupportedKernels {
+		if sk.DistroRelease == "" {
+			err = errors.New("Please set distro_release")
+			return
+		}
+
+		err = generateKernels(sk, g.Config.Docker.Registry, g.Config.Docker.Commands, cmd.Max, !kernelCmd.NoDownload)
+		if err != nil {
+			return
+		}
+	}
+
+	return updateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
+}
+
+type KernelDockerRegenCmd struct{}
+
+func (cmd *KernelDockerRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
+	dockerImages, err := listDockerImages()
+	if err != nil {
+		return
+	}
+
+	for _, d := range dockerImages {
+		var imagePath string
+		imagePath, err = dockerImagePath(config.KernelMask{
+			DistroType:    d.DistroType,
+			DistroRelease: d.DistroRelease,
+		})
+		if err != nil {
+			return
+		}
+
+		cmd := exec.Command("docker", "build", "-t",
+			d.ContainerName, imagePath)
+		var rawOutput []byte
+		rawOutput, err = cmd.CombinedOutput()
+		if err != nil {
+			log.Println("docker build:", string(rawOutput))
+			return
+		}
+
+		err = kickImage(d.ContainerName)
+		if err != nil {
+			log.Println("kick image", d.ContainerName, ":", err)
+			continue
+		}
+
+		err = copyKernels(d.ContainerName)
+		if err != nil {
+			log.Println("copy kernels", d.ContainerName, ":", err)
+			continue
+		}
+	}
+
+	return updateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
+}
+
+type KernelGenallCmd struct {
+	Distro string `required:"" help:"distribution"`
+	Ver    string `required:"" help:"distro version"`
+}
+
+func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
+	distroType, err := config.NewDistroType(cmd.Distro)
+	if err != nil {
+		return
+	}
+
+	km := config.KernelMask{
+		DistroType:    distroType,
+		DistroRelease: cmd.Ver,
+		ReleaseMask:   ".*",
+	}
+	err = generateKernels(km, g.Config.Docker.Registry, g.Config.Docker.Commands, math.MaxInt64, !kernelCmd.NoDownload)
+	if err != nil {
+		return
+	}
+
+	return updateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
 }
 
 func matchDebianHeadersPkg(container, mask string, generic bool) (
@@ -636,91 +751,4 @@ func generateKernels(km config.KernelMask, registry string,
 		return
 	}
 	return
-}
-
-func kernelAutogenHandler(workPath, registry string,
-	commands []config.DockerCommand,
-	max int64, host, download bool) (err error) {
-
-	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
-	if err != nil {
-		return
-	}
-
-	for _, sk := range ka.SupportedKernels {
-		if sk.DistroRelease == "" {
-			err = errors.New("Please set distro_release")
-			return
-		}
-
-		err = generateKernels(sk, registry, commands, max, download)
-		if err != nil {
-			return
-		}
-	}
-
-	err = updateKernelsCfg(host, download)
-	return
-}
-
-func kernelDockerRegenHandler(host, download bool) (err error) {
-	dockerImages, err := listDockerImages()
-	if err != nil {
-		return
-	}
-
-	for _, d := range dockerImages {
-		var imagePath string
-		imagePath, err = dockerImagePath(config.KernelMask{
-			DistroType:    d.DistroType,
-			DistroRelease: d.DistroRelease,
-		})
-		if err != nil {
-			return
-		}
-
-		cmd := exec.Command("docker", "build", "-t",
-			d.ContainerName, imagePath)
-		var rawOutput []byte
-		rawOutput, err = cmd.CombinedOutput()
-		if err != nil {
-			log.Println("docker build:", string(rawOutput))
-			return
-		}
-
-		err = kickImage(d.ContainerName)
-		if err != nil {
-			log.Println("kick image", d.ContainerName, ":", err)
-			continue
-		}
-
-		err = copyKernels(d.ContainerName)
-		if err != nil {
-			log.Println("copy kernels", d.ContainerName, ":", err)
-			continue
-		}
-	}
-
-	return updateKernelsCfg(host, download)
-}
-
-func kernelGenallHandler(distro, version, registry string,
-	commands []config.DockerCommand, host, download bool) (err error) {
-
-	distroType, err := config.NewDistroType(distro)
-	if err != nil {
-		return
-	}
-
-	km := config.KernelMask{
-		DistroType:    distroType,
-		DistroRelease: version,
-		ReleaseMask:   ".*",
-	}
-	err = generateKernels(km, registry, commands, kernelsAll, download)
-	if err != nil {
-		return
-	}
-
-	return updateKernelsCfg(host, download)
 }

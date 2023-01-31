@@ -12,6 +12,20 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
+type GenCmd struct {
+	Type string `enum:"module,exploit" required:"" help:"module/exploit"`
+}
+
+func (cmd *GenCmd) Run(g *Globals) (err error) {
+	switch cmd.Type {
+	case "module":
+		err = genConfig(config.KernelModule)
+	case "exploit":
+		err = genConfig(config.KernelExploit)
+	}
+	return
+}
+
 func genConfig(at config.ArtifactType) (err error) {
 	a := config.Artifact{
 		Name: "Put name here",

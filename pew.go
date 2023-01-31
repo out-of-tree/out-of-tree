@@ -26,6 +26,46 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
+type PewCmd struct {
+	Max     int64         `help:"test no more than X kernels" default:"100500"`
+	Runs    int64         `help:"runs per each kernel" default:"1"`
+	Kernel  string        `help:"override kernel regex"`
+	Guess   bool          `help:"try all defined kernels"`
+	Binary  string        `help:"use binary, do not build"`
+	Test    string        `help:"override path for test"`
+	Dist    string        `help:"build result path" default:"/dev/null"`
+	Threads int           `help:"threads"`
+	Tag     string        `help:"log tagging"`
+	Verbose bool          `help:"show more information"`
+	Timeout time.Duration `help:"timeout after tool will not spawn new tests"`
+}
+
+func (cmd *PewCmd) Run(g *Globals) (err error) {
+	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
+	if err != nil {
+		log.Println(err)
+	}
+
+	stop := time.Time{} // never stop
+	if cmd.Timeout != 0 {
+		stop = time.Now().Add(cmd.Timeout)
+	}
+
+	db, err := openDatabase(g.Config.Database)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer db.Close()
+
+	return pewHandler(
+		kcfg, g.WorkDir, cmd.Kernel, cmd.Binary, cmd.Test,
+		cmd.Guess, stop, g.Config.Qemu.Timeout.Duration,
+		g.Config.Docker.Timeout.Duration,
+		cmd.Max, cmd.Runs, cmd.Dist, cmd.Tag, cmd.Threads,
+		db, cmd.Verbose,
+	)
+}
+
 type runstate struct {
 	Overall, Success float64
 }
