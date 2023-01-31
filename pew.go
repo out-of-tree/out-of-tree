@@ -34,13 +34,16 @@ type PewCmd struct {
 	Binary  string        `help:"use binary, do not build"`
 	Test    string        `help:"override path for test"`
 	Dist    string        `help:"build result path" default:"/dev/null"`
-	Threads int           `help:"threads"`
+	Threads int           `help:"threads" default:"1"`
 	Tag     string        `help:"log tagging"`
 	Verbose bool          `help:"show more information"`
 	Timeout time.Duration `help:"timeout after tool will not spawn new tests"`
+
+	QemuTimeout   time.Duration `help:"timeout for qemu"`
+	DockerTimeout time.Duration `help:"timeout for docker"`
 }
 
-func (cmd *PewCmd) Run(g *Globals) (err error) {
+func (cmd PewCmd) Run(g *Globals) (err error) {
 	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
 		log.Println(err)
@@ -57,13 +60,51 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 	}
 	defer db.Close()
 
-	return pewHandler(
-		kcfg, g.WorkDir, cmd.Kernel, cmd.Binary, cmd.Test,
-		cmd.Guess, stop, g.Config.Qemu.Timeout.Duration,
-		g.Config.Docker.Timeout.Duration,
-		cmd.Max, cmd.Runs, cmd.Dist, cmd.Tag, cmd.Threads,
-		db, cmd.Verbose,
-	)
+	ka, err := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
+	if err != nil {
+		return
+	}
+
+	if ka.SourcePath == "" {
+		ka.SourcePath = g.WorkDir
+	}
+
+	if cmd.Kernel != "" {
+		var km config.KernelMask
+		km, err = kernelMask(cmd.Kernel)
+		if err != nil {
+			return
+		}
+
+		ka.SupportedKernels = []config.KernelMask{km}
+	}
+
+	if cmd.Guess {
+		ka.SupportedKernels, err = genAllKernels()
+		if err != nil {
+			return
+		}
+	}
+
+	qemuTimeout := g.Config.Qemu.Timeout.Duration
+	if cmd.QemuTimeout != 0 {
+		qemuTimeout = cmd.QemuTimeout
+	}
+
+	dockerTimeout := g.Config.Docker.Timeout.Duration
+	if cmd.DockerTimeout != 0 {
+		dockerTimeout = cmd.DockerTimeout
+	}
+
+	err = performCI(ka, kcfg, cmd.Binary, cmd.Test, stop,
+		qemuTimeout, dockerTimeout,
+		cmd.Max, cmd.Runs, cmd.Dist, cmd.Tag,
+		cmd.Threads, db, cmd.Verbose)
+	if err != nil {
+		return
+	}
+
+	return
 }
 
 type runstate struct {
@@ -541,48 +582,5 @@ func genAllKernels() (sk []config.KernelMask, err error) {
 			ReleaseMask: ".*",
 		})
 	}
-	return
-}
-
-// TODO: Now too many parameters, move all of them to some structure
-func pewHandler(kcfg config.KernelConfig,
-	workPath, ovrrdKrnl, binary, test string, guess bool,
-	stop time.Time, qemuTimeout, dockerTimeout time.Duration,
-	max, runs int64, dist, tag string, threads int,
-	db *sql.DB, verbose bool) (err error) {
-
-	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
-	if err != nil {
-		return
-	}
-
-	if ka.SourcePath == "" {
-		ka.SourcePath = workPath
-	}
-
-	if ovrrdKrnl != "" {
-		var km config.KernelMask
-		km, err = kernelMask(ovrrdKrnl)
-		if err != nil {
-			return
-		}
-
-		ka.SupportedKernels = []config.KernelMask{km}
-	}
-
-	if guess {
-		ka.SupportedKernels, err = genAllKernels()
-		if err != nil {
-			return
-		}
-	}
-
-	err = performCI(ka, kcfg, binary, test,
-		stop, qemuTimeout, dockerTimeout,
-		max, runs, dist, tag, threads, db, verbose)
-	if err != nil {
-		return
-	}
-
 	return
 }

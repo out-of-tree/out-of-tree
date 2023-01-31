@@ -57,13 +57,7 @@ type KernelAutogenCmd struct {
 	Max int64 `help:"download random kernels from set defined by regex in release_mask, but no more than X for each of release_mask" default:"100500"`
 }
 
-func kernelAutogenHandler(workPath, registry string,
-	commands []config.DockerCommand,
-	max int64, host, download bool) (err error) {
-	return errors.New("MEH")
-}
-
-func (cmd *KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
+func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	ka, err := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
 	if err != nil {
 		return

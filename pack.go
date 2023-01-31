@@ -8,42 +8,27 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"runtime"
 	"time"
-
-	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
 type PackCmd struct {
 	Autogen     bool  `help:"kernel autogeneration"`
+	UseHost     bool  `help:"also use host kernels"`
 	NoDownload  bool  `help:"do not download qemu image while kernel generation"`
 	ExploitRuns int64 `default:"4" help:"amount of runs of each exploit"`
 	KernelRuns  int64 `default:"1" help:"amount of runs of each kernel"`
+	Max         int64 `help:"download random kernels from set defined by regex in release_mask, but no more than X for each of release_mask" default:"1"`
+
+	Threads int `help:"threads" default:"4"`
 
 	Tag string `help:"filter tag"`
 
-	Timeout time.Duration `help:"timeout after tool will not spawn new tests"`
+	Timeout       time.Duration `help:"timeout after tool will not spawn new tests"`
+	QemuTimeout   time.Duration `help:"timeout for qemu"`
+	DockerTimeout time.Duration `help:"timeout for docker"`
 }
 
 func (cmd *PackCmd) Run(g *Globals) (err error) {
-	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
-	if err != nil {
-		log.Println(err)
-	}
-
-	db, err := openDatabase(g.Config.Database)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer db.Close()
-
-	stop := time.Time{} // never stop
-	if cmd.Timeout != 0 {
-		stop = time.Now().Add(cmd.Timeout)
-	}
-
-	threads := runtime.NumCPU()
-
 	tag := fmt.Sprintf("pack_run_%d", time.Now().Unix())
 	log.Println("Tag:", tag)
 
@@ -60,11 +45,16 @@ func (cmd *PackCmd) Run(g *Globals) (err error) {
 		}
 
 		if cmd.Autogen {
-			var perRegex int64 = 1
-			err = kernelAutogenHandler(workPath,
-				g.Config.Docker.Registry,
-				g.Config.Docker.Commands,
-				perRegex, false, !cmd.NoDownload)
+			err = KernelAutogenCmd{Max: cmd.Max}.Run(
+				&KernelCmd{
+					NoDownload: cmd.NoDownload,
+					UseHost:    cmd.UseHost,
+				},
+				&Globals{
+					Config:  g.Config,
+					WorkDir: workPath,
+				},
+			)
 			if err != nil {
 				return
 			}
@@ -72,11 +62,19 @@ func (cmd *PackCmd) Run(g *Globals) (err error) {
 
 		log.Println(f.Name())
 
-		pewHandler(kcfg, workPath, "", "", "", false, stop,
-			g.Config.Docker.Timeout.Duration,
-			g.Config.Qemu.Timeout.Duration,
-			cmd.KernelRuns, cmd.ExploitRuns, pathDevNull,
-			tag, threads, db, false)
+		PewCmd{
+			Max:           cmd.KernelRuns,
+			Runs:          cmd.ExploitRuns,
+			Threads:       cmd.Threads,
+			Tag:           tag,
+			Timeout:       cmd.Timeout,
+			QemuTimeout:   cmd.QemuTimeout,
+			DockerTimeout: cmd.DockerTimeout,
+			Dist:          pathDevNull,
+		}.Run(&Globals{
+			Config:  g.Config,
+			WorkDir: workPath,
+		})
 	}
 
 	return
