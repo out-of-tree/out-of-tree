@@ -106,7 +106,7 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 		return
 	}
 
-	if successRate(state) < *threshold {
+	if successRate(state) < cmd.Threshold {
 		err = errors.New("reliability threshold not met")
 	}
 	return
