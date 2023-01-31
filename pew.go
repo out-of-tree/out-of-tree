@@ -41,6 +41,8 @@ type PewCmd struct {
 
 	QemuTimeout   time.Duration `help:"timeout for qemu"`
 	DockerTimeout time.Duration `help:"timeout for docker"`
+
+	Threshold float64 `help:"Reliablity threshold for exit code" default:"1.00"`
 }
 
 func (cmd PewCmd) Run(g *Globals) (err error) {
@@ -104,6 +106,9 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 		return
 	}
 
+	if successRate(state) < *threshold {
+		err = errors.New("reliability threshold not met")
+	}
 	return
 }
 
