@@ -17,6 +17,8 @@
 
 - Adding TestFiles to artifact config, transfers extra test files to VM.
 
+- Flag `--artifact-config` to specify the path to .out-of-tree.toml.
+
 ## [1.4.0]
 
 ### Added

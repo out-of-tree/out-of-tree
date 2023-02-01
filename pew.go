@@ -39,6 +39,8 @@ type PewCmd struct {
 	Verbose bool          `help:"show more information"`
 	Timeout time.Duration `help:"timeout after tool will not spawn new tests"`
 
+	ArtifactConfig string `help:"path to artifact config" type:"path"`
+
 	QemuTimeout   time.Duration `help:"timeout for qemu"`
 	DockerTimeout time.Duration `help:"timeout for docker"`
 
@@ -62,7 +64,13 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 	}
 	defer db.Close()
 
-	ka, err := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
+	var configPath string
+	if cmd.ArtifactConfig == "" {
+		configPath = g.WorkDir + "/.out-of-tree.toml"
+	} else {
+		configPath = cmd.ArtifactConfig
+	}
+	ka, err := config.ReadArtifactConfig(configPath)
 	if err != nil {
 		return
 	}
