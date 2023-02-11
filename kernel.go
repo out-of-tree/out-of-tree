@@ -98,7 +98,7 @@ func (cmd *KernelDockerRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err erro
 
 		args := []string{"build"}
 		if dockerIsPodman() {
-			args = append(args, "--squash-all")
+			args = append(args, "--layers", "--squash-all")
 		}
 		args = append(args, "-t", d.ContainerName, imagePath)
 
@@ -353,7 +353,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 
 	args := []string{"build"}
 	if dockerIsPodman() {
-		args = append(args, "--squash-all")
+		args = append(args, "--layers", "--squash-all")
 	}
 	args = append(args, "-t", sk.DockerName(), imagePath)
 
@@ -426,7 +426,7 @@ func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
 
 	args := []string{"build"}
 	if dockerIsPodman() {
-		args = append(args, "--squash-all")
+		args = append(args, "--layers", "--squash-all")
 	}
 	args = append(args, "-t", sk.DockerName(), imagePath)
 
