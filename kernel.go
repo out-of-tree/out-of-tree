@@ -97,9 +97,6 @@ func (cmd *KernelDockerRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err erro
 		}
 
 		args := []string{"build"}
-		if dockerIsPodman() {
-			args = append(args, "--layers", "--squash-all")
-		}
 		args = append(args, "-t", d.ContainerName, imagePath)
 
 		cmd := exec.Command("docker", args...)
@@ -352,9 +349,6 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	}
 
 	args := []string{"build"}
-	if dockerIsPodman() {
-		args = append(args, "--layers", "--squash-all")
-	}
 	args = append(args, "-t", sk.DockerName(), imagePath)
 
 	cmd = exec.Command("docker", args...)
@@ -425,9 +419,6 @@ func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
 	}
 
 	args := []string{"build"}
-	if dockerIsPodman() {
-		args = append(args, "--layers", "--squash-all")
-	}
 	args = append(args, "-t", sk.DockerName(), imagePath)
 
 	cmd := exec.Command("docker", args...)
@@ -762,12 +753,4 @@ func generateKernels(km config.KernelMask, registry string,
 		return
 	}
 	return
-}
-
-func dockerIsPodman() bool {
-	output, err := exec.Command("docker", "version").CombinedOutput()
-	if err != nil {
-		return false
-	}
-	return strings.Contains(strings.ToLower(string(output)), "podman")
 }
