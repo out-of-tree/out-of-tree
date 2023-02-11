@@ -96,7 +96,7 @@ func (cmd *KernelDockerRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err erro
 			return
 		}
 
-		cmd := exec.Command("docker", "build", "-t",
+		cmd := exec.Command("docker", "build", "--squash", "-t",
 			d.ContainerName, imagePath)
 		var rawOutput []byte
 		rawOutput, err = cmd.CombinedOutput()
@@ -346,7 +346,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		return
 	}
 
-	cmd = exec.Command("docker", "build", "-t", sk.DockerName(), imagePath)
+	cmd = exec.Command("docker", "build", "--squash", "-t", sk.DockerName(), imagePath)
 	rawOutput, err = cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("Base image for %s:%s generating error, see log",
@@ -413,7 +413,7 @@ func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
 		return
 	}
 
-	cmd := exec.Command("docker", "build", "-t", sk.DockerName(), imagePath)
+	cmd := exec.Command("docker", "build", "--squash", "-t", sk.DockerName(), imagePath)
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
 		// Fallback to previous state
