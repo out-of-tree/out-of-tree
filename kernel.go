@@ -769,5 +769,5 @@ func dockerIsPodman() bool {
 	if err != nil {
 		return false
 	}
-	return strings.Contains(string(output), "podman")
+	return strings.Contains(strings.ToLower(string(output)), "podman")
 }
