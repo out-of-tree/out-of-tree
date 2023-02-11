@@ -99,7 +99,7 @@ func (cmd *KernelDockerRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err erro
 		args := []string{"build"}
 		_, err = exec.Command("which", "podman").CombinedOutput()
 		if err != nil {
-			args = append(args, "--squash")
+			args = append(args, "--squash-all")
 		}
 		args = append(args, "-t", d.ContainerName, imagePath)
 
@@ -355,7 +355,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	args := []string{"build"}
 	_, err = exec.Command("which", "podman").CombinedOutput()
 	if err != nil {
-		args = append(args, "--squash")
+		args = append(args, "--squash-all")
 	}
 	args = append(args, "-t", sk.DockerName(), imagePath)
 
@@ -429,7 +429,7 @@ func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
 	args := []string{"build"}
 	_, err = exec.Command("which", "podman").CombinedOutput()
 	if err != nil {
-		args = append(args, "--squash")
+		args = append(args, "--squash-all")
 	}
 	args = append(args, "-t", sk.DockerName(), imagePath)
 
