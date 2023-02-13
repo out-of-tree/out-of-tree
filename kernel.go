@@ -54,7 +54,7 @@ func (cmd *KernelListCmd) Run(g *Globals) (err error) {
 }
 
 type KernelAutogenCmd struct {
-	Max int64 `help:"download random kernels from set defined by regex in release_mask, but no more than X for each of release_mask" default:"100500"`
+	Max int64 `help:"download random kernels from set defined by regex in release_mask, but no more than X for each of release_mask" default:"100"`
 }
 
 func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
