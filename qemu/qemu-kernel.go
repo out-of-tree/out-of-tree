@@ -352,22 +352,41 @@ func (q System) AsyncCommand(user, cmd string) (err error) {
 		"nohup sh -c '%s' > /dev/null 2> /dev/null < /dev/null &", cmd))
 }
 
-// CopyFile is copy file from local machine to remote through ssh/scp
-func (q *System) CopyFile(user, localPath, remotePath string) (err error) {
+func (q System) scp(user, localPath, remotePath string, recursive bool) (err error) {
 	addrPort := strings.Split(q.sshAddrPort, ":")
 	addr := addrPort[0]
 	port := addrPort[1]
 
-	cmd := exec.Command("scp", "-P", port,
+	args := []string{
+		"-P", port,
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "LogLevel=error",
-		localPath, user+"@"+addr+":"+remotePath)
+	}
+
+	if recursive {
+		args = append(args, "-r")
+	}
+
+	args = append(args, localPath, user+"@"+addr+":"+remotePath)
+
+	cmd := exec.Command("scp", args...)
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return errors.New(string(output))
 	}
 
 	return
+}
+
+// CopyFile from local machine to remote via scp
+func (q System) CopyFile(user, localPath, remotePath string) (err error) {
+	return q.scp(user, localPath, remotePath, false)
+}
+
+// CopyDirectory from local machine to remote via scp
+func (q System) CopyDirectory(user, localPath, remotePath string) (err error) {
+	return q.scp(user, localPath, remotePath, true)
 }
 
 // CopyAndInsmod copy kernel module to temporary file on qemu then insmod it
