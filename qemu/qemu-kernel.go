@@ -372,7 +372,7 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 	cmd := exec.Command("scp", args...)
 
 	output, err := cmd.CombinedOutput()
-	if err != nil {
+	if err != nil || string(output) != "" {
 		return errors.New(string(output))
 	}
 
