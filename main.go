@@ -30,6 +30,7 @@ type CLI struct {
 	Log    LogCmd    `cmd:"" help:"query logs"`
 	Pack   PackCmd   `cmd:"" help:"exploit pack test"`
 	Gen    GenCmd    `cmd:"" help:"generate .out-of-tree.toml skeleton"`
+	Image  ImageCmd  `cmd:"" help:"manage images"`
 
 	Version VersionFlag `name:"version" help:"print version information and quit"`
 }

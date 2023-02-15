@@ -5,13 +5,106 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
+	"time"
+
+	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
+
+type ImageCmd struct {
+	List ImageListCmd `cmd:"" help:"list images"`
+	Edit ImageEditCmd `cmd:"" help:"edit image"`
+}
+
+type ImageListCmd struct{}
+
+func (cmd *ImageListCmd) Run(g *Globals) (err error) {
+	usr, err := user.Current()
+	if err != nil {
+		return
+	}
+
+	entries, err := os.ReadDir(usr.HomeDir + "/.out-of-tree/images/")
+	if err != nil {
+		return
+	}
+
+	for _, e := range entries {
+		fmt.Println(e.Name())
+	}
+
+	return
+}
+
+type ImageEditCmd struct {
+	Name string `help:"image name" required:""`
+}
+
+func (cmd *ImageEditCmd) Run(g *Globals) (err error) {
+	usr, err := user.Current()
+	if err != nil {
+		return
+	}
+
+	image := usr.HomeDir + "/.out-of-tree/images/" + cmd.Name
+	if !exists(image) {
+		fmt.Println("image does not exist")
+	}
+
+	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
+	if err != nil {
+		return
+	}
+
+	if len(kcfg.Kernels) == 0 {
+		return errors.New("No kernels found")
+	}
+
+	ki := config.KernelInfo{}
+	for _, k := range kcfg.Kernels {
+		if k.RootFS == image {
+			ki = k
+			break
+		}
+	}
+
+	kernel := qemu.Kernel{
+		KernelPath: ki.KernelPath,
+		InitrdPath: ki.InitrdPath,
+	}
+
+	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)
+
+	q.Mutable = true
+
+	err = q.Start()
+	if err != nil {
+		fmt.Println("Qemu start error:", err)
+		return
+	}
+	defer q.Stop()
+
+	fmt.Print("ssh command:\n\n\t")
+	fmt.Println(q.GetSSHCommand())
+
+	fmt.Print("\npress enter to stop")
+	fmt.Scanln()
+
+	q.Command("root", "poweroff")
+
+	for !q.Died {
+		time.Sleep(time.Second)
+	}
+	return
+}
 
 // inspired by Edd Turtle code
 func downloadFile(filepath string, url string) (err error) {
