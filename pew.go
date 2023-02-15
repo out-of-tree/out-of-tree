@@ -403,6 +403,15 @@ func copyTest(q *qemu.System, testPath string, ka config.Artifact) (
 	return
 }
 
+func copyStandardModules(q *qemu.System, ki config.KernelInfo) (err error) {
+	_, err = q.Command("root", "mkdir -p /lib/modules")
+	if err != nil {
+		return
+	}
+
+	return q.CopyDirectory("root", ki.ModulesPath, "/lib/modules/")
+}
+
 func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	ki config.KernelInfo, binaryPath, testPath string,
 	qemuTimeout, dockerTimeout time.Duration, dist, tag string,
@@ -496,6 +505,15 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	remoteTest, err := copyTest(q, testPath, ka)
 	if err != nil {
 		return
+	}
+
+	if ka.StandardModules {
+		// Module depends on one of the standard modules
+		err = copyStandardModules(q, ki)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 
 	err = preloadModules(q, ka, ki, dockerTimeout)

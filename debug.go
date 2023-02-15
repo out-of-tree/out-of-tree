@@ -109,6 +109,7 @@ func interactive(q *qemu.System) (err error) {
 	}
 }
 
+// TODO Merge with pew.go:whatever
 func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	dockerTimeout time.Duration, yekaslr, yesmep, yesmap, yekpti,
 	nokaslr, nosmep, nosmap, nokpti bool) (err error) {
@@ -205,6 +206,15 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 		return
 	}
 	defer os.RemoveAll(tmp)
+
+	if ka.StandardModules {
+		// Module depends on one of the standard modules
+		err = copyStandardModules(q, ki)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	}
 
 	err = preloadModules(q, ka, ki, dockerTimeout)
 	if err != nil {
