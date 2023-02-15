@@ -250,9 +250,11 @@ type KernelInfo struct {
 	ContainerName string
 
 	// Runtime information
-	KernelPath string
-	InitrdPath string
-	RootFS     string
+	KernelPath  string
+	InitrdPath  string
+	ModulesPath string
+
+	RootFS string
 
 	// Debug symbols
 	VmlinuxPath string

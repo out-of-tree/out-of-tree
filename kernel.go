@@ -482,6 +482,13 @@ func copyKernels(name string) (err error) {
 		return
 	}
 
+	cmd = exec.Command("docker", "cp", containerID+":/lib/modules", target)
+	rawOutput, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Println(string(rawOutput))
+		return
+	}
+
 	return
 }
 
@@ -658,9 +665,11 @@ func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 			KernelRelease: k,
 			ContainerName: name,
 
-			KernelPath: kernelsBase + genKernelPath(files, k),
-			InitrdPath: kernelsBase + genInitrdPath(files, k),
-			RootFS:     rootfs,
+			KernelPath:  kernelsBase + genKernelPath(files, k),
+			InitrdPath:  kernelsBase + genInitrdPath(files, k),
+			ModulesPath: kernelsBase + "modules/" + k,
+
+			RootFS: rootfs,
 		}
 		newkcfg.Kernels = append(newkcfg.Kernels, ki)
 	}
