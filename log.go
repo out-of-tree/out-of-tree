@@ -22,7 +22,7 @@ type LogCmd struct {
 	Query    LogQueryCmd    `cmd:"" help:"query logs"`
 	Dump     LogDumpCmd     `cmd:"" help:"show all info for log entry with ID"`
 	Json     LogJsonCmd     `cmd:"" help:"generate json statistics"`
-	Makrdown LogMarkdownCmd `cmd:"" help:"generate markdown statistics"`
+	Markdown LogMarkdownCmd `cmd:"" help:"generate markdown statistics"`
 }
 
 type LogQueryCmd struct {
