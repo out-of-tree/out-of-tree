@@ -140,6 +140,10 @@ type Artifact struct {
 		DisableKpti  bool
 	}
 
+	Make struct {
+		Target string
+	}
+
 	StandardModules bool
 
 	Preload []PreloadModule
