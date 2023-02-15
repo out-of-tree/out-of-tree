@@ -470,7 +470,7 @@ func copyKernels(name string) (err error) {
 		return
 	}
 
-	target := usr.HomeDir + "/.out-of-tree/kernels/"
+	target := usr.HomeDir + "/.out-of-tree/kernels/" + name + "/"
 	if !exists(target) {
 		os.MkdirAll(target, os.ModePerm)
 	}
@@ -654,7 +654,7 @@ func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 	if err != nil {
 		return
 	}
-	kernelsBase := usr.HomeDir + "/.out-of-tree/kernels/"
+	kernelsBase := usr.HomeDir + "/.out-of-tree/kernels/" + name + "/"
 	files, err := ioutil.ReadDir(kernelsBase)
 	if err != nil {
 		return
