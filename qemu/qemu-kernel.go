@@ -66,6 +66,8 @@ type System struct {
 	kernel    Kernel
 	drivePath string
 
+	Mutable bool
+
 	Cpus   int
 	Memory int
 
@@ -215,13 +217,17 @@ func (q *System) Start() (err error) {
 	rand.Seed(time.Now().UnixNano()) // Are you sure?
 	q.sshAddrPort = getFreeAddrPort()
 	hostfwd := fmt.Sprintf("hostfwd=tcp:%s-:22", q.sshAddrPort)
-	qemuArgs := []string{"-snapshot", "-nographic",
+	qemuArgs := []string{"-nographic",
 		"-hda", q.drivePath,
 		"-kernel", q.kernel.KernelPath,
 		"-smp", fmt.Sprintf("%d", q.Cpus),
 		"-m", fmt.Sprintf("%d", q.Memory),
 		"-device", "e1000,netdev=n1",
 		"-netdev", "user,id=n1," + hostfwd,
+	}
+
+	if !q.Mutable {
+		qemuArgs = append(qemuArgs, "-snapshot")
 	}
 
 	if q.debug {
