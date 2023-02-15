@@ -489,6 +489,14 @@ func copyKernels(name string) (err error) {
 		return
 	}
 
+	cmd = exec.Command("find", "~/.out-of-tree/kernels/modules",
+		"-type", "l", "-delete")
+	rawOutput, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Println(string(rawOutput))
+		return
+	}
+
 	return
 }
 
