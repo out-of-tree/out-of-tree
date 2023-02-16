@@ -111,7 +111,7 @@ func buildPreload(workPath, tmp string, ki config.KernelInfo,
 		dockerTimeout = ka.Docker.Timeout.Duration
 	}
 
-	artifact, _, err = build(tmp, ka, ki, dockerTimeout)
+	_, artifact, _, err = build(tmp, ka, ki, dockerTimeout)
 	return
 }
 

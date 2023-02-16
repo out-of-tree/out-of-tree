@@ -227,7 +227,7 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 		return
 	}
 
-	outFile, output, err := build(tmp, ka, ki, dockerTimeout)
+	_, outFile, output, err := build(tmp, ka, ki, dockerTimeout)
 	if err != nil {
 		log.Println(err, output)
 		return

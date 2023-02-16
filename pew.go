@@ -211,25 +211,25 @@ func applyPatches(src string, ka config.Artifact) (err error) {
 }
 
 func build(tmp string, ka config.Artifact, ki config.KernelInfo,
-	dockerTimeout time.Duration) (outPath, output string, err error) {
+	dockerTimeout time.Duration) (outdir, outpath, output string, err error) {
 
 	target := fmt.Sprintf("%d_%s", rand.Int(), ki.KernelRelease)
 
-	tmpSourcePath := tmp + "/source"
+	outdir = tmp + "/source"
 
-	err = copy.Copy(ka.SourcePath, tmpSourcePath)
+	err = copy.Copy(ka.SourcePath, outdir)
 	if err != nil {
 		return
 	}
 
-	err = applyPatches(tmpSourcePath, ka)
+	err = applyPatches(outdir, ka)
 	if err != nil {
 		return
 	}
 
-	outPath = tmpSourcePath + "/" + target
+	outpath = outdir + "/" + target
 	if ka.Type == config.KernelModule {
-		outPath += ".ko"
+		outpath += ".ko"
 	}
 
 	kernel := "/lib/modules/" + ki.KernelRelease + "/build"
@@ -244,9 +244,9 @@ func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 
 	if ki.ContainerName != "" {
 		output, err = dockerRun(dockerTimeout, ki.ContainerName,
-			tmpSourcePath, buildCommand+" && chmod -R 777 /work")
+			outdir, buildCommand+" && chmod -R 777 /work")
 	} else {
-		cmd := exec.Command("bash", "-c", "cd "+tmpSourcePath+" && "+
+		cmd := exec.Command("bash", "-c", "cd "+outdir+" && "+
 			buildCommand)
 		timer := time.AfterFunc(dockerTimeout, func() {
 			cmd.Process.Kill()
@@ -313,6 +313,7 @@ func genOkFail(name string, ok bool) (aurv aurora.Value) {
 }
 
 type phasesResult struct {
+	BuildDir         string
 	BuildArtifact    string
 	Build, Run, Test struct {
 		Output string
@@ -409,6 +410,9 @@ func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
 
 		// Copy all test files to the remote machine
 		for _, f := range ka.TestFiles {
+			if f.Local[0] != '/' {
+				f.Local = res.BuildDir + "/" + f.Local
+			}
 			err = q.CopyFile(f.User, f.Local, f.Remote)
 			if err != nil {
 				log.Println("error copy err:", err, f.Local, f.Remote)
@@ -545,8 +549,9 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	defer dumpResult(q, ka, ki, &result, dist, tag, binaryPath, db)
 
 	if binaryPath == "" {
-		result.BuildArtifact, result.Build.Output, err = build(tmp, ka,
-			ki, dockerTimeout)
+		// TODO: build should return structure
+		result.BuildDir, result.BuildArtifact, result.Build.Output, err =
+			build(tmp, ka, ki, dockerTimeout)
 		if err != nil {
 			log.Println(err)
 			return
