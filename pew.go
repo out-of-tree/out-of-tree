@@ -157,6 +157,59 @@ func dockerRun(timeout time.Duration, container, workdir, command string) (
 	return
 }
 
+func sh(workdir, cmd string) (output string, err error) {
+	command := exec.Command("sh", "-c", "cd "+workdir+" && "+cmd)
+	raw, err := command.CombinedOutput()
+	output = string(raw)
+	if err != nil {
+		e := fmt.Sprintf("%v %v output: %v", cmd, err, output)
+		err = errors.New(e)
+	}
+	return
+}
+
+func applyPatches(src string, ka config.Artifact) (err error) {
+	for i, patch := range ka.Patches {
+		name := fmt.Sprintf("patch_%02d", i)
+
+		path := src + "/" + name + ".diff"
+		if patch.Source != "" && patch.Path != "" {
+			err = errors.New("path and source are mutually exclusive")
+			return
+		} else if patch.Source != "" {
+			err = os.WriteFile(path, []byte(patch.Source), 0644)
+			if err != nil {
+				return
+			}
+		} else if patch.Path != "" {
+			err = copy.Copy(patch.Path, path)
+			if err != nil {
+				return
+			}
+		}
+
+		if patch.Source != "" || patch.Path != "" {
+			_, err = sh(src, "patch < "+path)
+			if err != nil {
+				return
+			}
+		}
+
+		if patch.Script != "" {
+			script := src + "/" + name + ".sh"
+			err = os.WriteFile(script, []byte(patch.Script), 0755)
+			if err != nil {
+				return
+			}
+			_, err = sh(src, script)
+			if err != nil {
+				return
+			}
+		}
+	}
+	return
+}
+
 func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 	dockerTimeout time.Duration) (outPath, output string, err error) {
 
@@ -165,6 +218,11 @@ func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 	tmpSourcePath := tmp + "/source"
 
 	err = copy.Copy(ka.SourcePath, tmpSourcePath)
+	if err != nil {
+		return
+	}
+
+	err = applyPatches(tmpSourcePath, ka)
 	if err != nil {
 		return
 	}

@@ -115,6 +115,12 @@ type FileTransfer struct {
 	Remote string
 }
 
+type Patch struct {
+	Path   string
+	Source string
+	Script string
+}
+
 // Artifact is for .out-of-tree.toml
 type Artifact struct {
 	Name             string
@@ -139,6 +145,8 @@ type Artifact struct {
 		DisableKaslr bool
 		DisableKpti  bool
 	}
+
+	Patches []Patch
 
 	Make struct {
 		Target string

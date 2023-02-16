@@ -39,6 +39,9 @@ func genConfig(at config.ArtifactType) (err error) {
 	a.Preload = append(a.Preload, config.PreloadModule{
 		Repo: "Repo name (e.g. https://github.com/openwall/lkrg)",
 	})
+	a.Patches = append(a.Patches, config.Patch{
+		Path: "/path/to/profiling.patch",
+	})
 
 	buf, err := toml.Marshal(&a)
 	if err != nil {
