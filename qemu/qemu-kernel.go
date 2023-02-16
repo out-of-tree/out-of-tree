@@ -307,6 +307,20 @@ func (q *System) Stop() {
 	}
 }
 
+func (q System) WaitForSSH(timeout time.Duration) error {
+	for start := time.Now(); time.Since(start) < timeout; {
+		client, err := q.ssh("root")
+		if err != nil {
+			time.Sleep(time.Second / 10)
+			continue
+		}
+		client.Close()
+		return nil
+	}
+
+	return errors.New("no ssh (timeout)")
+}
+
 func (q System) ssh(user string) (client *ssh.Client, err error) {
 	cfg := &ssh.ClientConfig{
 		User:            user,

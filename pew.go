@@ -506,6 +506,11 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		}
 	}
 
+	err = q.WaitForSSH(qemuTimeout)
+	if err != nil {
+		return
+	}
+
 	remoteTest, err := copyTest(q, testPath, ka)
 	if err != nil {
 		return

@@ -207,6 +207,11 @@ func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
 	}
 	defer os.RemoveAll(tmp)
 
+	err = q.WaitForSSH(time.Minute)
+	if err != nil {
+		return
+	}
+
 	if ka.StandardModules {
 		// Module depends on one of the standard modules
 		err = copyStandardModules(q, ki)
