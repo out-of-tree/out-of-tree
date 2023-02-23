@@ -23,6 +23,8 @@ type DebugCmd struct {
 	Kernel string `help:"regexp (first match)" required:""`
 	Gdb    string `help:"gdb listen address" default:"tcp::1234"`
 
+	ArtifactConfig string `help:"path to artifact config" type:"path"`
+
 	Kaslr bool `help:"Enable KASLR"`
 	Smep  bool `help:"Enable SMEP"`
 	Smap  bool `help:"Enable SMAP"`
@@ -40,7 +42,13 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 		log.Println(err)
 	}
 
-	ka, err := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
+	var configPath string
+	if cmd.ArtifactConfig == "" {
+		configPath = g.WorkDir + "/.out-of-tree.toml"
+	} else {
+		configPath = cmd.ArtifactConfig
+	}
+	ka, err := config.ReadArtifactConfig(configPath)
 	if err != nil {
 		return
 	}
