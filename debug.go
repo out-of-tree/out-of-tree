@@ -40,10 +40,154 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 		log.Println(err)
 	}
 
-	return debugHandler(kcfg, g.WorkDir, cmd.Kernel, cmd.Gdb,
-		g.Config.Docker.Timeout.Duration,
-		cmd.Kaslr, cmd.Smep, cmd.Smap, cmd.Kpti,
-		cmd.NoKaslr, cmd.NoSmep, cmd.NoSmap, cmd.NoKpti)
+	ka, err := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
+	if err != nil {
+		return
+	}
+
+	if ka.SourcePath == "" {
+		ka.SourcePath = g.WorkDir
+	}
+
+	ki, err := firstSupported(kcfg, ka, cmd.Kernel)
+	if err != nil {
+		return
+	}
+
+	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
+	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)
+	if err != nil {
+		return
+	}
+
+	if ka.Qemu.Cpus != 0 {
+		q.Cpus = ka.Qemu.Cpus
+	}
+	if ka.Qemu.Memory != 0 {
+		q.Memory = ka.Qemu.Memory
+	}
+
+	if ka.Docker.Timeout.Duration != 0 {
+		g.Config.Docker.Timeout.Duration = ka.Docker.Timeout.Duration
+	}
+
+	q.SetKASLR(false) // set KASLR to false by default because of gdb
+	q.SetSMEP(!ka.Mitigations.DisableSmep)
+	q.SetSMAP(!ka.Mitigations.DisableSmap)
+	q.SetKPTI(!ka.Mitigations.DisableKpti)
+
+	if cmd.Kaslr {
+		q.SetKASLR(true)
+	} else if cmd.NoKaslr {
+		q.SetKASLR(false)
+	}
+
+	if cmd.Smep {
+		q.SetSMEP(true)
+	} else if cmd.NoSmep {
+		q.SetSMEP(false)
+	}
+
+	if cmd.Smap {
+		q.SetSMAP(true)
+	} else if cmd.NoSmap {
+		q.SetSMAP(false)
+	}
+
+	if cmd.Kpti {
+		q.SetKPTI(true)
+	} else if cmd.NoKpti {
+		q.SetKPTI(false)
+	}
+
+	redgreen := func(name string, enabled bool) aurora.Value {
+		if enabled {
+			return aurora.BgGreen(aurora.Black(name))
+		}
+
+		return aurora.BgRed(aurora.White(name))
+	}
+
+	fmt.Printf("[*] %s %s %s %s\n",
+		redgreen("KASLR", q.GetKASLR()),
+		redgreen("SMEP", q.GetSMEP()),
+		redgreen("SMAP", q.GetSMAP()),
+		redgreen("KPTI", q.GetKPTI()))
+
+	fmt.Printf("[*] SMP: %d CPUs\n", q.Cpus)
+	fmt.Printf("[*] Memory: %d MB\n", q.Memory)
+
+	q.Debug(cmd.Gdb)
+	coloredGdbAddress := aurora.BgGreen(aurora.Black(cmd.Gdb))
+	fmt.Printf("[*] gdb is listening on %s\n", coloredGdbAddress)
+
+	err = q.Start()
+	if err != nil {
+		return
+	}
+	defer q.Stop()
+
+	tmp, err := ioutil.TempDir("/tmp/", "out-of-tree_")
+	if err != nil {
+		return
+	}
+	defer os.RemoveAll(tmp)
+
+	err = q.WaitForSSH(time.Minute)
+	if err != nil {
+		return
+	}
+
+	if ka.StandardModules {
+		// Module depends on one of the standard modules
+		err = copyStandardModules(q, ki)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	}
+
+	err = preloadModules(q, ka, ki, g.Config.Docker.Timeout.Duration)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	_, outFile, output, err := build(tmp, ka, ki, g.Config.Docker.Timeout.Duration)
+	if err != nil {
+		log.Println(err, output)
+		return
+	}
+
+	remoteFile := "/tmp/exploit"
+	if ka.Type == config.KernelModule {
+		remoteFile = "/tmp/module.ko"
+	}
+
+	err = q.CopyFile("user", outFile, remoteFile)
+	if err != nil {
+		return
+	}
+
+	// Copy all test files to the remote machine
+	for _, f := range ka.TestFiles {
+		err = q.CopyFile(f.User, f.Local, f.Remote)
+		if err != nil {
+			log.Println("error copy err:", err, f.Local, f.Remote)
+			return
+		}
+	}
+
+	coloredRemoteFile := aurora.BgGreen(aurora.Black(remoteFile))
+	fmt.Printf("[*] build result copied to %s\n", coloredRemoteFile)
+
+	fmt.Printf("\n%s\n", q.GetSSHCommand())
+	fmt.Printf("gdb %s -ex 'target remote %s'\n\n", ki.VmlinuxPath, cmd.Gdb)
+
+	// TODO set substitute-path /build/.../linux-... /path/to/linux-source
+
+	err = interactive(q)
+	return
 }
 
 func firstSupported(kcfg config.KernelConfig, ka config.Artifact,
@@ -107,159 +251,4 @@ func interactive(q *qemu.System) (err error) {
 			return
 		}
 	}
-}
-
-// TODO Merge with pew.go:whatever
-func debugHandler(kcfg config.KernelConfig, workPath, kernRegex, gdb string,
-	dockerTimeout time.Duration, yekaslr, yesmep, yesmap, yekpti,
-	nokaslr, nosmep, nosmap, nokpti bool) (err error) {
-
-	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
-	if err != nil {
-		return
-	}
-
-	if ka.SourcePath == "" {
-		ka.SourcePath = workPath
-	}
-
-	ki, err := firstSupported(kcfg, ka, kernRegex)
-	if err != nil {
-		return
-	}
-
-	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
-	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)
-	if err != nil {
-		return
-	}
-
-	if ka.Qemu.Cpus != 0 {
-		q.Cpus = ka.Qemu.Cpus
-	}
-	if ka.Qemu.Memory != 0 {
-		q.Memory = ka.Qemu.Memory
-	}
-
-	if ka.Docker.Timeout.Duration != 0 {
-		dockerTimeout = ka.Docker.Timeout.Duration
-	}
-
-	q.SetKASLR(false) // set KASLR to false by default because of gdb
-	q.SetSMEP(!ka.Mitigations.DisableSmep)
-	q.SetSMAP(!ka.Mitigations.DisableSmap)
-	q.SetKPTI(!ka.Mitigations.DisableKpti)
-
-	if yekaslr {
-		q.SetKASLR(true)
-	} else if nokaslr {
-		q.SetKASLR(false)
-	}
-
-	if yesmep {
-		q.SetSMEP(true)
-	} else if nosmep {
-		q.SetSMEP(false)
-	}
-
-	if yesmap {
-		q.SetSMAP(true)
-	} else if nosmap {
-		q.SetSMAP(false)
-	}
-
-	if yekpti {
-		q.SetKPTI(true)
-	} else if nokpti {
-		q.SetKPTI(false)
-	}
-
-	redgreen := func(name string, enabled bool) aurora.Value {
-		if enabled {
-			return aurora.BgGreen(aurora.Black(name))
-		}
-
-		return aurora.BgRed(aurora.White(name))
-	}
-
-	fmt.Printf("[*] %s %s %s %s\n",
-		redgreen("KASLR", q.GetKASLR()),
-		redgreen("SMEP", q.GetSMEP()),
-		redgreen("SMAP", q.GetSMAP()),
-		redgreen("KPTI", q.GetKPTI()))
-
-	fmt.Printf("[*] SMP: %d CPUs\n", q.Cpus)
-	fmt.Printf("[*] Memory: %d MB\n", q.Memory)
-
-	q.Debug(gdb)
-	coloredGdbAddress := aurora.BgGreen(aurora.Black(gdb))
-	fmt.Printf("[*] gdb is listening on %s\n", coloredGdbAddress)
-
-	err = q.Start()
-	if err != nil {
-		return
-	}
-	defer q.Stop()
-
-	tmp, err := ioutil.TempDir("/tmp/", "out-of-tree_")
-	if err != nil {
-		return
-	}
-	defer os.RemoveAll(tmp)
-
-	err = q.WaitForSSH(time.Minute)
-	if err != nil {
-		return
-	}
-
-	if ka.StandardModules {
-		// Module depends on one of the standard modules
-		err = copyStandardModules(q, ki)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	}
-
-	err = preloadModules(q, ka, ki, dockerTimeout)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	_, outFile, output, err := build(tmp, ka, ki, dockerTimeout)
-	if err != nil {
-		log.Println(err, output)
-		return
-	}
-
-	remoteFile := "/tmp/exploit"
-	if ka.Type == config.KernelModule {
-		remoteFile = "/tmp/module.ko"
-	}
-
-	err = q.CopyFile("user", outFile, remoteFile)
-	if err != nil {
-		return
-	}
-
-	// Copy all test files to the remote machine
-	for _, f := range ka.TestFiles {
-		err = q.CopyFile(f.User, f.Local, f.Remote)
-		if err != nil {
-			log.Println("error copy err:", err, f.Local, f.Remote)
-			return
-		}
-	}
-
-	coloredRemoteFile := aurora.BgGreen(aurora.Black(remoteFile))
-	fmt.Printf("[*] build result copied to %s\n", coloredRemoteFile)
-
-	fmt.Printf("\n%s\n", q.GetSSHCommand())
-	fmt.Printf("gdb %s -ex 'target remote %s'\n\n", ki.VmlinuxPath, gdb)
-
-	// TODO set substitute-path /build/.../linux-... /path/to/linux-source
-
-	err = interactive(q)
-	return
 }
