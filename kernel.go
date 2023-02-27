@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -139,7 +138,12 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		DistroRelease: cmd.Ver,
 		ReleaseMask:   ".*",
 	}
-	err = generateKernels(km, g.Config.Docker.Registry, g.Config.Docker.Commands, math.MaxInt64, !kernelCmd.NoDownload)
+	err = generateKernels(km,
+		g.Config.Docker.Registry,
+		g.Config.Docker.Commands,
+		100, // FIXME docker-related limit is 127 layers
+		!kernelCmd.NoDownload,
+	)
 	if err != nil {
 		return
 	}
