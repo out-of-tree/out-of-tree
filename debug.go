@@ -36,6 +36,7 @@ type DebugCmd struct {
 	NoKpti  bool `help:"Disable KPTI"`
 }
 
+// TODO: merge with pew.go
 func (cmd *DebugCmd) Run(g *Globals) (err error) {
 	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
@@ -161,7 +162,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 		return
 	}
 
-	_, outFile, output, err := build(tmp, ka, ki, g.Config.Docker.Timeout.Duration)
+	buildDir, outFile, output, err := build(tmp, ka, ki, g.Config.Docker.Timeout.Duration)
 	if err != nil {
 		log.Println(err, output)
 		return
@@ -179,6 +180,9 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 
 	// Copy all test files to the remote machine
 	for _, f := range ka.TestFiles {
+		if f.Local[0] != '/' {
+			f.Local = buildDir + "/" + f.Local
+		}
 		err = q.CopyFile(f.User, f.Local, f.Remote)
 		if err != nil {
 			log.Println("error copy err:", err, f.Local, f.Remote)
