@@ -127,6 +127,12 @@ func NewSystem(arch arch, kernel Kernel, drivePath string) (q *System, err error
 	return
 }
 
+func (q *System) SetSSHAddrPort(addr string, port int) (err error) {
+	// TODO validate
+	q.sshAddrPort = fmt.Sprintf("%s:%d", addr, port)
+	return
+}
+
 func getRandomAddrPort() (addr string) {
 	// 127.1-255.0-255.0-255:10000-50000
 	ip := fmt.Sprintf("127.%d.%d.%d",
@@ -215,7 +221,9 @@ func (q System) cmdline() (s string) {
 // Start qemu process
 func (q *System) Start() (err error) {
 	rand.Seed(time.Now().UnixNano()) // Are you sure?
-	q.sshAddrPort = getFreeAddrPort()
+	if q.sshAddrPort == "" {
+		q.sshAddrPort = getFreeAddrPort()
+	}
 	hostfwd := fmt.Sprintf("hostfwd=tcp:%s-:22", q.sshAddrPort)
 	qemuArgs := []string{"-nographic",
 		"-hda", q.drivePath,

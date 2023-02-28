@@ -23,6 +23,9 @@ type DebugCmd struct {
 	Kernel string `help:"regexp (first match)" required:""`
 	Gdb    string `help:"gdb listen address" default:"tcp::1234"`
 
+	SshAddr string `help:"ssh address to listen" default:"127.0.0.1"`
+	SshPort int    `help:"ssh port to listen" default:"50022"`
+
 	ArtifactConfig string `help:"path to artifact config" type:"path"`
 
 	Kaslr bool `help:"Enable KASLR"`
@@ -65,6 +68,11 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 
 	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
 	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)
+	if err != nil {
+		return
+	}
+
+	err = q.SetSSHAddrPort(cmd.SshAddr, cmd.SshPort)
 	if err != nil {
 		return
 	}
