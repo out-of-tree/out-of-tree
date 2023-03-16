@@ -142,7 +142,7 @@ const pathDevNull = "/dev/null"
 func dockerRun(timeout time.Duration, container, workdir, command string) (
 	output string, err error) {
 
-	cmd := exec.Command("docker", "run", "-v", workdir+":/work",
+	cmd := exec.Command("docker", "run", "--rm", "-v", workdir+":/work",
 		container, "bash", "-c", "cd /work && "+command)
 
 	timer := time.AfterFunc(timeout, func() {
