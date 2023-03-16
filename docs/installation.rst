@@ -10,7 +10,7 @@ Ubuntu
 Install dependencies::
 
   $ sudo snap install go --classic
-  $ sudo snap install docker
+  $ # Install docker: https://docs.docker.com/engine/install/ubuntu/
   $ sudo apt install qemu-system-x86 build-essential gdb
 
 macOS
