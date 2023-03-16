@@ -106,6 +106,11 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 		dockerTimeout = cmd.DockerTimeout
 	}
 
+	if cmd.Tag == "" {
+		cmd.Tag = fmt.Sprintf("%d", time.Now().Unix())
+		log.Println("Tag: " + cmd.Tag)
+	}
+
 	err = performCI(ka, kcfg, cmd.Binary, cmd.Test, stop,
 		qemuTimeout, dockerTimeout,
 		cmd.Max, cmd.Runs, cmd.Dist, cmd.Tag,
