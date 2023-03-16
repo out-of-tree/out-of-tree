@@ -386,7 +386,7 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 	}
 
 	if recursive {
-		args = append(args, "-O", "-r")
+		args = append(args, "-r")
 	}
 
 	args = append(args, localPath, user+"@"+addr+":"+remotePath)
