@@ -53,15 +53,16 @@ Install dependencies::
 Common
 ======
 
-Setup Go environment::
+Setup environment::
 
-  $ echo 'export GOPATH=$HOME' >> ~/.bashrc
   $ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
   $ source ~/.bashrc
 
 Build *out-of-tree*::
 
-  $ go get -u code.dumpstack.io/tools/out-of-tree
+  $ git clone https://code.dumpstack.io/tools/out-of-tree
+  $ cd out-of-tree
+  $ go build -o ~/bin/out-of-tree
 
 .. note::
   On a GNU/Linux you need to add your user to docker group if you want
@@ -71,7 +72,7 @@ Build *out-of-tree*::
 
 Test that everything works::
 
-  $ cd $GOPATH/src/code.dumpstack.io/tools/out-of-tree/examples/kernel-exploit
+  $ cd out-of-tree/examples/kernel-exploit
   $ out-of-tree kernel autogen --max=1
   $ out-of-tree pew --max=1
 
