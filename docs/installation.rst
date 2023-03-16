@@ -62,7 +62,7 @@ Build *out-of-tree*::
 
   $ git clone https://code.dumpstack.io/tools/out-of-tree
   $ cd out-of-tree
-  $ go build -o ~/bin/out-of-tree
+  $ CGO_ENABLED=1 go build -o ~/bin/out-of-tree
 
 .. note::
   On a GNU/Linux you need to add your user to docker group if you want
