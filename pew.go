@@ -50,17 +50,19 @@ type PewCmd struct {
 func (cmd PewCmd) Run(g *Globals) (err error) {
 	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
-		log.Debug().Err(err).Msg("read kernel config")
+		log.Debug().Err(err).Msg("read kernels config")
 	}
 
 	stop := time.Time{} // never stop
 	if cmd.Timeout != 0 {
+		log.Info().Msgf("Set global timeout to %s", cmd.Timeout)
 		stop = time.Now().Add(cmd.Timeout)
 	}
 
 	db, err := openDatabase(g.Config.Database)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).
+			Msgf("Cannot open database %s", g.Config.Database)
 	}
 	defer db.Close()
 
@@ -98,18 +100,20 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 
 	qemuTimeout := g.Config.Qemu.Timeout.Duration
 	if cmd.QemuTimeout != 0 {
+		log.Info().Msgf("Set qemu timeout to %s", cmd.QemuTimeout)
 		qemuTimeout = cmd.QemuTimeout
 	}
 
 	dockerTimeout := g.Config.Docker.Timeout.Duration
 	if cmd.DockerTimeout != 0 {
+		log.Info().Msgf("Set docker timeout to %s", cmd.DockerTimeout)
 		dockerTimeout = cmd.DockerTimeout
 	}
 
 	if cmd.Tag == "" {
 		cmd.Tag = fmt.Sprintf("%d", time.Now().Unix())
-		log.Print("Tag: " + cmd.Tag)
 	}
+	log.Info().Str("tag", cmd.Tag).Msg("")
 
 	err = performCI(ka, kcfg, cmd.Binary, cmd.Test, stop,
 		qemuTimeout, dockerTimeout,
@@ -119,6 +123,8 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 		return
 	}
 
+	log.Info().Msgf("Success rate: %.02f, Threshold: %.02f",
+		successRate(state), cmd.Threshold)
 	if successRate(state) < cmd.Threshold {
 		err = errors.New("reliability threshold not met")
 	}
@@ -145,7 +151,13 @@ func dockerRun(timeout time.Duration, container, workdir, command string) (
 	cmd := exec.Command("docker", "run", "--rm", "-v", workdir+":/work",
 		container, "bash", "-c", "cd /work && "+command)
 
+	log.Debug().Msgf("%v", cmd)
+
 	timer := time.AfterFunc(timeout, func() {
+		log.Info().Str("container", container).
+			Str("workdir", workdir).
+			Str("command", command).
+			Msg("killing container by timeout")
 		cmd.Process.Kill()
 	})
 	defer timer.Stop()
@@ -163,6 +175,7 @@ func dockerRun(timeout time.Duration, container, workdir, command string) (
 }
 
 func sh(workdir, cmd string) (output string, err error) {
+	log.Debug().Str("workdir", workdir).Str("cmd", cmd).Msg("run command")
 	command := exec.Command("sh", "-c", "cd "+workdir+" && "+cmd)
 	raw, err := command.CombinedOutput()
 	output = string(raw)
