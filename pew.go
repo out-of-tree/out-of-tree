@@ -36,7 +36,6 @@ type PewCmd struct {
 	Dist    string        `help:"build result path" default:"/dev/null"`
 	Threads int           `help:"threads" default:"1"`
 	Tag     string        `help:"log tagging"`
-	Verbose bool          `help:"show more information"`
 	Timeout time.Duration `help:"timeout after tool will not spawn new tests"`
 
 	ArtifactConfig string `help:"path to artifact config" type:"path"`
@@ -118,7 +117,7 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 	err = performCI(ka, kcfg, cmd.Binary, cmd.Test, stop,
 		qemuTimeout, dockerTimeout,
 		cmd.Max, cmd.Runs, cmd.Dist, cmd.Tag,
-		cmd.Threads, db, cmd.Verbose)
+		cmd.Threads, db)
 	if err != nil {
 		return
 	}
@@ -499,7 +498,7 @@ func copyStandardModules(q *qemu.System, ki config.KernelInfo) (err error) {
 func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	ki config.KernelInfo, binaryPath, testPath string,
 	qemuTimeout, dockerTimeout time.Duration, dist, tag string,
-	db *sql.DB, verbose bool) {
+	db *sql.DB) {
 
 	defer swg.Done()
 
@@ -537,17 +536,15 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	}
 	defer q.Stop()
 
-	if verbose {
-		go func() {
-			for !q.Died {
-				time.Sleep(time.Minute)
-				log.Print(ka.Name, ki.DistroType,
-					ki.DistroRelease, ki.KernelRelease,
-					"still alive")
+	go func() {
+		for !q.Died {
+			time.Sleep(time.Minute)
+			log.Debug().Msgf("still alive %s %s %s %s",
+				ka.Name, ki.DistroType,
+				ki.DistroRelease, ki.KernelRelease)
 
-			}
-		}()
-	}
+		}
+	}()
 
 	usr, err := user.Current()
 	if err != nil {
@@ -628,7 +625,7 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 	testPath string, stop time.Time,
 	qemuTimeout, dockerTimeout time.Duration,
 	max, runs int64, dist, tag string, threads int,
-	db *sql.DB, verbose bool) (err error) {
+	db *sql.DB) (err error) {
 
 	found := false
 
@@ -654,7 +651,7 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 				swg.Add()
 				go whatever(&swg, ka, kernel, binaryPath,
 					testPath, qemuTimeout, dockerTimeout,
-					dist, tag, db, verbose)
+					dist, tag, db)
 			}
 		}
 	}
