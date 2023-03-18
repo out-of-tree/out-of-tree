@@ -596,11 +596,13 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 
 	if ka.StandardModules {
 		// Module depends on one of the standard modules
+		start := time.Now()
 		err = copyStandardModules(q, ki)
 		if err != nil {
 			log.Print(err)
 			return
 		}
+		log.Debug().Msgf("Modules copied in %v", time.Now().Sub(start))
 	}
 
 	err = preloadModules(q, ka, ki, dockerTimeout)
