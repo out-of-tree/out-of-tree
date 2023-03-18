@@ -36,6 +36,24 @@ type CLI struct {
 	Image  ImageCmd  `cmd:"" help:"manage images"`
 
 	Version VersionFlag `name:"version" help:"print version information and quit"`
+
+	LogLevel LogLevelFlag `enum:"debug,info,warn,error" default:"info"`
+}
+
+type LogLevelFlag string
+
+func (loglevel LogLevelFlag) AfterApply() error {
+	switch loglevel {
+	case "debug":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case "info":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case "warn":
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	case "error":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	}
+	return nil
 }
 
 type VersionFlag string

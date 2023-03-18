@@ -50,7 +50,7 @@ type PewCmd struct {
 func (cmd PewCmd) Run(g *Globals) (err error) {
 	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
-		log.Print(err)
+		log.Debug().Err(err).Msg("read kernel config")
 	}
 
 	stop := time.Time{} // never stop
