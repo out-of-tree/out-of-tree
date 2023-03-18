@@ -8,11 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"gopkg.in/logrusorgru/aurora.v2"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
@@ -43,7 +43,7 @@ type DebugCmd struct {
 func (cmd *DebugCmd) Run(g *Globals) (err error) {
 	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
-		log.Println(err)
+		log.Print(err)
 	}
 
 	var configPath string
@@ -159,20 +159,20 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 		// Module depends on one of the standard modules
 		err = copyStandardModules(q, ki)
 		if err != nil {
-			log.Println(err)
+			log.Print(err)
 			return
 		}
 	}
 
 	err = preloadModules(q, ka, ki, g.Config.Docker.Timeout.Duration)
 	if err != nil {
-		log.Println(err)
+		log.Print(err)
 		return
 	}
 
 	buildDir, outFile, output, err := build(tmp, ka, ki, g.Config.Docker.Timeout.Duration)
 	if err != nil {
-		log.Println(err, output)
+		log.Print(err, output)
 		return
 	}
 
@@ -193,7 +193,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 		}
 		err = q.CopyFile(f.User, f.Local, f.Remote)
 		if err != nil {
-			log.Println("error copy err:", err, f.Local, f.Remote)
+			log.Print("error copy err:", err, f.Local, f.Remote)
 			return
 		}
 	}

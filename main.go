@@ -6,9 +6,12 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
+	"os"
 	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/alecthomas/kong"
 
@@ -46,7 +49,7 @@ func (v VersionFlag) BeforeApply(app *kong.Kong, vars kong.Vars) error {
 }
 
 func main() {
-	log.SetFlags(log.Lshortfile)
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	rand.Seed(time.Now().UnixNano())
 

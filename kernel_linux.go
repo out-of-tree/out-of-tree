@@ -1,19 +1,21 @@
-// Copyright 2018 Mikhail Klementev. All rights reserved.
+// Copyright 2023 Mikhail Klementev. All rights reserved.
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
+//go:build linux
 // +build linux
 
 package main
 
 import (
 	"io/ioutil"
-	"log"
 	"os/exec"
 	"strings"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"github.com/rs/zerolog/log"
 	"github.com/zcalusic/sysinfo"
+
+	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
 func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
@@ -28,7 +30,7 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 	cmd := exec.Command("ls", "/lib/modules")
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Println(string(rawOutput), err)
+		log.Print(string(rawOutput), err)
 		return
 	}
 
@@ -65,7 +67,7 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 		}
 
 		vmlinux := "/usr/lib/debug/boot/vmlinux-" + k
-		log.Println("vmlinux", vmlinux)
+		log.Print("vmlinux", vmlinux)
 		if exists(vmlinux) {
 			ki.VmlinuxPath = vmlinux
 		}

@@ -8,11 +8,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"os"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/rs/zerolog/log"
 	"gopkg.in/logrusorgru/aurora.v2"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
@@ -34,7 +34,7 @@ type LogQueryCmd struct {
 func (cmd *LogQueryCmd) Run(g *Globals) (err error) {
 	db, err := openDatabase(g.Config.Database)
 	if err != nil {
-		log.Fatalln(err)
+		panic(err)
 	}
 	defer db.Close()
 
@@ -42,7 +42,7 @@ func (cmd *LogQueryCmd) Run(g *Globals) (err error) {
 
 	ka, kaErr := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
 	if kaErr == nil {
-		log.Println(".out-of-tree.toml found, filter by artifact name")
+		log.Print(".out-of-tree.toml found, filter by artifact name")
 		les, err = getAllArtifactLogs(db, cmd.Tag, cmd.Num, ka)
 	} else {
 		les, err = getAllLogs(db, cmd.Tag, cmd.Num)
@@ -91,7 +91,7 @@ type LogDumpCmd struct {
 func (cmd *LogDumpCmd) Run(g *Globals) (err error) {
 	db, err := openDatabase(g.Config.Database)
 	if err != nil {
-		log.Fatalln(err)
+		panic(err)
 	}
 	defer db.Close()
 
@@ -152,7 +152,7 @@ type LogJsonCmd struct {
 func (cmd *LogJsonCmd) Run(g *Globals) (err error) {
 	db, err := openDatabase(g.Config.Database)
 	if err != nil {
-		log.Fatalln(err)
+		panic(err)
 	}
 	defer db.Close()
 
@@ -177,7 +177,7 @@ type LogMarkdownCmd struct {
 func (cmd *LogMarkdownCmd) Run(g *Globals) (err error) {
 	db, err := openDatabase(g.Config.Database)
 	if err != nil {
-		log.Fatalln(err)
+		panic(err)
 	}
 	defer db.Close()
 

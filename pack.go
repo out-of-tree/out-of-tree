@@ -1,4 +1,4 @@
-// Copyright 2019 Mikhail Klementev. All rights reserved.
+// Copyright 2023 Mikhail Klementev. All rights reserved.
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
@@ -7,8 +7,9 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type PackCmd struct {
@@ -30,7 +31,7 @@ type PackCmd struct {
 
 func (cmd *PackCmd) Run(g *Globals) (err error) {
 	tag := fmt.Sprintf("pack_run_%d", time.Now().Unix())
-	log.Println("Tag:", tag)
+	log.Print("Tag:", tag)
 
 	files, err := ioutil.ReadDir(g.WorkDir)
 	if err != nil {
@@ -60,7 +61,7 @@ func (cmd *PackCmd) Run(g *Globals) (err error) {
 			}
 		}
 
-		log.Println(f.Name())
+		log.Print(f.Name())
 
 		PewCmd{
 			Max:           cmd.KernelRuns,

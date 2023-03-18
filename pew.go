@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/otiai10/copy"
 	"github.com/remeh/sizedwaitgroup"
+	"github.com/rs/zerolog/log"
 	"gopkg.in/logrusorgru/aurora.v2"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
@@ -50,7 +50,7 @@ type PewCmd struct {
 func (cmd PewCmd) Run(g *Globals) (err error) {
 	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
-		log.Println(err)
+		log.Print(err)
 	}
 
 	stop := time.Time{} // never stop
@@ -60,7 +60,7 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 
 	db, err := openDatabase(g.Config.Database)
 	if err != nil {
-		log.Fatalln(err)
+		panic(err)
 	}
 	defer db.Close()
 
@@ -108,7 +108,7 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 
 	if cmd.Tag == "" {
 		cmd.Tag = fmt.Sprintf("%d", time.Now().Unix())
-		log.Println("Tag: " + cmd.Tag)
+		log.Print("Tag: " + cmd.Tag)
 	}
 
 	err = performCI(ka, kcfg, cmd.Binary, cmd.Test, stop,
@@ -379,13 +379,13 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 
 	err := addToLog(db, q, ka, ki, res, tag)
 	if err != nil {
-		log.Println("[db] addToLog (", ka, ") error:", err)
+		log.Print("[db] addToLog (", ka, ") error:", err)
 	}
 
 	if binary == "" && dist != pathDevNull {
 		err = os.MkdirAll(dist, os.ModePerm)
 		if err != nil {
-			log.Println("os.MkdirAll (", ka, ") error:", err)
+			log.Print("os.MkdirAll (", ka, ") error:", err)
 		}
 
 		path := fmt.Sprintf("%s/%s-%s-%s", dist, ki.DistroType,
@@ -396,7 +396,7 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 
 		err = copyFile(res.BuildArtifact, path)
 		if err != nil {
-			log.Println("copyFile (", ka, ") error:", err)
+			log.Print("copyFile (", ka, ") error:", err)
 		}
 	}
 }
@@ -408,7 +408,7 @@ func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
 	case config.KernelModule:
 		res.Run.Output, err = q.CopyAndInsmod(res.BuildArtifact)
 		if err != nil {
-			log.Println(res.Run.Output, err)
+			log.Print(res.Run.Output, err)
 			return
 		}
 		res.Run.Ok = true
@@ -420,14 +420,14 @@ func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
 			}
 			err = q.CopyFile(f.User, f.Local, f.Remote)
 			if err != nil {
-				log.Println("error copy err:", err, f.Local, f.Remote)
+				log.Print("error copy err:", err, f.Local, f.Remote)
 				return
 			}
 		}
 
 		res.Test.Output, err = testKernelModule(q, ka, remoteTest)
 		if err != nil {
-			log.Println(res.Test.Output, err)
+			log.Print(res.Test.Output, err)
 			return
 		}
 		res.Test.Ok = true
@@ -441,13 +441,13 @@ func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
 		res.Test.Output, err = testKernelExploit(q, ka, remoteTest,
 			remoteExploit)
 		if err != nil {
-			log.Println(res.Test.Output)
+			log.Print(res.Test.Output)
 			return
 		}
 		res.Run.Ok = true // does not really used
 		res.Test.Ok = true
 	default:
-		log.Println("Unsupported artifact type")
+		log.Print("Unsupported artifact type")
 	}
 
 	return
@@ -493,7 +493,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
 	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)
 	if err != nil {
-		log.Println("Qemu creation error:", err)
+		log.Print("Qemu creation error:", err)
 		return
 	}
 	q.Timeout = qemuTimeout
@@ -519,7 +519,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 
 	err = q.Start()
 	if err != nil {
-		log.Println("Qemu start error:", err)
+		log.Print("Qemu start error:", err)
 		return
 	}
 	defer q.Stop()
@@ -528,7 +528,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		go func() {
 			for !q.Died {
 				time.Sleep(time.Minute)
-				log.Println(ka.Name, ki.DistroType,
+				log.Print(ka.Name, ki.DistroType,
 					ki.DistroRelease, ki.KernelRelease,
 					"still alive")
 
@@ -545,7 +545,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 
 	tmp, err := ioutil.TempDir(tmpdir, "out-of-tree_")
 	if err != nil {
-		log.Println("Temporary directory creation error:", err)
+		log.Print("Temporary directory creation error:", err)
 		return
 	}
 	defer os.RemoveAll(tmp)
@@ -558,7 +558,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		result.BuildDir, result.BuildArtifact, result.Build.Output, err =
 			build(tmp, ka, ki, dockerTimeout)
 		if err != nil {
-			log.Println(err)
+			log.Print(err)
 			return
 		}
 		result.Build.Ok = true
@@ -588,14 +588,14 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		// Module depends on one of the standard modules
 		err = copyStandardModules(q, ki)
 		if err != nil {
-			log.Println(err)
+			log.Print(err)
 			return
 		}
 	}
 
 	err = preloadModules(q, ka, ki, dockerTimeout)
 	if err != nil {
-		log.Println(err)
+		log.Print(err)
 		return
 	}
 

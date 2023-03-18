@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -19,6 +18,7 @@ import (
 	"time"
 
 	"github.com/naoina/toml"
+	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
@@ -102,19 +102,19 @@ func (cmd *KernelDockerRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err erro
 		var rawOutput []byte
 		rawOutput, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Println("docker build:", string(rawOutput))
+			log.Print("docker build:", string(rawOutput))
 			return
 		}
 
 		err = kickImage(d.ContainerName)
 		if err != nil {
-			log.Println("kick image", d.ContainerName, ":", err)
+			log.Print("kick image", d.ContainerName, ":", err)
 			continue
 		}
 
 		err = copyKernels(d.ContainerName)
 		if err != nil {
-			log.Println("copy kernels", d.ContainerName, ":", err)
+			log.Print("copy kernels", d.ContainerName, ":", err)
 			continue
 		}
 	}
@@ -301,11 +301,11 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		d += "RUN mkdir -p /lib/modules\n"
 	case config.CentOS:
 		if sk.DistroRelease < "7" && !vsyscall {
-			log.Println("Old CentOS requires `vsyscall=emulate` " +
+			log.Print("Old CentOS requires `vsyscall=emulate` " +
 				"on the latest kernels")
-			log.Println("Check out `A note about vsyscall` " +
+			log.Print("Check out `A note about vsyscall` " +
 				"at https://hub.docker.com/_/centos")
-			log.Println("See also https://lwn.net/Articles/446528/")
+			log.Print("See also https://lwn.net/Articles/446528/")
 			err = fmt.Errorf("vsyscall is not available")
 			return
 		}
@@ -353,7 +353,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	if err != nil {
 		log.Printf("Base image for %s:%s generating error, see log",
 			sk.DistroType.String(), sk.DistroRelease)
-		log.Println(string(rawOutput))
+		log.Print(string(rawOutput))
 		return
 	}
 
@@ -429,7 +429,7 @@ func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
 
 		log.Printf("Add kernel %s for %s:%s error, see log",
 			pkgname, sk.DistroType.String(), sk.DistroRelease)
-		log.Println(string(rawOutput))
+		log.Print(string(rawOutput))
 		return
 	}
 
@@ -449,7 +449,7 @@ func copyKernels(name string) (err error) {
 	cmd := exec.Command("docker", "ps", "-a")
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Println(string(rawOutput))
+		log.Print(string(rawOutput))
 		return
 	}
 
@@ -482,21 +482,21 @@ func copyKernels(name string) (err error) {
 	cmd = exec.Command("docker", "cp", containerID+":/boot/.", target)
 	rawOutput, err = cmd.CombinedOutput()
 	if err != nil {
-		log.Println(string(rawOutput))
+		log.Print(string(rawOutput))
 		return
 	}
 
 	cmd = exec.Command("docker", "cp", containerID+":/lib/modules", target)
 	rawOutput, err = cmd.CombinedOutput()
 	if err != nil {
-		log.Println(string(rawOutput))
+		log.Print(string(rawOutput))
 		return
 	}
 
 	cmd = exec.Command("find", target+"modules", "-type", "l", "-delete")
 	rawOutput, err = cmd.CombinedOutput()
 	if err != nil {
-		log.Println(string(rawOutput))
+		log.Print(string(rawOutput))
 		return
 	}
 
@@ -540,7 +540,7 @@ func genRootfsImage(d dockerImageInfo, download bool) (rootfs string, err error)
 	rootfs = imagesPath + imageFile
 	if !exists(rootfs) {
 		if download {
-			log.Println(imageFile, "not exists, start downloading...")
+			log.Print(imageFile, "not exists, start downloading...")
 			err = downloadImage(imagesPath, imageFile)
 		}
 	}
@@ -608,7 +608,7 @@ func updateKernelsCfg(host, download bool) (err error) {
 	for _, d := range dockerImages {
 		err = genDockerKernels(d, &newkcfg, download)
 		if err != nil {
-			log.Println("gen kernels", d.ContainerName, ":", err)
+			log.Print("gen kernels", d.ContainerName, ":", err)
 			continue
 		}
 	}
@@ -639,7 +639,7 @@ func updateKernelsCfg(host, download bool) (err error) {
 		return
 	}
 
-	log.Println(kernelsCfgPath, "is successfully updated")
+	log.Print(kernelsCfgPath, "is successfully updated")
 	return
 }
 
@@ -650,7 +650,7 @@ func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 	cmd := exec.Command("docker", "run", name, "ls", "/lib/modules")
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Println(string(rawOutput), err)
+		log.Print(string(rawOutput), err)
 		return
 	}
 
@@ -710,7 +710,7 @@ func generateKernels(km config.KernelMask, registry string,
 	commands []config.DockerCommand, max int64,
 	download bool) (err error) {
 
-	log.Println("Generating for kernel mask", km)
+	log.Print("Generating for kernel mask", km)
 
 	_, err = genRootfsImage(dockerImageInfo{ContainerName: km.DockerName()},
 		download)
@@ -740,29 +740,29 @@ func generateKernels(km config.KernelMask, registry string,
 
 	for i, pkg := range shuffle(pkgs) {
 		if max <= 0 {
-			log.Println("Max is reached")
+			log.Print("Max is reached")
 			break
 		}
 
-		log.Println(i, "/", len(pkgs), pkg)
+		log.Print(i, "/", len(pkgs), pkg)
 
 		err = dockerImageAppend(km, pkg)
 		if err == nil {
 			max--
 		} else {
-			log.Println("dockerImageAppend", err)
+			log.Print("dockerImageAppend", err)
 		}
 	}
 
 	err = kickImage(km.DockerName())
 	if err != nil {
-		log.Println("kick image", km.DockerName(), ":", err)
+		log.Print("kick image", km.DockerName(), ":", err)
 		return
 	}
 
 	err = copyKernels(km.DockerName())
 	if err != nil {
-		log.Println("copy kernels", km.DockerName(), ":", err)
+		log.Print("copy kernels", km.DockerName(), ":", err)
 		return
 	}
 	return

@@ -9,13 +9,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/user"
 	"path/filepath"
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
@@ -38,7 +38,7 @@ func preload(q *qemu.System, ki config.KernelInfo, pm config.PreloadModule,
 
 	var workPath, cache string
 	if pm.Path != "" {
-		log.Println("Use non-git path for preload module (no cache)")
+		log.Print("Use non-git path for preload module (no cache)")
 		workPath = pm.Path
 	} else if pm.Repo != "" {
 		workPath, cache, err = cloneOrPull(pm.Repo, ki)
@@ -85,7 +85,7 @@ func buildAndInsmod(workPath string, q *qemu.System, ki config.KernelInfo,
 
 	output, err := q.CopyAndInsmod(artifact)
 	if err != nil {
-		log.Println(output)
+		log.Print(output)
 		return
 	}
 	return
@@ -138,7 +138,7 @@ func cloneOrPull(repo string, ki config.KernelInfo) (workPath, cache string, err
 
 		err = w.Pull(&git.PullOptions{})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
-			log.Println(repo, "pull error:", err)
+			log.Print(repo, "pull error:", err)
 		}
 	} else {
 		r, err = git.PlainClone(workPath, false, &git.CloneOptions{URL: repo})
