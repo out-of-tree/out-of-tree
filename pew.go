@@ -565,8 +565,12 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 
 	if binaryPath == "" {
 		// TODO: build should return structure
+		start := time.Now()
 		result.BuildDir, result.BuildArtifact, result.Build.Output, err =
 			build(tmp, ka, ki, dockerTimeout)
+		log.Debug().Msgf("%s %s %s Build done in %v",
+			ki.DistroType, ki.DistroRelease, ki.KernelRelease,
+			time.Now().Sub(start))
 		if err != nil {
 			log.Print(err)
 			return
@@ -602,7 +606,9 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 			log.Print(err)
 			return
 		}
-		log.Debug().Msgf("Modules copied in %v", time.Now().Sub(start))
+		log.Debug().Msgf("%s %s %s Modules copied in %v",
+			ki.DistroType, ki.DistroRelease, ki.KernelRelease,
+			time.Now().Sub(start))
 	}
 
 	err = preloadModules(q, ka, ki, dockerTimeout)
@@ -611,7 +617,11 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		return
 	}
 
+	start := time.Now()
 	copyArtifactAndTest(q, ka, &result, remoteTest)
+	log.Debug().Msgf("%s %s %s Tests completed in %v",
+		ki.DistroType, ki.DistroRelease, ki.KernelRelease,
+		time.Now().Sub(start))
 }
 
 func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
