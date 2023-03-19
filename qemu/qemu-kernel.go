@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -257,6 +258,7 @@ func (q *System) Start() (err error) {
 	qemuArgs = append(qemuArgs, "-append", q.cmdline())
 
 	q.cmd = exec.Command("qemu-system-"+string(q.arch), qemuArgs...)
+	log.Debug().Msgf("%v", q.cmd)
 
 	if q.pipe.stdin, err = q.cmd.StdinPipe(); err != nil {
 		return
@@ -392,6 +394,7 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 	args = append(args, localPath, user+"@"+addr+":"+remotePath)
 
 	cmd := exec.Command("scp", args...)
+	log.Debug().Msgf("%v", cmd)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil || string(output) != "" {

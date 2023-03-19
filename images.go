@@ -17,6 +17,7 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
+	"github.com/rs/zerolog/log"
 )
 
 type ImageCmd struct {
@@ -145,6 +146,8 @@ func unpackTar(archive, destination string) (err error) {
 	// Also make sure that sparse files are extracting correctly
 	cmd := exec.Command("tar", "-Sxf", archive)
 	cmd.Dir = destination + "/"
+
+	log.Debug().Msgf("%v", cmd)
 
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {

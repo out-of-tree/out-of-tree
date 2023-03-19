@@ -99,6 +99,8 @@ func (cmd *KernelDockerRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err erro
 		args = append(args, "-t", d.ContainerName, imagePath)
 
 		cmd := exec.Command("docker", args...)
+		log.Debug().Msgf("%v", cmd)
+
 		var rawOutput []byte
 		rawOutput, err = cmd.CombinedOutput()
 		if err != nil {
@@ -244,6 +246,8 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	d := "# BASE\n"
 
 	cmd := exec.Command("docker", "images", "-q", sk.DockerName())
+	log.Debug().Msgf("%v", cmd)
+
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
 		return
@@ -349,6 +353,8 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	args = append(args, "-t", sk.DockerName(), imagePath)
 
 	cmd = exec.Command("docker", args...)
+	log.Debug().Msgf("%v", cmd)
+
 	rawOutput, err = cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("Base image for %s:%s generating error, see log",
@@ -419,6 +425,8 @@ func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
 	args = append(args, "-t", sk.DockerName(), imagePath)
 
 	cmd := exec.Command("docker", args...)
+	log.Debug().Msgf("%v", cmd)
+
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
 		// Fallback to previous state
@@ -441,12 +449,16 @@ func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
 
 func kickImage(name string) (err error) {
 	cmd := exec.Command("docker", "run", name, "bash", "-c", "ls")
+	log.Debug().Msgf("%v", cmd)
+
 	_, err = cmd.CombinedOutput()
 	return
 }
 
 func copyKernels(name string) (err error) {
 	cmd := exec.Command("docker", "ps", "-a")
+	log.Debug().Msgf("%v", cmd)
+
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Print(string(rawOutput))
@@ -463,7 +475,9 @@ func copyKernels(name string) (err error) {
 	what := r.FindAll(rawOutput, -1)
 	for _, w := range what {
 		containerID = strings.Fields(string(w))[0]
-		_, err = exec.Command("which", "podman").CombinedOutput()
+		cmd = exec.Command("which", "podman")
+		log.Debug().Msgf("%v", cmd)
+		_, err = cmd.CombinedOutput()
 		if err != nil {
 			break
 		}
@@ -480,6 +494,8 @@ func copyKernels(name string) (err error) {
 	}
 
 	cmd = exec.Command("docker", "cp", containerID+":/boot/.", target)
+	log.Debug().Msgf("%v", cmd)
+
 	rawOutput, err = cmd.CombinedOutput()
 	if err != nil {
 		log.Print(string(rawOutput))
@@ -487,6 +503,8 @@ func copyKernels(name string) (err error) {
 	}
 
 	cmd = exec.Command("docker", "cp", containerID+":/lib/modules", target)
+	log.Debug().Msgf("%v", cmd)
+
 	rawOutput, err = cmd.CombinedOutput()
 	if err != nil {
 		log.Print(string(rawOutput))
@@ -494,6 +512,8 @@ func copyKernels(name string) (err error) {
 	}
 
 	cmd = exec.Command("find", target+"modules", "-type", "l", "-delete")
+	log.Debug().Msgf("%v", cmd)
+
 	rawOutput, err = cmd.CombinedOutput()
 	if err != nil {
 		log.Print(string(rawOutput))
@@ -555,6 +575,8 @@ type dockerImageInfo struct {
 
 func listDockerImages() (diis []dockerImageInfo, err error) {
 	cmd := exec.Command("docker", "images")
+	log.Debug().Msgf("%v", cmd)
+
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
 		return
@@ -648,6 +670,8 @@ func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 
 	name := dii.ContainerName
 	cmd := exec.Command("docker", "run", name, "ls", "/lib/modules")
+	log.Debug().Msgf("%v", cmd)
+
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Print(string(rawOutput), err)

@@ -28,6 +28,8 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 	}
 
 	cmd := exec.Command("ls", "/lib/modules")
+	log.Debug().Msgf("%v", cmd)
+
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Print(string(rawOutput), err)

@@ -174,8 +174,10 @@ func dockerRun(timeout time.Duration, container, workdir, command string) (
 }
 
 func sh(workdir, cmd string) (output string, err error) {
-	log.Debug().Str("workdir", workdir).Str("cmd", cmd).Msg("run command")
 	command := exec.Command("sh", "-c", "cd "+workdir+" && "+cmd)
+
+	log.Debug().Msgf("%v", command)
+
 	raw, err := command.CombinedOutput()
 	output = string(raw)
 	if err != nil {
@@ -265,6 +267,9 @@ func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 	} else {
 		cmd := exec.Command("bash", "-c", "cd "+outdir+" && "+
 			buildCommand)
+
+		log.Debug().Msgf("%v", cmd)
+
 		timer := time.AfterFunc(dockerTimeout, func() {
 			cmd.Process.Kill()
 		})
