@@ -38,7 +38,7 @@ type CLI struct {
 
 	Version VersionFlag `name:"version" help:"print version information and quit"`
 
-	LogLevel LogLevelFlag `enum:"debug,info,warn,error" default:"debug"`
+	LogLevel LogLevelFlag `enum:"debug,info,warn,error" default:"info"`
 }
 
 type LogLevelFlag string
