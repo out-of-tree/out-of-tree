@@ -391,13 +391,13 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 
 	err := addToLog(db, q, ka, ki, res, tag)
 	if err != nil {
-		log.Print("[db] addToLog (", ka, ") error:", err)
+		log.Warn().Err(err).Msgf("[db] addToLog (%v)", ka)
 	}
 
 	if binary == "" && dist != pathDevNull {
 		err = os.MkdirAll(dist, os.ModePerm)
 		if err != nil {
-			log.Print("os.MkdirAll (", ka, ") error:", err)
+			log.Warn().Err(err).Msgf("os.MkdirAll (%v)", ka)
 		}
 
 		path := fmt.Sprintf("%s/%s-%s-%s", dist, ki.DistroType,
@@ -408,7 +408,7 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 
 		err = copyFile(res.BuildArtifact, path)
 		if err != nil {
-			log.Print("copyFile (", ka, ") error:", err)
+			log.Warn().Err(err).Msgf("copy file (%v)", ka)
 		}
 	}
 }
@@ -420,7 +420,7 @@ func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
 	case config.KernelModule:
 		res.Run.Output, err = q.CopyAndInsmod(res.BuildArtifact)
 		if err != nil {
-			log.Print(res.Run.Output, err)
+			log.Error().Err(err).Msg(res.Run.Output)
 			return
 		}
 		res.Run.Ok = true
@@ -432,14 +432,14 @@ func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
 			}
 			err = q.CopyFile(f.User, f.Local, f.Remote)
 			if err != nil {
-				log.Print("error copy err:", err, f.Local, f.Remote)
+				log.Error().Err(err).Msg("copy test file")
 				return
 			}
 		}
 
 		res.Test.Output, err = testKernelModule(q, ka, remoteTest)
 		if err != nil {
-			log.Print(res.Test.Output, err)
+			log.Error().Err(err).Msg(res.Test.Output)
 			return
 		}
 		res.Test.Ok = true
@@ -453,13 +453,13 @@ func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
 		res.Test.Output, err = testKernelExploit(q, ka, remoteTest,
 			remoteExploit)
 		if err != nil {
-			log.Print(res.Test.Output)
+			log.Error().Err(err).Msg(res.Test.Output)
 			return
 		}
 		res.Run.Ok = true // does not really used
 		res.Test.Ok = true
 	default:
-		log.Print("Unsupported artifact type")
+		log.Fatal().Msg("Unsupported artifact type")
 	}
 
 	return
@@ -495,17 +495,23 @@ func copyStandardModules(q *qemu.System, ki config.KernelInfo) (err error) {
 	return q.CopyDirectory("root", ki.ModulesPath, "/lib/modules/")
 }
 
-func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
+func testArtifact(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	ki config.KernelInfo, binaryPath, testPath string,
 	qemuTimeout, dockerTimeout time.Duration, dist, tag string,
 	db *sql.DB) {
+
+	slog := log.With().
+		Str("distro_type", ki.DistroType.String()).
+		Str("distro_release", ki.DistroRelease).
+		Str("kernel", ki.KernelRelease).
+		Logger()
 
 	defer swg.Done()
 
 	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
 	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)
 	if err != nil {
-		log.Print("Qemu creation error:", err)
+		slog.Error().Err(err).Msg("qemu init")
 		return
 	}
 	q.Timeout = qemuTimeout
@@ -531,7 +537,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 
 	err = q.Start()
 	if err != nil {
-		log.Print("Qemu start error:", err)
+		slog.Error().Err(err).Msg("qemu start")
 		return
 	}
 	defer q.Stop()
@@ -539,10 +545,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	go func() {
 		for !q.Died {
 			time.Sleep(time.Minute)
-			log.Debug().Msgf("still alive %s %s %s %s",
-				ka.Name, ki.DistroType,
-				ki.DistroRelease, ki.KernelRelease)
-
+			slog.Debug().Msg("still alive")
 		}
 	}()
 
@@ -555,7 +558,7 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 
 	tmp, err := ioutil.TempDir(tmpdir, "out-of-tree_")
 	if err != nil {
-		log.Print("Temporary directory creation error:", err)
+		slog.Error().Err(err).Msg("making tmp directory")
 		return
 	}
 	defer os.RemoveAll(tmp)
@@ -568,11 +571,10 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		start := time.Now()
 		result.BuildDir, result.BuildArtifact, result.Build.Output, err =
 			build(tmp, ka, ki, dockerTimeout)
-		log.Debug().Msgf("%s %s %s Build done in %v",
-			ki.DistroType, ki.DistroRelease, ki.KernelRelease,
-			time.Now().Sub(start))
+		slog.Debug().Str("duration", time.Now().Sub(start).String()).
+			Msg("build done")
 		if err != nil {
-			log.Print(err)
+			log.Error().Err(err).Msg("build")
 			return
 		}
 		result.Build.Ok = true
@@ -603,25 +605,23 @@ func whatever(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		start := time.Now()
 		err = copyStandardModules(q, ki)
 		if err != nil {
-			log.Print(err)
+			slog.Error().Err(err).Msg("copy standard modules")
 			return
 		}
-		log.Debug().Msgf("%s %s %s Modules copied in %v",
-			ki.DistroType, ki.DistroRelease, ki.KernelRelease,
-			time.Now().Sub(start))
+		slog.Debug().Str("duration", time.Now().Sub(start).String()).
+			Msg("copy standard modules")
 	}
 
 	err = preloadModules(q, ka, ki, dockerTimeout)
 	if err != nil {
-		log.Print(err)
+		slog.Error().Err(err).Msg("preload modules")
 		return
 	}
 
 	start := time.Now()
 	copyArtifactAndTest(q, ka, &result, remoteTest)
-	log.Debug().Msgf("%s %s %s Tests completed in %v",
-		ki.DistroType, ki.DistroRelease, ki.KernelRelease,
-		time.Now().Sub(start))
+	slog.Debug().Str("duration", time.Now().Sub(start).String()).
+		Msg("test completed")
 }
 
 func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
@@ -661,7 +661,7 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 					break
 				}
 				swg.Add()
-				go whatever(&swg, ka, kernel, binaryPath,
+				go testArtifact(&swg, ka, kernel, binaryPath,
 					testPath, qemuTimeout, dockerTimeout,
 					dist, tag, db)
 			}
