@@ -387,6 +387,7 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 	args := []string{
 		"-P", port,
 		"-o", "StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
 		"-o", "LogLevel=error",
 	}
 
