@@ -343,6 +343,9 @@ func (q System) ssh(user string) (client *ssh.Client, err error) {
 
 // Command executes shell commands on qemu system
 func (q System) Command(user, cmd string) (output string, err error) {
+	log.Debug().Str("kernel", q.kernel.KernelPath).
+		Str("user", user).Str("cmd", cmd).Msg("qemu command")
+
 	client, err := q.ssh(user)
 	if err != nil {
 		return
