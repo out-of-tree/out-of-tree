@@ -391,8 +391,12 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 	}
 
 	if recursive {
+		cmd := exec.Command("ssh", "-V")
+
+		log.Debug().Msgf("%v", cmd)
+
 		var output []byte
-		output, err = exec.Command("ssh", "-V").CombinedOutput()
+		output, err = cmd.CombinedOutput()
 		if err != nil {
 			return
 		}
