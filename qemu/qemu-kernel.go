@@ -391,6 +391,27 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 	}
 
 	if recursive {
+		var output []byte
+		output, err = exec.Command("ssh", "-V").CombinedOutput()
+		if err != nil {
+			return
+		}
+		sshVersion := string(output)
+
+		log.Debug().Str("ssh version", sshVersion).Msg("")
+
+		if strings.Contains(sshVersion, "OpenSSH_9") {
+			// This release switches scp from using the
+			// legacy scp/rcp protocol to using the SFTP
+			// protocol by default.
+			//
+			// To keep compatibility with old distros,
+			// using -O flag to use the legacy scp/rcp.
+			//
+			// Note: old ssh doesn't support -O flag
+			args = append(args, "-O")
+		}
+
 		args = append(args, "-r")
 	}
 
