@@ -32,6 +32,7 @@ type KernelCmd struct {
 	List    KernelListCmd    `cmd:"" help:"list kernels"`
 	Autogen KernelAutogenCmd `cmd:"" help:"generate kernels based on the current config"`
 	Genall  KernelGenallCmd  `cmd:"" help:"generate all kernels for distro"`
+	Install KernelInstallCmd `cmd:"" help:"install specific kernel"`
 }
 
 type KernelListCmd struct{}
@@ -93,6 +94,37 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		DistroType:    distroType,
 		DistroRelease: cmd.Ver,
 		ReleaseMask:   ".*",
+	}
+	err = generateKernels(km,
+		g.Config.Docker.Registry,
+		g.Config.Docker.Commands,
+		math.MaxUint32,
+		!kernelCmd.NoDownload,
+		kernelCmd.Force,
+	)
+	if err != nil {
+		return
+	}
+
+	return updateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
+}
+
+type KernelInstallCmd struct {
+	Distro string `required:"" help:"distribution"`
+	Ver    string `required:"" help:"distro version"`
+	Kernel string `required:"" help:"kernel release mask"`
+}
+
+func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
+	distroType, err := config.NewDistroType(cmd.Distro)
+	if err != nil {
+		return
+	}
+
+	km := config.KernelMask{
+		DistroType:    distroType,
+		DistroRelease: cmd.Ver,
+		ReleaseMask:   cmd.Kernel,
 	}
 	err = generateKernels(km,
 		g.Config.Docker.Registry,
