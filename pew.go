@@ -679,8 +679,10 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 
 func exists(path string) bool {
 	if _, err := os.Stat(path); err != nil {
+		log.Debug().Msgf("%s does not exist", path)
 		return false
 	}
+	log.Debug().Msgf("%s exist", path)
 	return true
 }
 

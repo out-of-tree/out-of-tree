@@ -211,7 +211,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	d := "# BASE\n"
 
 	cmd := exec.Command("docker", "images", "-q", sk.DockerName())
-	log.Debug().Msgf("%v", cmd)
+	log.Debug().Msgf("run %v", cmd)
 
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
@@ -334,24 +334,35 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 }
 
 func installKernel(sk config.KernelMask, pkgname string) (err error) {
+	slog := log.With().
+		Str("distro_type", sk.DistroType.String()).
+		Str("distro_release", sk.DistroRelease).
+		Str("pkg", pkgname).
+		Logger()
+
 	c, err := NewContainer(sk.DockerName(), time.Hour) // TODO conf
 	if err != nil {
 		return
 	}
 
-	if exists(c.Volumes.LibModules + "/" + sk.ReleaseMask) {
-		// already installed kernel
-		log.Info().Msgf("kernel %s for %s:%s is already exists",
-			pkgname, sk.DistroType.String(), sk.DistroRelease)
+	moddirs, err := ioutil.ReadDir(c.Volumes.LibModules)
+	if err != nil {
 		return
 	}
+
+	for _, krel := range moddirs {
+		if strings.Contains(pkgname, krel.Name()) {
+			// already installed kernel
+			slog.Info().Msg("Already installed")
+			return
+		}
+	}
+
+	slog.Info().Msgf("Installing kernel")
 
 	switch sk.DistroType {
 	case config.Ubuntu:
 		imagepkg := strings.Replace(pkgname, "headers", "image", -1)
-
-		log.Info().Msgf("Start adding kernel %s for %s:%s",
-			imagepkg, sk.DistroType.String(), sk.DistroRelease)
 
 		cmd := fmt.Sprintf("apt-get install -y %s %s", imagepkg,
 			pkgname)
@@ -362,9 +373,6 @@ func installKernel(sk config.KernelMask, pkgname string) (err error) {
 		}
 	case config.CentOS:
 		imagepkg := strings.Replace(pkgname, "-devel", "", -1)
-
-		log.Info().Msgf("Start adding kernel %s for %s:%s",
-			imagepkg, sk.DistroType.String(), sk.DistroRelease)
 
 		version := strings.Replace(pkgname, "kernel-devel-", "", -1)
 
@@ -386,9 +394,7 @@ func installKernel(sk config.KernelMask, pkgname string) (err error) {
 		return
 	}
 
-	log.Info().Msgf("Add kernel %s for %s:%s success",
-		pkgname, sk.DistroType.String(), sk.DistroRelease)
-
+	slog.Info().Msgf("Success")
 	return
 }
 
@@ -638,7 +644,7 @@ func generateKernels(km config.KernelMask, registry string,
 			break
 		}
 
-		log.Info().Msgf("%d/%d %s", i, len(pkgs), pkg)
+		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
 
 		err = installKernel(km, pkg)
 		if err == nil {
