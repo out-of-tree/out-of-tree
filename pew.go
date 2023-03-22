@@ -19,6 +19,7 @@ import (
 
 	"github.com/otiai10/copy"
 	"github.com/remeh/sizedwaitgroup"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/logrusorgru/aurora.v2"
 
@@ -394,14 +395,14 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 	}
 }
 
-func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
+func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka config.Artifact,
 	res *phasesResult, remoteTest string) (err error) {
 
 	switch ka.Type {
 	case config.KernelModule:
 		res.Run.Output, err = q.CopyAndInsmod(res.BuildArtifact)
 		if err != nil {
-			log.Error().Err(err).Msg(res.Run.Output)
+			slog.Error().Err(err).Msg(res.Run.Output)
 			return
 		}
 		res.Run.Ok = true
@@ -413,14 +414,14 @@ func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
 			}
 			err = q.CopyFile(f.User, f.Local, f.Remote)
 			if err != nil {
-				log.Error().Err(err).Msg("copy test file")
+				slog.Error().Err(err).Msg("copy test file")
 				return
 			}
 		}
 
 		res.Test.Output, err = testKernelModule(q, ka, remoteTest)
 		if err != nil {
-			log.Error().Err(err).Msg(res.Test.Output)
+			slog.Error().Err(err).Msg(res.Test.Output)
 			return
 		}
 		res.Test.Ok = true
@@ -434,13 +435,13 @@ func copyArtifactAndTest(q *qemu.System, ka config.Artifact,
 		res.Test.Output, err = testKernelExploit(q, ka, remoteTest,
 			remoteExploit)
 		if err != nil {
-			log.Error().Err(err).Msg(res.Test.Output)
+			slog.Error().Err(err).Msg(res.Test.Output)
 			return
 		}
 		res.Run.Ok = true // does not really used
 		res.Test.Ok = true
 	default:
-		log.Fatal().Msg("Unsupported artifact type")
+		slog.Fatal().Msg("Unsupported artifact type")
 	}
 
 	return
@@ -620,7 +621,7 @@ func testArtifact(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	}
 
 	start := time.Now()
-	copyArtifactAndTest(q, ka, &result, remoteTest)
+	copyArtifactAndTest(slog, q, ka, &result, remoteTest)
 	slog.Debug().Str("duration", time.Now().Sub(start).String()).
 		Msg("test completed")
 }
