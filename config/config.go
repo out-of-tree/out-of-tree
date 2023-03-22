@@ -49,10 +49,12 @@ const (
 	KernelModule ArtifactType = iota
 	// KernelExploit is the privilege escalation exploit
 	KernelExploit
+	// Script for information gathering or automation
+	Script
 )
 
 func (at ArtifactType) String() string {
-	return [...]string{"module", "exploit"}[at]
+	return [...]string{"module", "exploit", "script"}[at]
 }
 
 // UnmarshalTOML is for support github.com/naoina/toml
@@ -63,6 +65,8 @@ func (at *ArtifactType) UnmarshalTOML(data []byte) (err error) {
 		*at = KernelModule
 	} else if strings.Contains(stypelower, "exploit") {
 		*at = KernelExploit
+	} else if strings.Contains(stypelower, "script") {
+		*at = Script
 	} else {
 		err = fmt.Errorf("Type %s is unsupported", stype)
 	}
@@ -77,6 +81,8 @@ func (at ArtifactType) MarshalTOML() (data []byte, err error) {
 		s = "module"
 	case KernelExploit:
 		s = "exploit"
+	case Script:
+		s = "script"
 	default:
 		err = fmt.Errorf("Cannot marshal %d", at)
 	}
@@ -128,6 +134,8 @@ type Artifact struct {
 	TestFiles        []FileTransfer
 	SourcePath       string
 	SupportedKernels []KernelMask
+
+	Script string
 
 	Qemu struct {
 		Cpus    int

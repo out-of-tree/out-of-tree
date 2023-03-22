@@ -170,20 +170,29 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 		return
 	}
 
-	buildDir, outFile, output, err := build(tmp, ka, ki, g.Config.Docker.Timeout.Duration)
-	if err != nil {
-		log.Print(err, output)
-		return
-	}
+	var buildDir, outFile, output, remoteFile string
 
-	remoteFile := "/tmp/exploit"
-	if ka.Type == config.KernelModule {
-		remoteFile = "/tmp/module.ko"
-	}
+	if ka.Type == config.Script {
+		err = q.CopyFile("root", ka.Script, ka.Script)
+		if err != nil {
+			return
+		}
+	} else {
+		buildDir, outFile, output, err = build(tmp, ka, ki, g.Config.Docker.Timeout.Duration)
+		if err != nil {
+			log.Print(err, output)
+			return
+		}
 
-	err = q.CopyFile("user", outFile, remoteFile)
-	if err != nil {
-		return
+		remoteFile = "/tmp/exploit"
+		if ka.Type == config.KernelModule {
+			remoteFile = "/tmp/module.ko"
+		}
+
+		err = q.CopyFile("user", outFile, remoteFile)
+		if err != nil {
+			return
+		}
 	}
 
 	// Copy all test files to the remote machine

@@ -1,0 +1,11 @@
+# out-of-tree configuration file
+# docs at https://out-of-tree.io
+name = "out-of-tree script example"
+type = "script"
+
+script = "script.sh"
+
+[[supported_kernels]]
+distro_type = "Ubuntu"
+distro_release = "22.04"
+release_mask = ".*"

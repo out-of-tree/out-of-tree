@@ -266,6 +266,10 @@ func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 	return
 }
 
+func runScript(q *qemu.System, script string) (output string, err error) {
+	return q.Command("root", script)
+}
+
 func testKernelModule(q *qemu.System, ka config.Artifact,
 	test string) (output string, err error) {
 
@@ -300,12 +304,16 @@ func testKernelExploit(q *qemu.System, ka config.Artifact,
 
 func genOkFail(name string, ok bool) (aurv aurora.Value) {
 	state.Overall += 1
+	s := " " + name
+	if name == "" {
+		s = ""
+	}
 	if ok {
 		state.Success += 1
-		s := " " + name + " SUCCESS "
+		s += " SUCCESS "
 		aurv = aurora.BgGreen(aurora.Black(s))
 	} else {
-		s := " " + name + " FAILURE "
+		s += " FAILURE "
 		aurv = aurora.BgRed(aurora.White(aurora.Bold(s)))
 	}
 	return
@@ -347,15 +355,19 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 		ki.DistroRelease, ki.KernelRelease)
 
 	colored := ""
-	if ka.Type == config.KernelExploit {
+	switch ka.Type {
+	case config.KernelExploit:
 		colored = aurora.Sprintf("[*] %40s: %s %s", distroInfo,
 			genOkFail("BUILD", res.Build.Ok),
 			genOkFail("LPE", res.Test.Ok))
-	} else {
+	case config.KernelModule:
 		colored = aurora.Sprintf("[*] %40s: %s %s %s", distroInfo,
 			genOkFail("BUILD", res.Build.Ok),
 			genOkFail("INSMOD", res.Run.Ok),
 			genOkFail("TEST", res.Test.Ok))
+	case config.Script:
+		colored = aurora.Sprintf("[*] %40s: %s", distroInfo,
+			genOkFail("", res.Test.Ok))
 	}
 
 	additional := ""
@@ -398,6 +410,20 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka config.Artifact,
 	res *phasesResult, remoteTest string) (err error) {
 
+	// Copy all test files to the remote machine
+	for _, f := range ka.TestFiles {
+		if f.Local[0] != '/' {
+			if res.BuildDir != "" {
+				f.Local = res.BuildDir + "/" + f.Local
+			}
+		}
+		err = q.CopyFile(f.User, f.Local, f.Remote)
+		if err != nil {
+			slog.Error().Err(err).Msg("copy test file")
+			return
+		}
+	}
+
 	switch ka.Type {
 	case config.KernelModule:
 		res.Run.Output, err = q.CopyAndInsmod(res.BuildArtifact)
@@ -406,18 +432,6 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka config.Artifact
 			return
 		}
 		res.Run.Ok = true
-
-		// Copy all test files to the remote machine
-		for _, f := range ka.TestFiles {
-			if f.Local[0] != '/' {
-				f.Local = res.BuildDir + "/" + f.Local
-			}
-			err = q.CopyFile(f.User, f.Local, f.Remote)
-			if err != nil {
-				slog.Error().Err(err).Msg("copy test file")
-				return
-			}
-		}
 
 		res.Test.Output, err = testKernelModule(q, ka, remoteTest)
 		if err != nil {
@@ -439,6 +453,15 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka config.Artifact
 			return
 		}
 		res.Run.Ok = true // does not really used
+		res.Test.Ok = true
+	case config.Script:
+		res.Test.Output, err = runScript(q, remoteTest)
+		if err != nil {
+			slog.Error().Err(err).Msg(res.Test.Output)
+			return
+		}
+		slog.Info().Msg(res.Test.Output)
+		res.Run.Ok = true
 		res.Test.Ok = true
 	default:
 		slog.Fatal().Msg("Unsupported artifact type")
@@ -568,7 +591,10 @@ func testArtifact(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	result := phasesResult{}
 	defer dumpResult(q, ka, ki, &result, dist, tag, binaryPath, db)
 
-	if binaryPath == "" {
+	if ka.Type == config.Script {
+		result.Build.Ok = true
+		testPath = ka.Script
+	} else if binaryPath == "" {
 		// TODO: build should return structure
 		start := time.Now()
 		result.BuildDir, result.BuildArtifact, result.Build.Output, err =
