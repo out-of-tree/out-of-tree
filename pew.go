@@ -1,4 +1,4 @@
-// Copyright 2018 Mikhail Klementev. All rights reserved.
+// Copyright 2023 Mikhail Klementev. All rights reserved.
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
@@ -112,7 +112,7 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 	if cmd.Tag == "" {
 		cmd.Tag = fmt.Sprintf("%d", time.Now().Unix())
 	}
-	log.Info().Str("tag", cmd.Tag).Msg("")
+	log.Info().Str("tag", cmd.Tag).Msg("log")
 
 	err = performCI(ka, kcfg, cmd.Binary, cmd.Test, stop,
 		qemuTimeout, dockerTimeout,
@@ -143,35 +143,6 @@ func successRate(state runstate) float64 {
 }
 
 const pathDevNull = "/dev/null"
-
-func dockerRun(timeout time.Duration, container, workdir, command string) (
-	output string, err error) {
-
-	cmd := exec.Command("docker", "run", "--rm", "-v", workdir+":/work",
-		container, "bash", "-c", "cd /work && "+command)
-
-	log.Debug().Msgf("%v", cmd)
-
-	timer := time.AfterFunc(timeout, func() {
-		log.Info().Str("container", container).
-			Str("workdir", workdir).
-			Str("command", command).
-			Msg("killing container by timeout")
-		cmd.Process.Kill()
-	})
-	defer timer.Stop()
-
-	raw, err := cmd.CombinedOutput()
-	if err != nil {
-		e := fmt.Sprintf("error `%v` for cmd `%v` with output `%v`",
-			err, command, string(raw))
-		err = errors.New(e)
-		return
-	}
-
-	output = string(raw)
-	return
-}
 
 func sh(workdir, cmd string) (output string, err error) {
 	command := exec.Command("sh", "-c", "cd "+workdir+" && "+cmd)
@@ -262,8 +233,13 @@ func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 	}
 
 	if ki.ContainerName != "" {
-		output, err = dockerRun(dockerTimeout, ki.ContainerName,
-			outdir, buildCommand+" && chmod -R 777 /work")
+		var c container
+		c, err = NewContainer(ki.ContainerName, dockerTimeout)
+		if err != nil {
+			log.Fatal().Err(err).Msg("container creation failure")
+		}
+
+		output, err = c.Run(outdir, buildCommand+" && chmod -R 777 /work")
 	} else {
 		cmd := exec.Command("bash", "-c", "cd "+outdir+" && "+
 			buildCommand)
@@ -497,7 +473,25 @@ func copyStandardModules(q *qemu.System, ki config.KernelInfo) (err error) {
 		return
 	}
 
-	return q.CopyDirectory("root", ki.ModulesPath, "/lib/modules/")
+	files, err := ioutil.ReadDir(ki.ModulesPath)
+	if err != nil {
+		return
+	}
+
+	// FIXME scp cannot ignore symlinks
+	for _, f := range files {
+		if f.Mode()&os.ModeSymlink == os.ModeSymlink {
+			continue
+		}
+
+		path := ki.ModulesPath + "/" + f.Name()
+		err = q.CopyDirectory("root", path, "/lib/modules/"+ki.KernelRelease+"/")
+		if err != nil {
+			return
+		}
+	}
+
+	return
 }
 
 func testArtifact(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
@@ -505,13 +499,15 @@ func testArtifact(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	qemuTimeout, dockerTimeout time.Duration, dist, tag string,
 	db *sql.DB) {
 
+	defer swg.Done()
+
 	slog := log.With().
 		Str("distro_type", ki.DistroType.String()).
 		Str("distro_release", ki.DistroRelease).
 		Str("kernel", ki.KernelRelease).
 		Logger()
 
-	defer swg.Done()
+	slog.Info().Msg("start")
 
 	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
 	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)

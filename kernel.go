@@ -1,4 +1,4 @@
-// Copyright 2018 Mikhail Klementev. All rights reserved.
+// Copyright 2023 Mikhail Klementev. All rights reserved.
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -27,10 +28,9 @@ type KernelCmd struct {
 	NoDownload bool `help:"do not download qemu image while kernel generation"`
 	UseHost    bool `help:"also use host kernels"`
 
-	List        KernelListCmd        `cmd:"" help:"list kernels"`
-	Autogen     KernelAutogenCmd     `cmd:"" help:"generate kernels based on the current config"`
-	DockerRegen KernelDockerRegenCmd `cmd:"" help:"regenerate kernels config from out_of_tree_* docker images"`
-	Genall      KernelGenallCmd      `cmd:"" help:"generate all kernels for distro"`
+	List    KernelListCmd    `cmd:"" help:"list kernels"`
+	Autogen KernelAutogenCmd `cmd:"" help:"generate kernels based on the current config"`
+	Genall  KernelGenallCmd  `cmd:"" help:"generate all kernels for distro"`
 }
 
 type KernelListCmd struct{}
@@ -38,7 +38,7 @@ type KernelListCmd struct{}
 func (cmd *KernelListCmd) Run(g *Globals) (err error) {
 	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
-		return
+		log.Debug().Err(err).Msg("read kernel config")
 	}
 
 	if len(kcfg.Kernels) == 0 {
@@ -77,53 +77,6 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	return updateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
 }
 
-type KernelDockerRegenCmd struct{}
-
-func (cmd *KernelDockerRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
-	dockerImages, err := listDockerImages()
-	if err != nil {
-		return
-	}
-
-	for _, d := range dockerImages {
-		var imagePath string
-		imagePath, err = dockerImagePath(config.KernelMask{
-			DistroType:    d.DistroType,
-			DistroRelease: d.DistroRelease,
-		})
-		if err != nil {
-			return
-		}
-
-		args := []string{"build"}
-		args = append(args, "-t", d.ContainerName, imagePath)
-
-		cmd := exec.Command("docker", args...)
-		log.Debug().Msgf("%v", cmd)
-
-		var rawOutput []byte
-		rawOutput, err = cmd.CombinedOutput()
-		if err != nil {
-			log.Print("docker build:", string(rawOutput))
-			return
-		}
-
-		err = kickImage(d.ContainerName)
-		if err != nil {
-			log.Print("kick image", d.ContainerName, ":", err)
-			continue
-		}
-
-		err = copyKernels(d.ContainerName)
-		if err != nil {
-			log.Print("copy kernels", d.ContainerName, ":", err)
-			continue
-		}
-	}
-
-	return updateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
-}
-
 type KernelGenallCmd struct {
 	Distro string `required:"" help:"distribution"`
 	Ver    string `required:"" help:"distro version"`
@@ -143,7 +96,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	err = generateKernels(km,
 		g.Config.Docker.Registry,
 		g.Config.Docker.Commands,
-		100, // FIXME docker-related limit is 127 layers
+		math.MaxUint32,
 		!kernelCmd.NoDownload,
 	)
 	if err != nil {
@@ -157,7 +110,13 @@ func matchDebianHeadersPkg(container, mask string, generic bool) (
 	pkgs []string, err error) {
 
 	cmd := "apt-cache search linux-headers | cut -d ' ' -f 1"
-	output, err := dockerRun(time.Minute, container, "/tmp", cmd)
+
+	c, err := NewContainer(container, time.Minute)
+	if err != nil {
+		return
+	}
+
+	output, err := c.Run("/tmp", cmd)
 	if err != nil {
 		return
 	}
@@ -188,7 +147,13 @@ func matchCentOSDevelPkg(container, mask string, generic bool) (
 
 	cmd := "yum search kernel-devel --showduplicates | " +
 		"grep '^kernel-devel' | cut -d ' ' -f 1"
-	output, err := dockerRun(time.Minute, container, "/tmp", cmd)
+
+	c, err := NewContainer(container, time.Minute)
+	if err != nil {
+		return
+	}
+
+	output, err := c.Run("/tmp", cmd)
 	if err != nil {
 		return
 	}
@@ -211,7 +176,7 @@ func dockerImagePath(sk config.KernelMask) (path string, err error) {
 		return
 	}
 
-	path = usr.HomeDir + "/.out-of-tree/"
+	path = usr.HomeDir + "/.out-of-tree/containers/"
 	path += sk.DistroType.String() + "/" + sk.DistroRelease
 	return
 }
@@ -254,12 +219,12 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	}
 
 	if exists(dockerPath) && string(rawOutput) != "" {
-		log.Printf("Base image for %s:%s found",
+		log.Info().Msgf("Base image for %s:%s found",
 			sk.DistroType.String(), sk.DistroRelease)
 		return
 	}
 
-	log.Printf("Base image for %s:%s not found, start generating",
+	log.Info().Msgf("Base image for %s:%s not found, start generating",
 		sk.DistroType.String(), sk.DistroRelease)
 	os.MkdirAll(imagePath, os.ModePerm)
 
@@ -349,176 +314,80 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		return
 	}
 
-	args := []string{"build"}
-	args = append(args, "-t", sk.DockerName(), imagePath)
-
-	cmd = exec.Command("docker", args...)
-	log.Debug().Msgf("%v", cmd)
-
-	rawOutput, err = cmd.CombinedOutput()
+	c, err := NewContainer(sk.DockerName(), time.Hour)
 	if err != nil {
-		log.Printf("Base image for %s:%s generating error, see log",
-			sk.DistroType.String(), sk.DistroRelease)
-		log.Print(string(rawOutput))
 		return
 	}
 
-	log.Printf("Base image for %s:%s generating success",
+	output, err := c.Build(imagePath)
+	if err != nil {
+		log.Error().Err(err).Msgf("Base image for %s:%s generating error",
+			sk.DistroType.String(), sk.DistroRelease)
+		log.Fatal().Msg(output)
+		return
+	}
+
+	log.Info().Msgf("Base image for %s:%s generating success",
 		sk.DistroType.String(), sk.DistroRelease)
 
 	return
 }
 
-func dockerImageAppend(sk config.KernelMask, pkgname string) (err error) {
-	imagePath, err := dockerImagePath(sk)
+func installKernel(sk config.KernelMask, pkgname string) (err error) {
+	c, err := NewContainer(sk.DockerName(), time.Hour) // TODO conf
 	if err != nil {
 		return
 	}
 
-	raw, err := ioutil.ReadFile(imagePath + "/Dockerfile")
-	if err != nil {
-		return
-	}
-
-	if strings.Contains(string(raw), pkgname) {
+	if exists(c.Volumes.LibModules + "/" + sk.ReleaseMask) {
 		// already installed kernel
-		log.Printf("kernel %s for %s:%s is already exists",
+		log.Info().Msgf("kernel %s for %s:%s is already exists",
 			pkgname, sk.DistroType.String(), sk.DistroRelease)
 		return
 	}
-
-	var s string
 
 	switch sk.DistroType {
 	case config.Ubuntu:
 		imagepkg := strings.Replace(pkgname, "headers", "image", -1)
 
-		log.Printf("Start adding kernel %s for %s:%s",
+		log.Info().Msgf("Start adding kernel %s for %s:%s",
 			imagepkg, sk.DistroType.String(), sk.DistroRelease)
 
-		s = fmt.Sprintf("RUN apt-get install -y %s %s\n", imagepkg,
+		cmd := fmt.Sprintf("apt-get install -y %s %s", imagepkg,
 			pkgname)
+
+		_, err = c.Run("/tmp", cmd)
+		if err != nil {
+			return
+		}
 	case config.CentOS:
 		imagepkg := strings.Replace(pkgname, "-devel", "", -1)
 
-		log.Printf("Start adding kernel %s for %s:%s",
+		log.Info().Msgf("Start adding kernel %s for %s:%s",
 			imagepkg, sk.DistroType.String(), sk.DistroRelease)
 
 		version := strings.Replace(pkgname, "kernel-devel-", "", -1)
 
-		s = fmt.Sprintf("RUN yum -y install %s %s\n", imagepkg,
+		cmd := fmt.Sprintf("yum -y install %s %s\n", imagepkg,
 			pkgname)
-		s += fmt.Sprintf("RUN dracut --add-drivers 'e1000 ext4' -f "+
+		_, err = c.Run("/tmp", cmd)
+		if err != nil {
+			return
+		}
+
+		cmd = fmt.Sprintf("dracut --add-drivers 'e1000 ext4' -f "+
 			"/boot/initramfs-%s.img %s\n", version, version)
+		_, err = c.Run("/tmp", cmd)
+		if err != nil {
+			return
+		}
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
 	}
 
-	err = ioutil.WriteFile(imagePath+"/Dockerfile",
-		append(raw, []byte(s)...), 0644)
-	if err != nil {
-		return
-	}
-
-	args := []string{"build"}
-	args = append(args, "-t", sk.DockerName(), imagePath)
-
-	cmd := exec.Command("docker", args...)
-	log.Debug().Msgf("%v", cmd)
-
-	rawOutput, err := cmd.CombinedOutput()
-	if err != nil {
-		// Fallback to previous state
-		werr := ioutil.WriteFile(imagePath+"/Dockerfile", raw, 0644)
-		if werr != nil {
-			return
-		}
-
-		log.Printf("Add kernel %s for %s:%s error, see log",
-			pkgname, sk.DistroType.String(), sk.DistroRelease)
-		log.Print(string(rawOutput))
-		return
-	}
-
-	log.Printf("Add kernel %s for %s:%s success",
+	log.Info().Msgf("Add kernel %s for %s:%s success",
 		pkgname, sk.DistroType.String(), sk.DistroRelease)
-
-	return
-}
-
-func kickImage(name string) (err error) {
-	cmd := exec.Command("docker", "run", name, "bash", "-c", "ls")
-	log.Debug().Msgf("%v", cmd)
-
-	_, err = cmd.CombinedOutput()
-	return
-}
-
-func copyKernels(name string) (err error) {
-	cmd := exec.Command("docker", "ps", "-a")
-	log.Debug().Msgf("%v", cmd)
-
-	rawOutput, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Print(string(rawOutput))
-		return
-	}
-
-	r, err := regexp.Compile(".*" + name)
-	if err != nil {
-		return
-	}
-
-	var containerID string
-
-	what := r.FindAll(rawOutput, -1)
-	for _, w := range what {
-		containerID = strings.Fields(string(w))[0]
-		cmd = exec.Command("which", "podman")
-		log.Debug().Msgf("%v", cmd)
-		_, err = cmd.CombinedOutput()
-		if err != nil {
-			break
-		}
-	}
-
-	usr, err := user.Current()
-	if err != nil {
-		return
-	}
-
-	target := usr.HomeDir + "/.out-of-tree/kernels/" + name + "/"
-	if !exists(target) {
-		os.MkdirAll(target, os.ModePerm)
-	}
-
-	cmd = exec.Command("docker", "cp", containerID+":/boot/.", target)
-	log.Debug().Msgf("%v", cmd)
-
-	rawOutput, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Print(string(rawOutput))
-		return
-	}
-
-	cmd = exec.Command("docker", "cp", containerID+":/lib/modules", target)
-	log.Debug().Msgf("%v", cmd)
-
-	rawOutput, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Print(string(rawOutput))
-		return
-	}
-
-	cmd = exec.Command("find", target+"modules", "-type", "l", "-delete")
-	log.Debug().Msgf("%v", cmd)
-
-	rawOutput, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Print(string(rawOutput))
-		return
-	}
 
 	return
 }
@@ -531,7 +400,9 @@ func genKernelPath(files []os.FileInfo, kname string) string {
 			}
 		}
 	}
-	return "unknown"
+
+	log.Fatal().Msgf("cannot find kernel %s", kname)
+	return ""
 }
 
 func genInitrdPath(files []os.FileInfo, kname string) string {
@@ -544,7 +415,9 @@ func genInitrdPath(files []os.FileInfo, kname string) string {
 			}
 		}
 	}
-	return "unknown"
+
+	log.Fatal().Msgf("cannot find initrd %s", kname)
+	return ""
 }
 
 func genRootfsImage(d dockerImageInfo, download bool) (rootfs string, err error) {
@@ -661,48 +534,45 @@ func updateKernelsCfg(host, download bool) (err error) {
 		return
 	}
 
-	log.Print(kernelsCfgPath, "is successfully updated")
+	log.Info().Msgf("%s is successfully updated", kernelsCfgPath)
 	return
 }
 
 func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 	download bool) (err error) {
 
-	name := dii.ContainerName
-	cmd := exec.Command("docker", "run", name, "ls", "/lib/modules")
-	log.Debug().Msgf("%v", cmd)
-
-	rawOutput, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Print(string(rawOutput), err)
-		return
-	}
-
-	usr, err := user.Current()
-	if err != nil {
-		return
-	}
-	kernelsBase := usr.HomeDir + "/.out-of-tree/kernels/" + name + "/"
-	files, err := ioutil.ReadDir(kernelsBase)
-	if err != nil {
-		return
-	}
-
 	rootfs, err := genRootfsImage(dii, download)
 	if err != nil {
 		return
 	}
 
-	for _, k := range strings.Fields(string(rawOutput)) {
+	c, err := NewContainer(dii.ContainerName, time.Minute)
+	if err != nil {
+		return
+	}
+
+	moddirs, err := ioutil.ReadDir(c.Volumes.LibModules)
+	if err != nil {
+		return
+	}
+
+	bootfiles, err := ioutil.ReadDir(c.Volumes.Boot)
+	if err != nil {
+		return
+	}
+
+	for _, krel := range moddirs {
 		ki := config.KernelInfo{
 			DistroType:    dii.DistroType,
 			DistroRelease: dii.DistroRelease,
-			KernelRelease: k,
-			ContainerName: name,
+			KernelRelease: krel.Name(),
+			ContainerName: dii.ContainerName,
 
-			KernelPath:  kernelsBase + genKernelPath(files, k),
-			InitrdPath:  kernelsBase + genInitrdPath(files, k),
-			ModulesPath: kernelsBase + "modules/" + k,
+			KernelPath: c.Volumes.Boot + "/" +
+				genKernelPath(bootfiles, krel.Name()),
+			InitrdPath: c.Volumes.Boot + "/" +
+				genInitrdPath(bootfiles, krel.Name()),
+			ModulesPath: c.Volumes.LibModules + "/" + krel.Name(),
 
 			RootFS: rootfs,
 		}
@@ -734,7 +604,7 @@ func generateKernels(km config.KernelMask, registry string,
 	commands []config.DockerCommand, max int64,
 	download bool) (err error) {
 
-	log.Print("Generating for kernel mask", km)
+	log.Info().Msgf("Generating for kernel mask %v", km)
 
 	_, err = genRootfsImage(dockerImageInfo{ContainerName: km.DockerName()},
 		download)
@@ -768,26 +638,15 @@ func generateKernels(km config.KernelMask, registry string,
 			break
 		}
 
-		log.Print(i, "/", len(pkgs), pkg)
+		log.Info().Msgf("%d/%d %s", i, len(pkgs), pkg)
 
-		err = dockerImageAppend(km, pkg)
+		err = installKernel(km, pkg)
 		if err == nil {
 			max--
 		} else {
-			log.Print("dockerImageAppend", err)
+			log.Fatal().Err(err).Msg("install kernel")
 		}
 	}
 
-	err = kickImage(km.DockerName())
-	if err != nil {
-		log.Print("kick image", km.DockerName(), ":", err)
-		return
-	}
-
-	err = copyKernels(km.DockerName())
-	if err != nil {
-		log.Print("copy kernels", km.DockerName(), ":", err)
-		return
-	}
 	return
 }
