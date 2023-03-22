@@ -389,7 +389,7 @@ func installKernel(sk config.KernelMask, pkgname string, force bool) (err error)
 			if force {
 				slog.Info().Msg("Reinstall")
 			} else {
-				slog.Debug().Msg("Already installed")
+				slog.Info().Msg("Already installed")
 				return
 			}
 		}
