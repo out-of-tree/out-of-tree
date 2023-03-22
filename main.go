@@ -47,6 +47,19 @@ func (loglevel LogLevelFlag) AfterApply() error {
 	switch loglevel {
 	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
+		zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
+			short := file
+			for i := len(file) - 1; i > 0; i-- {
+				if file[i] == '/' {
+					short = file[i+1:]
+					break
+				}
+			}
+			file = short
+			return file + ":" + strconv.Itoa(line)
+		}
+		log.Logger = log.With().Caller().Logger()
 	case "info":
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	case "warn":
@@ -69,19 +82,6 @@ func (v VersionFlag) BeforeApply(app *kong.Kong, vars kong.Vars) error {
 
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-
-	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
-		short := file
-		for i := len(file) - 1; i > 0; i-- {
-			if file[i] == '/' {
-				short = file[i+1:]
-				break
-			}
-		}
-		file = short
-		return file + ":" + strconv.Itoa(line)
-	}
-	log.Logger = log.With().Caller().Logger()
 
 	rand.Seed(time.Now().UnixNano())
 
