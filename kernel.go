@@ -27,6 +27,7 @@ import (
 type KernelCmd struct {
 	NoDownload bool `help:"do not download qemu image while kernel generation"`
 	UseHost    bool `help:"also use host kernels"`
+	Force      bool `help:"force reinstall kernel"`
 
 	List    KernelListCmd    `cmd:"" help:"list kernels"`
 	Autogen KernelAutogenCmd `cmd:"" help:"generate kernels based on the current config"`
@@ -68,7 +69,7 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			return
 		}
 
-		err = generateKernels(sk, g.Config.Docker.Registry, g.Config.Docker.Commands, cmd.Max, !kernelCmd.NoDownload)
+		err = generateKernels(sk, g.Config.Docker.Registry, g.Config.Docker.Commands, cmd.Max, !kernelCmd.NoDownload, kernelCmd.Force)
 		if err != nil {
 			return
 		}
@@ -98,6 +99,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		g.Config.Docker.Commands,
 		math.MaxUint32,
 		!kernelCmd.NoDownload,
+		kernelCmd.Force,
 	)
 	if err != nil {
 		return
@@ -333,7 +335,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	return
 }
 
-func installKernel(sk config.KernelMask, pkgname string) (err error) {
+func installKernel(sk config.KernelMask, pkgname string, force bool) (err error) {
 	slog := log.With().
 		Str("distro_type", sk.DistroType.String()).
 		Str("distro_release", sk.DistroRelease).
@@ -352,9 +354,12 @@ func installKernel(sk config.KernelMask, pkgname string) (err error) {
 
 	for _, krel := range moddirs {
 		if strings.Contains(pkgname, krel.Name()) {
-			// already installed kernel
-			slog.Debug().Msg("Already installed")
-			return
+			if force {
+				slog.Info().Msg("Reinstall")
+			} else {
+				slog.Debug().Msg("Already installed")
+				return
+			}
 		}
 	}
 
@@ -608,7 +613,7 @@ func shuffle(a []string) []string {
 
 func generateKernels(km config.KernelMask, registry string,
 	commands []config.DockerCommand, max int64,
-	download bool) (err error) {
+	download, force bool) (err error) {
 
 	log.Info().Msgf("Generating for kernel mask %v", km)
 
@@ -646,7 +651,7 @@ func generateKernels(km config.KernelMask, registry string,
 
 		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
 
-		err = installKernel(km, pkg)
+		err = installKernel(km, pkg, force)
 		if err == nil {
 			max--
 		} else {
