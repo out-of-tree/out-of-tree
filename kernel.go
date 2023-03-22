@@ -353,12 +353,12 @@ func installKernel(sk config.KernelMask, pkgname string) (err error) {
 	for _, krel := range moddirs {
 		if strings.Contains(pkgname, krel.Name()) {
 			// already installed kernel
-			slog.Info().Msg("Already installed")
+			slog.Debug().Msg("Already installed")
 			return
 		}
 	}
 
-	slog.Info().Msgf("Installing kernel")
+	slog.Debug().Msgf("Installing kernel")
 
 	switch sk.DistroType {
 	case config.Ubuntu:
@@ -394,7 +394,7 @@ func installKernel(sk config.KernelMask, pkgname string) (err error) {
 		return
 	}
 
-	slog.Info().Msgf("Success")
+	slog.Debug().Msgf("Success")
 	return
 }
 
