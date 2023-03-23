@@ -621,11 +621,8 @@ func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 		}
 		newkcfg.Kernels = append(newkcfg.Kernels, ki)
 
-		err = os.Chmod(ki.KernelPath, 0666)
-		if err != nil {
-			return
-		}
-		err = os.Chmod(ki.InitrdPath, 0666)
+		cmd := "find /boot -type f -exec chmod 0644 {} \\;"
+		_, err = c.Run("/tmp", cmd)
 		if err != nil {
 			return
 		}
