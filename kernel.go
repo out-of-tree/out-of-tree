@@ -620,15 +620,14 @@ func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 			RootFS: rootfs,
 		}
 		newkcfg.Kernels = append(newkcfg.Kernels, ki)
+	}
 
-		log.Info().Msg("Fix permissions...")
-		for _, cmd := range []string{
-			"find /boot -type f -exec chmod a+r {} \\;",
-		} {
-			_, err = c.Run("/tmp", cmd)
-			if err != nil {
-				return
-			}
+	for _, cmd := range []string{
+		"find /boot -type f -exec chmod a+r {} \\;",
+	} {
+		_, err = c.Run("/tmp", cmd)
+		if err != nil {
+			return
 		}
 	}
 
