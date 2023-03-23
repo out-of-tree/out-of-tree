@@ -624,11 +624,6 @@ func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 		log.Info().Msg("Fix permissions...")
 		for _, cmd := range []string{
 			"find /boot -type f -exec chmod a+r {} \\;",
-			"find /boot -type d -exec chmod a+rx {} \\;",
-			"find /usr/src -type f -exec chmod a+r {} \\;",
-			"find /usr/src -type d -exec chmod a+rx {} \\;",
-			"find /lib/modules -type f -exec chmod a+r {} \\;",
-			"find /lib/modules -type d -exec chmod a+rx {} \\;",
 		} {
 			_, err = c.Run("/tmp", cmd)
 			if err != nil {
