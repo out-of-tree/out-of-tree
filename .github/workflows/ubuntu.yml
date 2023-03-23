@@ -46,11 +46,11 @@ jobs:
     - name: End-to-End Testing [Kernel Module]
       run: |
         cd examples/kernel-module
-        ../../out-of-tree kernel autogen --max=1
-        ../../out-of-tree pew --qemu-timeout=10m
+        ../../out-of-tree --log-level=debug kernel autogen --max=1
+        ../../out-of-tree --log-level=debug pew --qemu-timeout=10m
 
     - name: End-to-End Testing [Kernel Exploit]
       run: |
         cd examples/kernel-exploit
-        ../../out-of-tree kernel autogen --max=1
-        ../../out-of-tree pew --threshold=0 --qemu-timeout=10m
+        ../../out-of-tree --log-level=debug kernel autogen --max=1
+        ../../out-of-tree --log-level=debug pew --threshold=0 --qemu-timeout=10m
