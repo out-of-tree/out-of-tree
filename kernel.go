@@ -589,7 +589,7 @@ func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 		return
 	}
 
-	c, err := NewContainer(dii.ContainerName, time.Minute)
+	c, err := NewContainer(dii.ContainerName, time.Hour)
 	if err != nil {
 		return
 	}
