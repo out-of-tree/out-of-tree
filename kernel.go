@@ -621,10 +621,18 @@ func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 		}
 		newkcfg.Kernels = append(newkcfg.Kernels, ki)
 
-		cmd := "find /boot -type f -exec chmod 0644 {} \\;"
-		_, err = c.Run("/tmp", cmd)
-		if err != nil {
-			return
+		for _, cmd := range []string{
+			"find /boot -type f -exec chmod 0644 {} \\;",
+			"find /boot -type d -exec chmod 0755 {} \\;",
+			"find /usr/src -type f -exec chmod 0644 {} \\;",
+			"find /usr/src -type d -exec chmod 0755 {} \\;",
+			"find /lib/modules -type f -exec chmod 0644 {} \\;",
+			"find /lib/modules -type d -exec chmod 0755 {} \\;",
+		} {
+			_, err = c.Run("/tmp", cmd)
+			if err != nil {
+				return
+			}
 		}
 	}
 
