@@ -145,7 +145,8 @@ func matchDebianHeadersPkg(container, mask string, generic bool) (
 
 	cmd := "apt-cache search linux-headers | cut -d ' ' -f 1"
 
-	c, err := NewContainer(container, time.Minute)
+	// FIXME timeout should be in global out-of-tree config
+	c, err := NewContainer(container, time.Hour)
 	if err != nil {
 		return
 	}
@@ -182,7 +183,8 @@ func matchCentOSDevelPkg(container, mask string, generic bool) (
 	cmd := "yum search kernel-devel --showduplicates | " +
 		"grep '^kernel-devel' | cut -d ' ' -f 1"
 
-	c, err := NewContainer(container, time.Minute)
+	// FIXME timeout should be in global out-of-tree config
+	c, err := NewContainer(container, time.Hour)
 	if err != nil {
 		return
 	}
