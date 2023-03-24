@@ -29,10 +29,11 @@ type KernelCmd struct {
 	UseHost    bool `help:"also use host kernels"`
 	Force      bool `help:"force reinstall kernel"`
 
-	List    KernelListCmd    `cmd:"" help:"list kernels"`
-	Autogen KernelAutogenCmd `cmd:"" help:"generate kernels based on the current config"`
-	Genall  KernelGenallCmd  `cmd:"" help:"generate all kernels for distro"`
-	Install KernelInstallCmd `cmd:"" help:"install specific kernel"`
+	List        KernelListCmd        `cmd:"" help:"list kernels"`
+	Autogen     KernelAutogenCmd     `cmd:"" help:"generate kernels based on the current config"`
+	Genall      KernelGenallCmd      `cmd:"" help:"generate all kernels for distro"`
+	Install     KernelInstallCmd     `cmd:"" help:"install specific kernel"`
+	ConfigRegen KernelConfigRegenCmd `cmd:"" help:"regenerate config"`
 }
 
 type KernelListCmd struct{}
@@ -137,6 +138,12 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		return
 	}
 
+	return updateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
+}
+
+type KernelConfigRegenCmd struct{}
+
+func (cmd *KernelConfigRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	return updateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
 }
 
