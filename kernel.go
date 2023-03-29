@@ -28,6 +28,7 @@ type KernelCmd struct {
 	NoDownload bool `help:"do not download qemu image while kernel generation"`
 	UseHost    bool `help:"also use host kernels"`
 	Force      bool `help:"force reinstall kernel"`
+	NoHeaders  bool `help:"do not install kernel headers"`
 
 	List        KernelListCmd        `cmd:"" help:"list kernels"`
 	Autogen     KernelAutogenCmd     `cmd:"" help:"generate kernels based on the current config"`
@@ -71,7 +72,14 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			return
 		}
 
-		err = generateKernels(sk, g.Config.Docker.Registry, g.Config.Docker.Commands, cmd.Max, !kernelCmd.NoDownload, kernelCmd.Force)
+		err = generateKernels(sk,
+			g.Config.Docker.Registry,
+			g.Config.Docker.Commands,
+			cmd.Max,
+			!kernelCmd.NoDownload,
+			kernelCmd.Force,
+			!kernelCmd.NoHeaders,
+		)
 		if err != nil {
 			return
 		}
@@ -102,6 +110,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		math.MaxUint32,
 		!kernelCmd.NoDownload,
 		kernelCmd.Force,
+		!kernelCmd.NoHeaders,
 	)
 	if err != nil {
 		return
@@ -133,6 +142,7 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		math.MaxUint32,
 		!kernelCmd.NoDownload,
 		kernelCmd.Force,
+		!kernelCmd.NoHeaders,
 	)
 	if err != nil {
 		return
@@ -150,7 +160,7 @@ func (cmd *KernelConfigRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err erro
 func matchDebianHeadersPkg(container, mask string, generic bool) (
 	pkgs []string, err error) {
 
-	cmd := "apt-cache search linux-headers | cut -d ' ' -f 1"
+	cmd := "apt-cache search linux-image | cut -d ' ' -f 1"
 
 	// FIXME timeout should be in global out-of-tree config
 	c, err := NewContainer(container, time.Hour)
@@ -163,7 +173,7 @@ func matchDebianHeadersPkg(container, mask string, generic bool) (
 		return
 	}
 
-	r, err := regexp.Compile("linux-headers-" + mask)
+	r, err := regexp.Compile("linux-image-" + mask)
 	if err != nil {
 		return
 	}
@@ -376,7 +386,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	return
 }
 
-func installKernel(sk config.KernelMask, pkgname string, force bool) (err error) {
+func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (err error) {
 	slog := log.With().
 		Str("distro_type", sk.DistroType.String()).
 		Str("distro_release", sk.DistroRelease).
@@ -408,10 +418,12 @@ func installKernel(sk config.KernelMask, pkgname string, force bool) (err error)
 
 	switch sk.DistroType {
 	case config.Ubuntu:
-		imagepkg := strings.Replace(pkgname, "headers", "image", -1)
+		var headerspkg string
+		if headers {
+			headerspkg = strings.Replace(pkgname, "image", "headers", -1)
+		}
 
-		cmd := fmt.Sprintf("apt-get install -y %s %s", imagepkg,
-			pkgname)
+		cmd := fmt.Sprintf("apt-get install -y %s %s", pkgname, headerspkg)
 
 		_, err = c.Run("/tmp", cmd)
 		if err != nil {
@@ -422,6 +434,9 @@ func installKernel(sk config.KernelMask, pkgname string, force bool) (err error)
 
 		version := strings.Replace(pkgname, "kernel-devel-", "", -1)
 
+		if !headers {
+			pkgname = ""
+		}
 		cmd := fmt.Sprintf("yum -y install %s %s\n", imagepkg,
 			pkgname)
 		_, err = c.Run("/tmp", cmd)
@@ -663,7 +678,7 @@ func shuffle(a []string) []string {
 
 func generateKernels(km config.KernelMask, registry string,
 	commands []config.DockerCommand, max int64,
-	download, force bool) (err error) {
+	download, force, headers bool) (err error) {
 
 	log.Info().Msgf("Generating for kernel mask %v", km)
 
@@ -701,7 +716,7 @@ func generateKernels(km config.KernelMask, registry string,
 
 		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
 
-		err = installKernel(km, pkg, force)
+		err = installKernel(km, pkg, force, headers)
 		if err == nil {
 			max--
 		} else {
