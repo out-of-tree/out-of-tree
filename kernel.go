@@ -568,7 +568,7 @@ func updateKernelsCfg(host, download bool) (err error) {
 	}
 
 	for _, d := range dockerImages {
-		err = genDockerKernels(d, &newkcfg, download)
+		err = listContainersKernels(d, &newkcfg, download)
 		if err != nil {
 			log.Print("gen kernels", d.ContainerName, ":", err)
 			continue
@@ -605,7 +605,7 @@ func updateKernelsCfg(host, download bool) (err error) {
 	return
 }
 
-func genDockerKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
+func listContainersKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 	download bool) (err error) {
 
 	rootfs, err := genRootfsImage(dii, download)
