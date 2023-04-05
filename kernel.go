@@ -161,10 +161,9 @@ func (cmd *KernelConfigRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err erro
 	return updateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
 }
 
-func matchDebianHeadersPkg(container, mask string, generic bool) (
-	pkgs []string, err error) {
+func matchDebImagePkg(container, mask string) (pkgs []string, err error) {
 
-	cmd := "apt-cache search linux-image | cut -d ' ' -f 1"
+	cmd := "apt-cache search --names-only '^linux-image-[0-9\\.\\-]*-generic' | awk '{ print $1 }'"
 
 	// FIXME timeout should be in global out-of-tree config
 	c, err := NewContainer(container, time.Hour)
@@ -183,18 +182,8 @@ func matchDebianHeadersPkg(container, mask string, generic bool) (
 	}
 
 	kernels := r.FindAll([]byte(output), -1)
-
 	for _, k := range kernels {
 		pkg := string(k)
-		if generic && !strings.HasSuffix(pkg, "generic") {
-			continue
-		}
-		if pkg == "linux-headers-generic" {
-			continue
-		}
-		if pkg == "linux-image-generic" {
-			continue
-		}
 		pkgs = append(pkgs, pkg)
 	}
 
@@ -703,8 +692,7 @@ func generateKernels(km config.KernelMask, registry string,
 	var pkgs []string
 	switch km.DistroType {
 	case config.Ubuntu:
-		pkgs, err = matchDebianHeadersPkg(km.DockerName(),
-			km.ReleaseMask, true)
+		pkgs, err = matchDebImagePkg(km.DockerName(), km.ReleaseMask)
 	case config.CentOS:
 		pkgs, err = matchCentOSDevelPkg(km.DockerName(),
 			km.ReleaseMask, true)
