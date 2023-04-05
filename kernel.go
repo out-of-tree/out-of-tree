@@ -30,7 +30,7 @@ type KernelCmd struct {
 	Force      bool  `help:"force reinstall kernel"`
 	NoHeaders  bool  `help:"do not install kernel headers"`
 	Shuffle    bool  `help:"randomize kernels installation order"`
-	Retries    int64 `help:"amount of tries for each kernel" default="10"`
+	Retries    int64 `help:"amount of tries for each kernel" default:"10"`
 
 	List        KernelListCmd        `cmd:"" help:"list kernels"`
 	Autogen     KernelAutogenCmd     `cmd:"" help:"generate kernels based on the current config"`
