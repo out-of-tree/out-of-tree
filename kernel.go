@@ -188,6 +188,9 @@ func matchDebianHeadersPkg(container, mask string, generic bool) (
 		if pkg == "linux-headers-generic" {
 			continue
 		}
+		if pkg == "linux-image-generic" {
+			continue
+		}
 		pkgs = append(pkgs, pkg)
 	}
 
