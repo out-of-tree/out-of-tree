@@ -29,6 +29,7 @@ type KernelCmd struct {
 	UseHost    bool `help:"also use host kernels"`
 	Force      bool `help:"force reinstall kernel"`
 	NoHeaders  bool `help:"do not install kernel headers"`
+	Shuffle    bool `help:"randomize kernels installation order"`
 
 	List        KernelListCmd        `cmd:"" help:"list kernels"`
 	Autogen     KernelAutogenCmd     `cmd:"" help:"generate kernels based on the current config"`
@@ -79,6 +80,7 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			!kernelCmd.NoDownload,
 			kernelCmd.Force,
 			!kernelCmd.NoHeaders,
+			kernelCmd.Shuffle,
 		)
 		if err != nil {
 			return
@@ -111,6 +113,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		!kernelCmd.NoDownload,
 		kernelCmd.Force,
 		!kernelCmd.NoHeaders,
+		kernelCmd.Shuffle,
 	)
 	if err != nil {
 		return
@@ -143,6 +146,7 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		!kernelCmd.NoDownload,
 		kernelCmd.Force,
 		!kernelCmd.NoHeaders,
+		kernelCmd.Shuffle,
 	)
 	if err != nil {
 		return
@@ -670,7 +674,7 @@ func hasKernel(ki config.KernelInfo, kcfg config.KernelConfig) bool {
 	return false
 }
 
-func shuffle(a []string) []string {
+func shuffleStrings(a []string) []string {
 	// Fisher–Yates shuffle
 	for i := len(a) - 1; i > 0; i-- {
 		j := rand.Intn(i + 1)
@@ -681,7 +685,7 @@ func shuffle(a []string) []string {
 
 func generateKernels(km config.KernelMask, registry string,
 	commands []config.DockerCommand, max int64,
-	download, force, headers bool) (err error) {
+	download, force, headers, shuffle bool) (err error) {
 
 	log.Info().Msgf("Generating for kernel mask %v", km)
 
@@ -711,7 +715,10 @@ func generateKernels(km config.KernelMask, registry string,
 		return
 	}
 
-	for i, pkg := range shuffle(pkgs) {
+	if shuffle {
+		pkgs = shuffleStrings(pkgs)
+	}
+	for i, pkg := range pkgs {
 		if max <= 0 {
 			log.Print("Max is reached")
 			break

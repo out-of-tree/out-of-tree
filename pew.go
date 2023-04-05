@@ -32,6 +32,7 @@ type PewCmd struct {
 	Runs    int64         `help:"runs per each kernel" default:"1"`
 	Kernel  string        `help:"override kernel regex"`
 	Guess   bool          `help:"try all defined kernels"`
+	Shuffle bool          `help:"randomize kernels test order"`
 	Binary  string        `help:"use binary, do not build"`
 	Test    string        `help:"override path for test"`
 	Dist    string        `help:"build result path" default:"/dev/null"`
@@ -45,26 +46,29 @@ type PewCmd struct {
 	DockerTimeout time.Duration `help:"timeout for docker"`
 
 	Threshold float64 `help:"reliablity threshold for exit code" default:"1.00"`
+
+	db              *sql.DB
+	kcfg            config.KernelConfig
+	timeoutDeadline time.Time
 }
 
-func (cmd PewCmd) Run(g *Globals) (err error) {
-	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
+func (cmd *PewCmd) Run(g *Globals) (err error) {
+	cmd.kcfg, err = config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
-		log.Debug().Err(err).Msg("read kernels config")
+		log.Fatal().Err(err).Msg("read kernels config")
 	}
 
-	stop := time.Time{} // never stop
 	if cmd.Timeout != 0 {
 		log.Info().Msgf("Set global timeout to %s", cmd.Timeout)
-		stop = time.Now().Add(cmd.Timeout)
+		cmd.timeoutDeadline = time.Now().Add(cmd.Timeout)
 	}
 
-	db, err := openDatabase(g.Config.Database)
+	cmd.db, err = openDatabase(g.Config.Database)
 	if err != nil {
 		log.Fatal().Err(err).
 			Msgf("Cannot open database %s", g.Config.Database)
 	}
-	defer db.Close()
+	defer cmd.db.Close()
 
 	var configPath string
 	if cmd.ArtifactConfig == "" {
@@ -98,16 +102,16 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 		}
 	}
 
-	qemuTimeout := g.Config.Qemu.Timeout.Duration
 	if cmd.QemuTimeout != 0 {
 		log.Info().Msgf("Set qemu timeout to %s", cmd.QemuTimeout)
-		qemuTimeout = cmd.QemuTimeout
+	} else {
+		cmd.QemuTimeout = g.Config.Qemu.Timeout.Duration
 	}
 
-	dockerTimeout := g.Config.Docker.Timeout.Duration
 	if cmd.DockerTimeout != 0 {
 		log.Info().Msgf("Set docker timeout to %s", cmd.DockerTimeout)
-		dockerTimeout = cmd.DockerTimeout
+	} else {
+		cmd.DockerTimeout = g.Config.Docker.Timeout.Duration
 	}
 
 	if cmd.Tag == "" {
@@ -115,10 +119,7 @@ func (cmd PewCmd) Run(g *Globals) (err error) {
 	}
 	log.Info().Str("tag", cmd.Tag).Msg("log")
 
-	err = performCI(ka, kcfg, cmd.Binary, cmd.Test, stop,
-		qemuTimeout, dockerTimeout,
-		cmd.Max, cmd.Runs, cmd.Dist, cmd.Tag,
-		cmd.Threads, db)
+	err = cmd.performCI(ka)
 	if err != nil {
 		return
 	}
@@ -518,10 +519,8 @@ func copyStandardModules(q *qemu.System, ki config.KernelInfo) (err error) {
 	return
 }
 
-func testArtifact(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
-	ki config.KernelInfo, binaryPath, testPath string,
-	qemuTimeout, dockerTimeout time.Duration, dist, tag string,
-	db *sql.DB) {
+func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
+	ka config.Artifact, ki config.KernelInfo) {
 
 	defer swg.Done()
 
@@ -539,7 +538,7 @@ func testArtifact(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		slog.Error().Err(err).Msg("qemu init")
 		return
 	}
-	q.Timeout = qemuTimeout
+	q.Timeout = cmd.QemuTimeout
 
 	if ka.Qemu.Timeout.Duration != 0 {
 		q.Timeout = ka.Qemu.Timeout.Duration
@@ -552,7 +551,7 @@ func testArtifact(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	}
 
 	if ka.Docker.Timeout.Duration != 0 {
-		dockerTimeout = ka.Docker.Timeout.Duration
+		cmd.DockerTimeout = ka.Docker.Timeout.Duration
 	}
 
 	q.SetKASLR(!ka.Mitigations.DisableKaslr)
@@ -589,16 +588,16 @@ func testArtifact(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 	defer os.RemoveAll(tmp)
 
 	result := phasesResult{}
-	defer dumpResult(q, ka, ki, &result, dist, tag, binaryPath, db)
+	defer dumpResult(q, ka, ki, &result, cmd.Dist, cmd.Tag, cmd.Binary, cmd.db)
 
 	if ka.Type == config.Script {
 		result.Build.Ok = true
-		testPath = ka.Script
-	} else if binaryPath == "" {
+		cmd.Test = ka.Script
+	} else if cmd.Binary == "" {
 		// TODO: build should return structure
 		start := time.Now()
 		result.BuildDir, result.BuildArtifact, result.Build.Output, err =
-			build(tmp, ka, ki, dockerTimeout)
+			build(tmp, ka, ki, cmd.DockerTimeout)
 		slog.Debug().Str("duration", time.Now().Sub(start).String()).
 			Msg("build done")
 		if err != nil {
@@ -607,23 +606,23 @@ func testArtifact(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 		}
 		result.Build.Ok = true
 	} else {
-		result.BuildArtifact = binaryPath
+		result.BuildArtifact = cmd.Binary
 		result.Build.Ok = true
 	}
 
-	if testPath == "" {
-		testPath = result.BuildArtifact + "_test"
-		if !exists(testPath) {
-			testPath = tmp + "/source/" + "test.sh"
+	if cmd.Test == "" {
+		cmd.Test = result.BuildArtifact + "_test"
+		if !exists(cmd.Test) {
+			cmd.Test = tmp + "/source/" + "test.sh"
 		}
 	}
 
-	err = q.WaitForSSH(qemuTimeout)
+	err = q.WaitForSSH(cmd.QemuTimeout)
 	if err != nil {
 		return
 	}
 
-	remoteTest, err := copyTest(q, testPath, ka)
+	remoteTest, err := copyTest(q, cmd.Test, ka)
 	if err != nil {
 		return
 	}
@@ -640,7 +639,7 @@ func testArtifact(swg *sizedwaitgroup.SizedWaitGroup, ka config.Artifact,
 			Msg("copy standard modules")
 	}
 
-	err = preloadModules(q, ka, ki, dockerTimeout)
+	err = preloadModules(q, ka, ki, cmd.DockerTimeout)
 	if err != nil {
 		slog.Error().Err(err).Msg("preload modules")
 		return
@@ -661,16 +660,15 @@ func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
 	return a
 }
 
-func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
-	testPath string, stop time.Time,
-	qemuTimeout, dockerTimeout time.Duration,
-	max, runs int64, dist, tag string, threads int,
-	db *sql.DB) (err error) {
-
+func (cmd PewCmd) performCI(ka config.Artifact) (err error) {
 	found := false
+	max := cmd.Max
 
-	swg := sizedwaitgroup.New(threads)
-	for _, kernel := range shuffleKernels(kcfg.Kernels) {
+	swg := sizedwaitgroup.New(cmd.Threads)
+	if cmd.Shuffle {
+		cmd.kcfg.Kernels = shuffleKernels(cmd.kcfg.Kernels)
+	}
+	for _, kernel := range cmd.kcfg.Kernels {
 		if max <= 0 {
 			break
 		}
@@ -684,14 +682,14 @@ func performCI(ka config.Artifact, kcfg config.KernelConfig, binaryPath,
 		if supported {
 			found = true
 			max--
-			for i := int64(0); i < runs; i++ {
-				if !stop.IsZero() && time.Now().After(stop) {
+			for i := int64(0); i < cmd.Runs; i++ {
+				if !cmd.timeoutDeadline.IsZero() &&
+					time.Now().After(cmd.timeoutDeadline) {
+
 					break
 				}
 				swg.Add()
-				go testArtifact(&swg, ka, kernel, binaryPath,
-					testPath, qemuTimeout, dockerTimeout,
-					dist, tag, db)
+				go cmd.testArtifact(&swg, ka, kernel)
 			}
 		}
 	}

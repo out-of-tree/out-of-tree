@@ -63,7 +63,7 @@ func (cmd *PackCmd) Run(g *Globals) (err error) {
 
 		log.Print(f.Name())
 
-		PewCmd{
+		pew := PewCmd{
 			Max:           cmd.KernelRuns,
 			Runs:          cmd.ExploitRuns,
 			Threads:       cmd.Threads,
@@ -72,7 +72,9 @@ func (cmd *PackCmd) Run(g *Globals) (err error) {
 			QemuTimeout:   cmd.QemuTimeout,
 			DockerTimeout: cmd.DockerTimeout,
 			Dist:          pathDevNull,
-		}.Run(&Globals{
+		}
+
+		pew.Run(&Globals{
 			Config:  g.Config,
 			WorkDir: workPath,
 		})
