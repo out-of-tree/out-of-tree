@@ -182,10 +182,10 @@ func matchDebImagePkg(container, mask string) (pkgs []string, err error) {
 		return
 	}
 
-	kernels := r.FindAll([]byte(output), -1)
-	for _, k := range kernels {
-		pkg := string(k)
-		pkgs = append(pkgs, pkg)
+	for _, pkg := range strings.Fields(output) {
+		if r.MatchString(pkg) || strings.Contains(pkg, mask) {
+			pkgs = append(pkgs, pkg)
+		}
 	}
 
 	return
