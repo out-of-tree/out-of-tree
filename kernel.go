@@ -296,18 +296,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	}
 
 	for _, c := range commands {
-		switch c.DistroType {
-		case config.Ubuntu:
-			d += "RUN " + c.Command + "\n"
-		case config.CentOS:
-			d += "RUN " + c.Command + "\n"
-		case config.Debian:
-			d += "RUN " + c.Command + "\n"
-		default:
-			err = fmt.Errorf("%s not yet supported",
-				sk.DistroType.String())
-			return
-		}
+		d += "RUN " + c.Command + "\n"
 	}
 
 	switch sk.DistroType {
