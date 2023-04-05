@@ -382,11 +382,32 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	return
 }
 
+func copyDirContent(source, target string) (err error) {
+	files, err := ioutil.ReadDir(source)
+	if err != nil {
+		return
+	}
+	if len(files) != 0 {
+		_, err = sh(source, "cp -r * "+target+"/")
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
 func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (err error) {
+	tmpdir, err := os.MkdirTemp("", "out-of-tree-"+pkgname+"-")
+	if err != nil {
+		log.Fatal().Err(err).Msg("make tmp directory")
+	}
+	defer os.RemoveAll(tmpdir)
+
 	slog := log.With().
 		Str("distro_type", sk.DistroType.String()).
 		Str("distro_release", sk.DistroRelease).
 		Str("pkg", pkgname).
+		Str("tmpdir", tmpdir).
 		Logger()
 
 	c, err := NewContainer(sk.DockerName(), time.Hour) // TODO conf
@@ -409,6 +430,17 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 			}
 		}
 	}
+
+	volumes := c.Volumes
+
+	c.Volumes.LibModules = fmt.Sprintf("%s/libmodules", tmpdir)
+	os.MkdirAll(c.Volumes.LibModules, 0777)
+
+	c.Volumes.UsrSrc = fmt.Sprintf("%s/usrsrc", tmpdir)
+	os.MkdirAll(c.Volumes.UsrSrc, 0777)
+
+	c.Volumes.Boot = fmt.Sprintf("%s/boot", tmpdir)
+	os.MkdirAll(c.Volumes.Boot, 0777)
 
 	slog.Debug().Msgf("Installing kernel")
 
@@ -448,6 +480,19 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		}
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
+		return
+	}
+
+	err = copyDirContent(c.Volumes.LibModules, volumes.LibModules)
+	if err != nil {
+		return
+	}
+	err = copyDirContent(c.Volumes.UsrSrc, volumes.UsrSrc)
+	if err != nil {
+		return
+	}
+	err = copyDirContent(c.Volumes.Boot, volumes.Boot)
+	if err != nil {
 		return
 	}
 
