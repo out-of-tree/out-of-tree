@@ -213,8 +213,10 @@ func matchCentOSDevelPkg(container, mask string, generic bool) (
 		return
 	}
 
-	for _, k := range r.FindAll([]byte(output), -1) {
-		pkgs = append(pkgs, string(k))
+	for _, pkg := range strings.Fields(output) {
+		if r.MatchString(pkg) || strings.Contains(pkg, mask) {
+			pkgs = append(pkgs, pkg)
+		}
 	}
 
 	return
