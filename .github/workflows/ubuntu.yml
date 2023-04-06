@@ -106,3 +106,7 @@ jobs:
     - name: End-to-End Testing [Install all Ubuntu 22.04 kernels]
       run: |
         sudo ./out-of-tree --log-level=debug kernel genall --distro=Ubuntu --ver=22.04
+
+    - name: End-to-End Testing [Install 10 Ubuntu 20.04 kernels w/o headers]
+      run: |
+        sudo ./out-of-tree --log-level=debug kernel genall --distro=Ubuntu --ver=20.04 --no-headers
