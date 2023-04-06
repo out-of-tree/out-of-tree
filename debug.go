@@ -257,12 +257,12 @@ func handleLine(q *qemu.System) (err error) {
 		fmt.Printf("ssh\t: print arguments to ssh command\n")
 		fmt.Printf("quit\t: quit\n")
 	case "l", "log":
-		fmt.Println(string(q.Stdout))
+		fmt.Println(q.Stdout)
 	case "cl", "clog":
-		fmt.Println(string(q.Stdout))
-		q.Stdout = []byte{}
+		fmt.Println(q.Stdout)
+		q.Stdout = ""
 	case "c", "cleanup":
-		q.Stdout = []byte{}
+		q.Stdout = ""
 	case "s", "ssh":
 		fmt.Println(q.GetSSHCommand())
 	case "q", "quit":

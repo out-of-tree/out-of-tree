@@ -6,7 +6,6 @@ package qemu
 
 import (
 	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -19,29 +18,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/ssh"
 )
-
-func readUntilEOF(pipe io.ReadCloser, buf *[]byte) (err error) {
-	bufSize := 1024
-	for err != io.EOF {
-		stdout := make([]byte, bufSize)
-		var n int
-
-		n, err = pipe.Read(stdout)
-		if err != nil && err != io.EOF {
-			return
-		}
-
-		*buf = append(*buf, stdout[:n]...)
-	}
-
-	if err == io.EOF {
-		err = nil
-	}
-	return
-}
 
 type arch string
 
@@ -98,18 +78,25 @@ type System struct {
 		stdout io.ReadCloser
 	}
 
-	Stdout, Stderr []byte
+	Stdout, Stderr string
 
 	// accessible after qemu is closed
 	exitErr error
+
+	log zerolog.Logger
 }
 
 // NewSystem constructor
 func NewSystem(arch arch, kernel Kernel, drivePath string) (q *System, err error) {
+	q = &System{}
+	q.log = log.With().
+		Str("kernel", kernel.KernelPath).
+		Logger()
+
 	if _, err = exec.LookPath("qemu-system-" + string(arch)); err != nil {
 		return
 	}
-	q = &System{}
+
 	q.arch = arch
 
 	if _, err = os.Stat(kernel.KernelPath); err != nil {
@@ -188,11 +175,12 @@ func kvmExists() bool {
 func (q *System) panicWatcher() {
 	for {
 		time.Sleep(time.Second)
-		if bytes.Contains(q.Stdout, []byte("Kernel panic")) {
+		if strings.Contains(q.Stdout, "Kernel panic") {
+			q.KernelPanic = true
+			q.log.Debug().Msg("kernel panic")
 			time.Sleep(time.Second)
 			// There is no reason to stay alive after kernel panic
 			q.Stop()
-			q.KernelPanic = true
 			return
 		}
 	}
@@ -259,7 +247,7 @@ func (q *System) Start() (err error) {
 	qemuArgs = append(qemuArgs, "-append", q.cmdline())
 
 	q.cmd = exec.Command("qemu-system-"+string(q.arch), qemuArgs...)
-	log.Debug().Msgf("%v", q.cmd)
+	q.log.Debug().Msgf("%v", q.cmd)
 
 	if q.pipe.stdin, err = q.cmd.StdinPipe(); err != nil {
 		return
@@ -278,8 +266,23 @@ func (q *System) Start() (err error) {
 		return
 	}
 
-	go readUntilEOF(q.pipe.stdout, &q.Stdout)
-	go readUntilEOF(q.pipe.stderr, &q.Stderr)
+	go func() {
+		scanner := bufio.NewScanner(q.pipe.stdout)
+		for scanner.Scan() {
+			m := scanner.Text()
+			q.Stdout += m + "\n"
+			q.log.Trace().Str("stdout", m).Msg("")
+		}
+	}()
+
+	go func() {
+		scanner := bufio.NewScanner(q.pipe.stderr)
+		for scanner.Scan() {
+			m := scanner.Text()
+			q.Stderr += m + "\n"
+			q.log.Trace().Str("stderr", m).Msg("")
+		}
+	}()
 
 	go func() {
 		q.exitErr = q.cmd.Wait()
