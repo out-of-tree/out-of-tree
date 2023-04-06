@@ -374,20 +374,6 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	return
 }
 
-func copyDirContent(source, target string) (err error) {
-	files, err := ioutil.ReadDir(source)
-	if err != nil {
-		return
-	}
-	if len(files) != 0 {
-		_, err = sh(source, "cp -r * "+target+"/")
-		if err != nil {
-			return
-		}
-	}
-	return
-}
-
 func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (err error) {
 	tmpdir, err := os.MkdirTemp("", "out-of-tree-"+pkgname+"-")
 	if err != nil {
@@ -475,15 +461,22 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		return
 	}
 
-	err = copyDirContent(c.Volumes.LibModules, volumes.LibModules)
+	c.Args = append(c.Args, "-v", volumes.LibModules+":/target/lib/modules")
+	c.Args = append(c.Args, "-v", volumes.UsrSrc+":/target/usr/src")
+	c.Args = append(c.Args, "-v", volumes.Boot+":/target/boot")
+
+	cmd := "cp -r /lib/modules/* /target/lib/modules/" +
+		" && cp -r /boot/* /target/boot/"
+
+	files, err := ioutil.ReadDir(c.Volumes.UsrSrc)
 	if err != nil {
 		return
 	}
-	err = copyDirContent(c.Volumes.UsrSrc, volumes.UsrSrc)
-	if err != nil {
-		return
+	if len(files) != 0 {
+		cmd += " && cp -r /usr/src/* /target/usr/src/"
 	}
-	err = copyDirContent(c.Volumes.Boot, volumes.Boot)
+
+	_, err = c.Run("/tmp", cmd)
 	if err != nil {
 		return
 	}
