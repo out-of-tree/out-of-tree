@@ -305,7 +305,6 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		d += "RUN apt-get update\n"
 		d += "RUN apt-get install -y build-essential libelf-dev\n"
 		d += "RUN apt-get install -y wget git\n"
-		d += "RUN apt-get install -y linux-image-generic\n"
 		if sk.DistroRelease >= "14.04" {
 			d += "RUN apt-get install -y libseccomp-dev\n"
 		}
