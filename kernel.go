@@ -348,7 +348,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		}
 
 		// Cache kernel package dependencies
-		d += "export PKGNAME=$(yum search kernel-devel --showduplicates | grep '^kernel-devel' | cut -d ' ' -f 1 | head -n 1); " +
+		d += "RUN export PKGNAME=$(yum search kernel-devel --showduplicates | grep '^kernel-devel' | cut -d ' ' -f 1 | head -n 1); " +
 			"yum -y install $PKGNAME $(echo $PKGNAME | sed 's/-devel//'); " +
 			"yum -y remove $PKGNAME $(echo $PKGNAME | sed 's/-devel//')\n"
 	default:
