@@ -513,12 +513,12 @@ func genInitrdPath(files []os.FileInfo, kname string) string {
 	return ""
 }
 
-func genRootfsImage(d dockerImageInfo, download bool) (rootfs string, err error) {
+func genRootfsImage(d containerImageInfo, download bool) (rootfs string, err error) {
 	usr, err := user.Current()
 	if err != nil {
 		return
 	}
-	imageFile := d.ContainerName + ".img"
+	imageFile := d.Name + ".img"
 
 	imagesPath := usr.HomeDir + "/.out-of-tree/images/"
 	os.MkdirAll(imagesPath, os.ModePerm)
@@ -529,49 +529,6 @@ func genRootfsImage(d dockerImageInfo, download bool) (rootfs string, err error)
 			log.Debug().Msgf("%v not exists, start downloading...", imageFile)
 			err = downloadImage(imagesPath, imageFile)
 		}
-	}
-	return
-}
-
-type dockerImageInfo struct {
-	ContainerName string
-	DistroType    config.DistroType
-	DistroRelease string // 18.04/7.4.1708/9.1
-}
-
-func listDockerImages() (diis []dockerImageInfo, err error) {
-	cmd := exec.Command("docker", "images")
-	log.Debug().Msgf("%v", cmd)
-
-	rawOutput, err := cmd.CombinedOutput()
-	if err != nil {
-		return
-	}
-
-	r, err := regexp.Compile("out_of_tree_.*")
-	if err != nil {
-		return
-	}
-
-	containers := r.FindAll(rawOutput, -1)
-	for _, c := range containers {
-		container := strings.Fields(string(c))[0]
-
-		s := strings.Replace(container, "__", ".", -1)
-		values := strings.Split(s, "_")
-		distro, ver := values[3], values[4]
-
-		dii := dockerImageInfo{
-			ContainerName: container,
-			DistroRelease: ver,
-		}
-
-		dii.DistroType, err = config.NewDistroType(distro)
-		if err != nil {
-			return
-		}
-
-		diis = append(diis, dii)
 	}
 	return
 }
@@ -588,7 +545,7 @@ func updateKernelsCfg(host, download bool) (err error) {
 	}
 
 	// Get docker kernels
-	dockerImages, err := listDockerImages()
+	dockerImages, err := listContainerImages()
 	if err != nil {
 		return
 	}
@@ -596,7 +553,7 @@ func updateKernelsCfg(host, download bool) (err error) {
 	for _, d := range dockerImages {
 		err = listContainersKernels(d, &newkcfg, download)
 		if err != nil {
-			log.Print("gen kernels", d.ContainerName, ":", err)
+			log.Print("gen kernels", d.Name, ":", err)
 			continue
 		}
 	}
@@ -631,7 +588,7 @@ func updateKernelsCfg(host, download bool) (err error) {
 	return
 }
 
-func listContainersKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
+func listContainersKernels(dii containerImageInfo, newkcfg *config.KernelConfig,
 	download bool) (err error) {
 
 	rootfs, err := genRootfsImage(dii, download)
@@ -639,7 +596,7 @@ func listContainersKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 		return
 	}
 
-	c, err := NewContainer(dii.ContainerName, time.Hour)
+	c, err := NewContainer(dii.Name, time.Hour)
 	if err != nil {
 		return
 	}
@@ -659,7 +616,7 @@ func listContainersKernels(dii dockerImageInfo, newkcfg *config.KernelConfig,
 			DistroType:    dii.DistroType,
 			DistroRelease: dii.DistroRelease,
 			KernelRelease: krel.Name(),
-			ContainerName: dii.ContainerName,
+			ContainerName: dii.Name,
 
 			KernelPath: c.Volumes.Boot + "/" +
 				genKernelPath(bootfiles, krel.Name()),
@@ -708,7 +665,7 @@ func generateKernels(km config.KernelMask, registry string,
 
 	log.Info().Msgf("Generating for kernel mask %v", km)
 
-	_, err = genRootfsImage(dockerImageInfo{ContainerName: km.DockerName()},
+	_, err = genRootfsImage(containerImageInfo{Name: km.DockerName()},
 		download)
 	if err != nil {
 		return

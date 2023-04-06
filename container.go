@@ -11,10 +11,102 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
+
+	"code.dumpstack.io/tools/out-of-tree/config"
 )
+
+type ContainerCmd struct {
+	Filter string `help:"filter by name"`
+
+	List    ContainerListCmd    `cmd:"" help:"list containers"`
+	Cleanup ContainerCleanupCmd `cmd:"" help:"cleanup containers"`
+}
+
+func (cmd ContainerCmd) Containers() (names []string) {
+	images, err := listContainerImages()
+	if err != nil {
+		log.Fatal().Err(err).Msg("")
+	}
+
+	for _, img := range images {
+		if cmd.Filter != "" && !strings.Contains(img.Name, cmd.Filter) {
+			continue
+		}
+		names = append(names, img.Name)
+	}
+	return
+}
+
+type ContainerListCmd struct{}
+
+func (cmd ContainerListCmd) Run(containerCmd *ContainerCmd) (err error) {
+	for _, name := range containerCmd.Containers() {
+		fmt.Println(name)
+	}
+	return
+}
+
+type ContainerCleanupCmd struct{}
+
+func (cmd ContainerCleanupCmd) Run(containerCmd *ContainerCmd) (err error) {
+	var output []byte
+	for _, name := range containerCmd.Containers() {
+		output, err = exec.Command("docker", "image", "rm", name).CombinedOutput()
+		if err != nil {
+			log.Error().Err(err).Str("output", string(output)).Msg("")
+			return
+		}
+	}
+	return
+}
+
+type containerImageInfo struct {
+	Name          string
+	DistroType    config.DistroType
+	DistroRelease string // 18.04/7.4.1708/9.1
+}
+
+func listContainerImages() (diis []containerImageInfo, err error) {
+	cmd := exec.Command("docker", "images")
+	log.Debug().Msgf("%v", cmd)
+
+	rawOutput, err := cmd.CombinedOutput()
+	if err != nil {
+		return
+	}
+
+	r, err := regexp.Compile("out_of_tree_.*")
+	if err != nil {
+		return
+	}
+
+	containers := r.FindAll(rawOutput, -1)
+	for _, c := range containers {
+		container := strings.Fields(string(c))[0]
+
+		s := strings.Replace(container, "__", ".", -1)
+		values := strings.Split(s, "_")
+		distro, ver := values[3], values[4]
+
+		dii := containerImageInfo{
+			Name:          container,
+			DistroRelease: ver,
+		}
+
+		dii.DistroType, err = config.NewDistroType(distro)
+		if err != nil {
+			return
+		}
+
+		diis = append(diis, dii)
+	}
+	return
+}
 
 type container struct {
 	name    string

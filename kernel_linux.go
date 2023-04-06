@@ -43,8 +43,8 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 	}
 
 	// only for compatibility, docker is not really used
-	dii := dockerImageInfo{
-		ContainerName: config.KernelMask{
+	dii := containerImageInfo{
+		Name: config.KernelMask{
 			DistroType:    distroType,
 			DistroRelease: si.OS.Version,
 		}.DockerName(),

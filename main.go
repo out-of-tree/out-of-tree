@@ -32,13 +32,14 @@ type Globals struct {
 type CLI struct {
 	Globals
 
-	Pew    PewCmd    `cmd:"" help:"build, run, and test module/exploit"`
-	Kernel KernelCmd `cmd:"" help:"manipulate kernels"`
-	Debug  DebugCmd  `cmd:"" help:"debug environment"`
-	Log    LogCmd    `cmd:"" help:"query logs"`
-	Pack   PackCmd   `cmd:"" help:"exploit pack test"`
-	Gen    GenCmd    `cmd:"" help:"generate .out-of-tree.toml skeleton"`
-	Image  ImageCmd  `cmd:"" help:"manage images"`
+	Pew       PewCmd       `cmd:"" help:"build, run, and test module/exploit"`
+	Kernel    KernelCmd    `cmd:"" help:"manipulate kernels"`
+	Debug     DebugCmd     `cmd:"" help:"debug environment"`
+	Log       LogCmd       `cmd:"" help:"query logs"`
+	Pack      PackCmd      `cmd:"" help:"exploit pack test"`
+	Gen       GenCmd       `cmd:"" help:"generate .out-of-tree.toml skeleton"`
+	Image     ImageCmd     `cmd:"" help:"manage images"`
+	Container ContainerCmd `cmd:"" help:"manage containers"`
 
 	Version VersionFlag `name:"version" help:"print version information and quit"`
 
