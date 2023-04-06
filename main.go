@@ -6,12 +6,15 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
+	"os/user"
 	"runtime/debug"
 	"strconv"
 	"time"
 
+	"github.com/natefinch/lumberjack"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -47,8 +50,6 @@ type LogLevelFlag string
 func (loglevel LogLevelFlag) AfterApply() error {
 	switch loglevel {
 	case "debug":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-
 		zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
 			short := file
 			for i := len(file) - 1; i > 0; i-- {
@@ -61,12 +62,6 @@ func (loglevel LogLevelFlag) AfterApply() error {
 			return file + ":" + strconv.Itoa(line)
 		}
 		log.Logger = log.With().Caller().Logger()
-	case "info":
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	case "warn":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	case "error":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 	}
 	return nil
 }
@@ -81,9 +76,19 @@ func (v VersionFlag) BeforeApply(app *kong.Kong, vars kong.Vars) error {
 	return nil
 }
 
-func main() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+type LevelWriter struct {
+	io.Writer
+	Level zerolog.Level
+}
 
+func (lw *LevelWriter) WriteLevel(l zerolog.Level, p []byte) (n int, err error) {
+	if l >= lw.Level {
+		return lw.Writer.Write(p)
+	}
+	return len(p), nil
+}
+
+func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	cli := CLI{}
@@ -99,11 +104,47 @@ func main() {
 		},
 	)
 
+	var loglevel zerolog.Level
+	switch cli.LogLevel {
+	case "debug":
+		loglevel = zerolog.DebugLevel
+	case "info":
+		loglevel = zerolog.InfoLevel
+	case "warn":
+		loglevel = zerolog.WarnLevel
+	case "error":
+		loglevel = zerolog.ErrorLevel
+	}
+
+	usr, err := user.Current()
+	if err != nil {
+		return
+	}
+
+	log.Logger = log.Output(zerolog.MultiLevelWriter(
+		&LevelWriter{Writer: zerolog.NewConsoleWriter(
+			func(w *zerolog.ConsoleWriter) {
+				w.Out = os.Stderr
+			},
+		),
+			Level: loglevel,
+		},
+		&LevelWriter{Writer: &lumberjack.Logger{
+			Filename: usr.HomeDir + "/.out-of-tree/logs/out-of-tree.log",
+		},
+			Level: zerolog.DebugLevel,
+		},
+	))
+
+	log.Debug().Msg("start out-of-tree")
+	log.Debug().Msgf("%v", os.Args)
+	log.Debug().Msgf("%v", cli)
+
 	if buildInfo, ok := debug.ReadBuildInfo(); ok {
 		log.Debug().Msgf("%v", buildInfo.GoVersion)
 		log.Debug().Msgf("%v", buildInfo.Settings)
 	}
 
-	err := ctx.Run(&cli.Globals)
+	err = ctx.Run(&cli.Globals)
 	ctx.FatalIfErrorf(err)
 }
