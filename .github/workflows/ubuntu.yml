@@ -79,7 +79,7 @@ jobs:
 
     - name: End-to-End Testing [Install one CentOS kernel]
       run: |
-        sudo ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=7 --kernel=4.15.0-70
+        sudo ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=7 --kernel=3.10.0-862
 
     - name: End-to-End Testing [Install all Ubuntu 22.04 kernels]
       run: |
