@@ -58,7 +58,7 @@ jobs:
     - name: Archive logs
       uses: actions/upload-artifact@v3
       with:
-        name: logs
+        name: test-end-to-end-logs
         path: /home/runner/.out-of-tree/logs/out-of-tree.log
 
   test-end-to-end-kernels:
@@ -102,7 +102,7 @@ jobs:
     - name: Archive logs
       uses: actions/upload-artifact@v3
       with:
-        name: logs
+        name: test-end-to-end-kernels-log
         path: /home/runner/.out-of-tree/logs/out-of-tree.log
 
   test-end-to-end-genall:
@@ -126,5 +126,5 @@ jobs:
     - name: Archive logs
       uses: actions/upload-artifact@v3
       with:
-        name: logs
+        name: test-end-to-end-genall-logs
         path: /home/runner/.out-of-tree/logs/out-of-tree.log
