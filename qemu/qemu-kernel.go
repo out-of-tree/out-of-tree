@@ -384,6 +384,7 @@ func (q System) Command(user, cmd string) (output string, err error) {
 			output += m + "\n"
 			flog.Trace().Str("stdout", m).Msg("")
 		}
+		output = strings.TrimSuffix(output, "\n")
 	}()
 
 	err = session.Wait()
