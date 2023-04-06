@@ -32,38 +32,18 @@ Read [documentation](https://out-of-tree.readthedocs.io) for further info.
 
 ## Examples
 
-Run by absolute path
+Generate all Ubuntu 22.04 kernels:
 
-    $ out-of-tree --path /path/to/exploit/directory pew
+    $ out-of-tree kernel genall --distro=Ubuntu --ver=22.04
 
-Test only with one kernel:
+Run tests based on .out-of-tree.toml definitions:
 
-    $ out-of-tree pew --kernel='Ubuntu:5.4.0-29-generic
+	$ out-of-tree pew
+
+Test with a specific kernel:
+
+    $ out-of-tree pew --kernel='Ubuntu:5.4.0-29-generic'
 
 Run debug environment:
 
-    $ out-of-tree debug --kernel='Ubuntu:5.4.0-29-generic
-
-Test binary module/exploit with implicit defined test ($BINARY_test)
-
-    $ out-of-tree pew --binary /path/to/exploit
-
-Test binary module/exploit with explicit defined test
-
-    $ out-of-tree pew --binary /path/to/exploit --test /path/to/exploit_test
-
-Guess work kernels:
-
-    $ out-of-tree pew --guess
-
-Use custom kernels config
-
-    $ out-of-tree --kernels /path/to/kernels.toml pew
-
-Generate all kernels
-
-    $ out-of-tree kernel genall --distro Ubuntu --ver 22.04
-
-## Development
-
-Read [Qemu API](qemu/README.md).
+    $ out-of-tree debug --kernel='Ubuntu:5.4.0-29-generic'
