@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bufio"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -146,13 +147,38 @@ func successRate(state runstate) float64 {
 
 const pathDevNull = "/dev/null"
 
-func sh(workdir, cmd string) (output string, err error) {
-	command := exec.Command("sh", "-c", "cd "+workdir+" && "+cmd)
+func sh(workdir, command string) (output string, err error) {
+	flog := log.With().
+		Str("workdir", workdir).
+		Str("command", command).
+		Logger()
 
-	log.Debug().Msgf("%v", command)
+	cmd := exec.Command("sh", "-c", "cd "+workdir+" && "+command)
 
-	raw, err := command.CombinedOutput()
-	output = string(raw)
+	flog.Debug().Msgf("%v", cmd)
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return
+	}
+	cmd.Stderr = cmd.Stdout
+
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+
+	go func() {
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			m := scanner.Text()
+			output += m + "\n"
+			flog.Trace().Str("stdout", m).Msg("")
+		}
+	}()
+
+	err = cmd.Wait()
+
 	if err != nil {
 		e := fmt.Sprintf("%v %v output: %v", cmd, err, output)
 		err = errors.New(e)
