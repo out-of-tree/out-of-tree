@@ -533,7 +533,7 @@ func genRootfsImage(d dockerImageInfo, download bool) (rootfs string, err error)
 	rootfs = imagesPath + imageFile
 	if !exists(rootfs) {
 		if download {
-			log.Print(imageFile, "not exists, start downloading...")
+			log.Debug().Msgf("%v not exists, start downloading...", imageFile)
 			err = downloadImage(imagesPath, imageFile)
 		}
 	}
