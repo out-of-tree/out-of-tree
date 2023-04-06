@@ -764,6 +764,7 @@ func generateKernels(km config.KernelMask, registry string,
 			} else {
 				log.Warn().Err(err).Msg("install kernel")
 				time.Sleep(time.Second)
+				log.Info().Msg("retry")
 			}
 		}
 	}
