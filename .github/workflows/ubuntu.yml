@@ -83,11 +83,11 @@ jobs:
 
     - name: End-to-End Testing [Install one CentOS kernel]
       run: |
-        sudo ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=7 --kernel=3.10.0-862
+        sudo ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=7 --kernel=3.10.0-862.6.3
 
     - name: End-to-End Testing [Install one CentOS kernel w/o headers]
       run: |
-        sudo ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=7 --kernel=3.10.0-1160 --no-headers
+        sudo ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=7 --kernel=3.10.0-1160.71.1 --no-headers
 
   test-end-to-end-genall:
     name: End-to-End Testing (genall)
