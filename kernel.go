@@ -318,6 +318,15 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 			log.Print("See also https://lwn.net/Articles/446528/")
 			err = fmt.Errorf("vsyscall is not available")
 			return
+		} else if sk.DistroRelease == "8" {
+			// CentOS 8 doesn't have Vault repos by default
+			for _, repover := range []string{
+				"8.0.1905", "8.1.1911", "8.2.2004", "8.3.2011", "8.4.2105", "8.5.2111",
+			} {
+				repo := fmt.Sprintf("[%s]\\nbaseurl=http://vault.centos.org/%s/BaseOS/$basearch/os/\\ngpgcheck=0", repover, repover)
+				d += fmt.Sprintf("RUN echo -e '%s' >> /etc/yum.repos.d/CentOS-Vault.repo\n", repo)
+			}
+			d += "RUN sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/*\n"
 		}
 
 		// enable rpms from old minor releases
@@ -326,21 +335,12 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		d += "RUN sed -i 's;installonly_limit=;installonly_limit=100500;' /etc/yum.conf\n"
 		d += "RUN yum -y update\n"
 
-		if sk.DistroRelease == "8" {
-			// FIXME CentOS Vault repository list for 8 is empty
-			// at the time of this fix; check for it and use a
-			// workaround if it's still empty
-			d += `RUN grep enabled /etc/yum.repos.d/CentOS-Vault.repo` +
-				` || echo -e '[8.0.1905]\nbaseurl=http://vault.centos.org/8.0.1905/BaseOS/$basearch/os/'` +
-				` >> /etc/yum.repos.d/CentOS-Vault.repo` + "\n"
-		}
-
 		d += "RUN yum -y groupinstall 'Development Tools'\n"
 
 		if sk.DistroRelease < "8" {
 			d += "RUN yum -y install deltarpm\n"
 		} else {
-			d += "RUN yum -y install drpm grub2-tools-minimal " +
+			d += "RUN yum -y install grub2-tools-minimal " +
 				"elfutils-libelf-devel\n"
 		}
 	default:

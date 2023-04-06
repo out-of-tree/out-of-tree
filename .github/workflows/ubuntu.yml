@@ -69,25 +69,29 @@ jobs:
         sudo apt-get update
         sudo apt-get install qemu-system-x86
 
-    - name: End-to-End Testing [Install one Ubuntu kernel]
+    - name: End-to-End Testing [Install one Ubuntu 18.04 kernel]
       run: |
         sudo ./out-of-tree --log-level=debug kernel install --distro=Ubuntu --ver=18.04 --kernel=4.15.0-70-generic
 
-    - name: End-to-End Testing [Reinstall one Ubuntu kernel]
+    - name: End-to-End Testing [Reinstall one Ubuntu 18.04 kernel]
       run: |
         sudo ./out-of-tree --log-level=debug kernel install --distro=Ubuntu --ver=18.04 --kernel=4.15.0-70-generic --force
 
-    - name: End-to-End Testing [Install one Ubuntu kernel w/o headers]
+    - name: End-to-End Testing [Install one Ubuntu 22.04 kernel w/o headers]
       run: |
         sudo ./out-of-tree --log-level=debug kernel install --distro=Ubuntu --ver=22.04 --kernel=5.19.0-28-generic --no-headers
 
-    - name: End-to-End Testing [Install one CentOS kernel]
+    - name: End-to-End Testing [Install one CentOS 7 kernel]
       run: |
         sudo ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=7 --kernel=3.10.0-862.6.3
 
-    - name: End-to-End Testing [Install one CentOS kernel w/o headers]
+    - name: End-to-End Testing [Install one CentOS 7 kernel w/o headers]
       run: |
         sudo ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=7 --kernel=3.10.0-1160.71.1 --no-headers
+
+    - name: End-to-End Testing [Install one CentOS 8 kernel]
+      run: |
+        sudo ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=8 --kernel=4.18.0-348.7.1
 
   test-end-to-end-genall:
     name: End-to-End Testing (genall)
