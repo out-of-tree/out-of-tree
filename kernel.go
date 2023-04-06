@@ -466,10 +466,25 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 	c.Args = append(c.Args, "-v", volumes.UsrSrc+":/target/usr/src")
 	c.Args = append(c.Args, "-v", volumes.Boot+":/target/boot")
 
-	cmd := "cp -r /lib/modules/* /target/lib/modules/" +
-		" && cp -r /boot/* /target/boot/"
+	cmd := "true"
 
-	files, err := ioutil.ReadDir(c.Volumes.UsrSrc)
+	files, err := ioutil.ReadDir(c.Volumes.Boot)
+	if err != nil {
+		return
+	}
+	if len(files) != 0 {
+		cmd += " && cp -r /boot/* /target/boot/"
+	}
+
+	files, err = ioutil.ReadDir(c.Volumes.LibModules)
+	if err != nil {
+		return
+	}
+	if len(files) != 0 {
+		cmd += " && cp -r /lib/modules/* /target/lib/modules/"
+	}
+
+	files, err = ioutil.ReadDir(c.Volumes.UsrSrc)
 	if err != nil {
 		return
 	}
