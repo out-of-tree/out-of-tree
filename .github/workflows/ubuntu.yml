@@ -79,7 +79,7 @@ jobs:
 
     - name: End-to-End Testing [Install one Ubuntu kernel w/o headers]
       run: |
-        sudo ./out-of-tree --log-level=debug kernel install --distro=Ubuntu --ver=18.04 --kernel=4.15.0-70-generic --no-headers
+        sudo ./out-of-tree --log-level=debug kernel install --distro=Ubuntu --ver=22.04 --kernel=5.19.0-28-generic --no-headers
 
     - name: End-to-End Testing [Install one CentOS kernel]
       run: |
