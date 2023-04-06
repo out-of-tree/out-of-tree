@@ -544,7 +544,7 @@ func genRootfsImage(d containerImageInfo, download bool) (rootfs string, err err
 	rootfs = imagesPath + imageFile
 	if !exists(rootfs) {
 		if download {
-			log.Debug().Msgf("%v not exists, start downloading...", imageFile)
+			log.Info().Msgf("%v not available, start download", imageFile)
 			err = downloadImage(imagesPath, imageFile)
 		}
 	}
