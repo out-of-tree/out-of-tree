@@ -57,8 +57,8 @@ jobs:
 
     - name: End-to-End Testing [Generate all Ubuntu 22.04 kernels]
       run: |
-        sudo ../../out-of-tree kernel genall --distro=Ubuntu --ver=22.04
+        sudo ../../out-of-tree --log-level=debug kernel genall --distro=Ubuntu --ver=22.04
 
     - name: End-to-End Testing [Generate all CentOS 7 kernels]
       run: |
-        sudo ../../out-of-tree kernel genall --distro=CentOS --ver=7
+        sudo ../../out-of-tree --log-level=debug kernel genall --distro=CentOS --ver=7
