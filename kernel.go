@@ -347,10 +347,15 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 				"elfutils-libelf-devel\n"
 		}
 
+		var flags string
+		if sk.DistroRelease >= "8" {
+			flags = "--noautoremove"
+		}
+
 		// Cache kernel package dependencies
 		d += "RUN export PKGNAME=$(yum search kernel-devel --showduplicates | grep '^kernel-devel' | cut -d ' ' -f 1 | head -n 1); " +
 			"yum -y install $PKGNAME $(echo $PKGNAME | sed 's/-devel//'); " +
-			"yum -y remove $PKGNAME $(echo $PKGNAME | sed 's/-devel//')\n"
+			fmt.Sprintf("yum -y remove $PKGNAME $(echo $PKGNAME | sed 's/-devel//') %s\n", flags)
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
