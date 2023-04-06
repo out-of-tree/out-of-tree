@@ -42,14 +42,14 @@ type CLI struct {
 
 	Version VersionFlag `name:"version" help:"print version information and quit"`
 
-	LogLevel LogLevelFlag `enum:"debug,info,warn,error" default:"info"`
+	LogLevel LogLevelFlag `enum:"trace,debug,info,warn,error" default:"info"`
 }
 
 type LogLevelFlag string
 
 func (loglevel LogLevelFlag) AfterApply() error {
 	switch loglevel {
-	case "debug":
+	case "debug", "trace":
 		zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
 			short := file
 			for i := len(file) - 1; i > 0; i-- {
@@ -106,6 +106,8 @@ func main() {
 
 	var loglevel zerolog.Level
 	switch cli.LogLevel {
+	case "trace":
+		loglevel = zerolog.TraceLevel
 	case "debug":
 		loglevel = zerolog.DebugLevel
 	case "info":
@@ -132,7 +134,7 @@ func main() {
 		&LevelWriter{Writer: &lumberjack.Logger{
 			Filename: usr.HomeDir + "/.out-of-tree/logs/out-of-tree.log",
 		},
-			Level: zerolog.DebugLevel,
+			Level: zerolog.TraceLevel,
 		},
 	))
 

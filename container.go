@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -64,6 +65,12 @@ func (c container) Build(imagePath string) (output string, err error) {
 }
 
 func (c container) Run(workdir string, command string) (output string, err error) {
+	flog := log.With().
+		Str("container", c.name).
+		Str("workdir", workdir).
+		Str("command", command).
+		Logger()
+
 	var args []string
 	args = append(args, "run", "--rm")
 	args = append(args, c.Args...)
@@ -78,23 +85,39 @@ func (c container) Run(workdir string, command string) (output string, err error
 
 	log.Debug().Msgf("%v", cmd)
 
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return
+	}
+	cmd.Stderr = cmd.Stdout
+
 	timer := time.AfterFunc(c.timeout, func() {
-		log.Info().Str("container", c.name).
-			Str("workdir", workdir).
-			Str("command", command).
-			Msg("killing container by timeout")
+		flog.Info().Msg("killing container by timeout")
 		cmd.Process.Kill()
 	})
 	defer timer.Stop()
 
-	raw, err := cmd.CombinedOutput()
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+
+	go func() {
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			m := scanner.Text()
+			output += m + "\n"
+			flog.Trace().Str("stdout", m).Msg("")
+		}
+	}()
+
+	err = cmd.Wait()
 	if err != nil {
 		e := fmt.Sprintf("error `%v` for cmd `%v` with output `%v`",
-			err, command, string(raw))
+			err, command, output)
 		err = errors.New(e)
 		return
 	}
 
-	output = string(raw)
 	return
 }
