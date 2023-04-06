@@ -57,10 +57,32 @@ func (c container) Build(imagePath string) (output string, err error) {
 	args = append(args, "-t", c.name, imagePath)
 
 	cmd := exec.Command("docker", args...)
-	log.Debug().Msgf("%v", cmd)
 
-	rawOutput, err := cmd.CombinedOutput()
-	output = string(rawOutput)
+	flog := log.With().
+		Str("command", fmt.Sprintf("%v", cmd)).
+		Logger()
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return
+	}
+	cmd.Stderr = cmd.Stdout
+
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+
+	go func() {
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			m := scanner.Text()
+			output += m + "\n"
+			flog.Trace().Str("stdout", m).Msg("")
+		}
+	}()
+
+	err = cmd.Wait()
 	return
 }
 
