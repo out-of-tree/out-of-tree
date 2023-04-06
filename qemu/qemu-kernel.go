@@ -5,6 +5,7 @@
 package qemu
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -343,8 +344,13 @@ func (q System) ssh(user string) (client *ssh.Client, err error) {
 
 // Command executes shell commands on qemu system
 func (q System) Command(user, cmd string) (output string, err error) {
-	log.Debug().Str("kernel", q.kernel.KernelPath).
-		Str("user", user).Str("cmd", cmd).Msg("qemu command")
+	flog := log.With().
+		Str("kernel", q.kernel.KernelPath).
+		Str("user", user).
+		Str("cmd", cmd).
+		Logger()
+
+	flog.Debug().Msg("qemu command")
 
 	client, err := q.ssh(user)
 	if err != nil {
@@ -357,8 +363,27 @@ func (q System) Command(user, cmd string) (output string, err error) {
 		return
 	}
 
-	bytesOutput, err := session.CombinedOutput(cmd)
-	output = string(bytesOutput)
+	stdout, err := session.StdoutPipe()
+	if err != nil {
+		return
+	}
+	session.Stderr = session.Stdout
+
+	err = session.Start(cmd)
+	if err != nil {
+		return
+	}
+
+	go func() {
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			m := scanner.Text()
+			output += m + "\n"
+			flog.Trace().Str("stdout", m).Msg("")
+		}
+	}()
+
+	err = session.Wait()
 	return
 }
 
