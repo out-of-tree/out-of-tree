@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -97,6 +98,11 @@ func main() {
 			"version": "1.4.0",
 		},
 	)
+
+	if buildInfo, ok := debug.ReadBuildInfo(); ok {
+		log.Debug().Msgf("%v", buildInfo.GoVersion)
+		log.Debug().Msgf("%v", buildInfo.Settings)
+	}
 
 	err := ctx.Run(&cli.Globals)
 	ctx.FatalIfErrorf(err)
