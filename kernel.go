@@ -346,6 +346,11 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 			d += "RUN yum -y install grub2-tools-minimal " +
 				"elfutils-libelf-devel\n"
 		}
+
+		// Cache kernel package dependencies
+		d += "export PKGNAME=$(yum search kernel-devel --showduplicates | grep '^kernel-devel' | cut -d ' ' -f 1 | head -n 1); " +
+			"yum -y install $PKGNAME $(echo $PKGNAME | sed 's/-devel//'); " +
+			"yum -y remove $PKGNAME $(echo $PKGNAME | sed 's/-devel//')\n"
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
