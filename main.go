@@ -138,7 +138,7 @@ func main() {
 		},
 	))
 
-	log.Debug().Msg("start out-of-tree")
+	log.Trace().Msg("start out-of-tree")
 	log.Debug().Msgf("%v", os.Args)
 	log.Debug().Msgf("%v", cli)
 
