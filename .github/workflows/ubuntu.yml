@@ -69,18 +69,18 @@ jobs:
         sudo apt-get update
         sudo apt-get install qemu-system-x86
 
-    - name: End-to-End Testing [Install one kernel]
+    - name: End-to-End Testing [Install one Ubuntu kernel]
       run: |
         sudo ./out-of-tree --log-level=debug kernel install --distro=Ubuntu --ver=18.04 --kernel=4.15.0-70-generic
 
-    - name: End-to-End Testing [Reinstall one kernel]
+    - name: End-to-End Testing [Reinstall one Ubuntu kernel]
       run: |
         sudo ./out-of-tree --log-level=debug kernel install --distro=Ubuntu --ver=18.04 --kernel=4.15.0-70-generic --force
+
+    - name: End-to-End Testing [Install one CentOS kernel]
+      run: |
+        sudo ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=7 --kernel=4.15.0-70
 
     - name: End-to-End Testing [Install all Ubuntu 22.04 kernels]
       run: |
         sudo ./out-of-tree --log-level=debug kernel genall --distro=Ubuntu --ver=22.04
-
-    - name: End-to-End Testing [Install all CentOS 7 kernels]
-      run: |
-        sudo ./out-of-tree --log-level=debug kernel genall --distro=CentOS --ver=7
