@@ -6,18 +6,51 @@
 
 ## [Unreleased]
 
+### Breaking
+
+- Layers with kernels in containers have been abandoned in favor of
+  installation to mounted volumes.
+
+- Command line interface has been changed to alecthomas/kong.
+
 ### Added
 
-- Command line interface has been changed to alecthomas/kong
-  (breaking).
+- Command `kernel install` to install specific kernel.
+
+- Command `containers` to manage containers.
+
+- Command `image edit` to edit qemu image.
+
+- Flag `--force` to force reinstallation of the kernel.
+
+- Flag `--artifact-config` to specify the path to .out-of-tree.toml.
+
+- Flag `--no-headers` flag to install kernel and initrd only.
+
+- Flag `--shuffle` to randomize the order of kernels for
+  installation/testing.
+
+- Support make targets in artifact config.
+
+- Support patches in artifact config.
+
+- Support for copying standard modules to qemu.
+
+- Script artifact type for various automation and information gathering.
+
+- Add TestFiles to artifact config, transfers additional test files to VM.
+
+- Improved logging, with logfile at ~/.out-of-tree/logs/out-of-tree.log
+
+- Kernel installation will retry (10 times by default) in case of
+  network problems.
+
+- Stdout trace (with --log-level=trace, and always to logfile) for
+  qemu and container execution.
 
 - Compatibility with Podman.
 
-- Added support for Ubuntu 22.04.
-
-- Adding TestFiles to artifact config, transfers extra test files to VM.
-
-- Flag `--artifact-config` to specify the path to .out-of-tree.toml.
+- Support for Ubuntu 22.04.
 
 ## [1.4.0]
 
