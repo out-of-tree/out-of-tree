@@ -23,6 +23,8 @@ type container struct {
 		UsrSrc     string
 		Boot       string
 	}
+	// Additional arguments
+	Args []string
 }
 
 func NewContainer(name string, timeout time.Duration) (c container, err error) {
@@ -62,12 +64,17 @@ func (c container) Build(imagePath string) (output string, err error) {
 }
 
 func (c container) Run(workdir string, command string) (output string, err error) {
-	cmd := exec.Command("docker", "run", "--rm",
+	var args []string
+	args = append(args, "run", "--rm")
+	args = append(args, c.Args...)
+	args = append(args,
 		"-v", workdir+":/work",
 		"-v", c.Volumes.LibModules+":/lib/modules",
 		"-v", c.Volumes.UsrSrc+":/usr/src",
-		"-v", c.Volumes.Boot+":/boot",
-		c.name, "bash", "-c", "cd /work && "+command)
+		"-v", c.Volumes.Boot+":/boot")
+	args = append(args, c.name, "bash", "-c", "cd /work && "+command)
+
+	cmd := exec.Command("docker", args...)
 
 	log.Debug().Msgf("%v", cmd)
 
