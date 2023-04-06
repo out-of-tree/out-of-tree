@@ -25,7 +25,7 @@ Note that adding a user to group *docker* has serious security implications. Che
 
     $ brew cask install docker
     $ open --background -a Docker && sleep 1m
-    $ brew tap jollheef/repo
+    $ brew tap out-of-tree/repo
     $ brew install out-of-tree
 
 Read [documentation](https://out-of-tree.readthedocs.io) for further info.
