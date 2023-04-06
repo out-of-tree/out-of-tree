@@ -55,6 +55,12 @@ jobs:
         ../../out-of-tree --log-level=debug kernel autogen --max=1
         ../../out-of-tree --log-level=debug pew --threshold=0 --qemu-timeout=10m
 
+    - name: Archive logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: logs
+        path: /home/runner/.out-of-tree/logs/out-of-tree.log
+
   test-end-to-end-kernels:
     name: End-to-End Testing (kernels)
     runs-on: ubuntu-latest
@@ -93,6 +99,12 @@ jobs:
       run: |
         ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=8 --kernel=4.18.0-348.7.1
 
+    - name: Archive logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: logs
+        path: /home/runner/.out-of-tree/logs/out-of-tree.log
+
   test-end-to-end-genall:
     name: End-to-End Testing (genall)
     runs-on: ubuntu-latest
@@ -110,3 +122,9 @@ jobs:
     - name: End-to-End Testing [Install all Ubuntu 22.04 kernels]
       run: |
         ./out-of-tree --log-level=debug kernel genall --distro=Ubuntu --ver=22.04
+
+    - name: Archive logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: logs
+        path: /home/runner/.out-of-tree/logs/out-of-tree.log
