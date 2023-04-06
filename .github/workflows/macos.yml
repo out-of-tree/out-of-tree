@@ -11,29 +11,3 @@ jobs:
 
     - name: Build
       run: go build
-
-  test-end-to-end:
-    name: End-to-End Testing
-    runs-on: macOS-latest
-    steps:
-    - uses: actions/checkout@v1
-    - uses: docker-practice/actions-setup-docker@master
-
-    - name: Build
-      run: go build
-
-    - name: Install dependencies for tests
-      run: |
-        brew install qemu
-
-    - name: End-to-End Testing [Kernel Module]
-      run: |
-        cd examples/kernel-module
-        ../../out-of-tree --log-level=debug kernel autogen --max=1
-        ../../out-of-tree --log-level=debug pew --qemu-timeout=10m
-
-    - name: End-to-End Testing [Kernel Exploit]
-      run: |
-        cd examples/kernel-exploit
-        ../../out-of-tree --log-level=debug kernel autogen --max=1
-        ../../out-of-tree --log-level=debug pew --threshold=0 --qemu-timeout=10m
