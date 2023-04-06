@@ -55,6 +55,20 @@ jobs:
         sudo ../../out-of-tree --log-level=debug kernel autogen --max=1
         sudo ../../out-of-tree --log-level=debug pew --threshold=0 --qemu-timeout=10m
 
+  test-end-to-end-kernels:
+    name: End-to-End Testing (Kernels)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: go build
+
+    - name: Install dependencies for tests
+      run: |
+        sudo apt-get update
+        sudo apt-get install qemu-system-x86
+
     - name: End-to-End Testing [Install one kernel]
       run: |
         sudo ./out-of-tree --log-level=debug kernel install --distro=Ubuntu --ver=18.04 --kernel=4.15.0-70-generic
