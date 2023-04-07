@@ -188,11 +188,18 @@ func (c container) Run(workdir string, command string) (output string, err error
 	var args []string
 	args = append(args, "run", "--rm")
 	args = append(args, c.Args...)
-	args = append(args,
-		"-v", workdir+":/work",
-		"-v", c.Volumes.LibModules+":/lib/modules",
-		"-v", c.Volumes.UsrSrc+":/usr/src",
-		"-v", c.Volumes.Boot+":/boot")
+	if workdir != "" {
+		args = append(args, "-v", workdir+":/work")
+	}
+	if c.Volumes.LibModules != "" {
+		args = append(args, "-v", c.Volumes.LibModules+":/lib/modules")
+	}
+	if c.Volumes.UsrSrc != "" {
+		args = append(args, "-v", c.Volumes.UsrSrc+":/usr/src")
+	}
+	if c.Volumes.Boot != "" {
+		args = append(args, "-v", c.Volumes.Boot+":/boot")
+	}
 	args = append(args, c.name, "bash", "-c", "cd /work && "+command)
 
 	cmd := exec.Command("docker", args...)
