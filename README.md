@@ -23,7 +23,7 @@ Note that adding a user to group *docker* has serious security implications. Che
 
 ### macOS
 
-    $ brew cask install docker
+    $ brew install --cask docker
     $ open --background -a Docker && sleep 1m
     $ brew tap out-of-tree/repo
     $ brew install out-of-tree
