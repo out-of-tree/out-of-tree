@@ -23,8 +23,13 @@ Note that adding a user to group *docker* has serious security implications. Che
 
 ### macOS
 
-    $ brew install --cask docker
-    $ open --background -a Docker && sleep 1m
+Note: case-insensitive FS is required for the ~/.out-of-tree directory.
+
+    $ brew install podman
+    $ podman machine stop || true
+    $ podman machine rm || true
+    $ podman machine init --cpus=4 --memory=4096 -v $HOME:$HOME
+    $ podman machine start
     $ brew tap out-of-tree/repo
     $ brew install out-of-tree
 
