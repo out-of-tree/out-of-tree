@@ -208,14 +208,16 @@ func (q System) cmdline() (s string) {
 	return
 }
 
-// Start qemu process
-func (q *System) Start() (err error) {
-	rand.Seed(time.Now().UnixNano()) // Are you sure?
+func (q System) Executable() string {
+	return "qemu-system-" + string(q.arch)
+}
+
+func (q *System) Args() (qemuArgs []string) {
 	if q.sshAddrPort == "" {
 		q.sshAddrPort = getFreeAddrPort()
 	}
 	hostfwd := fmt.Sprintf("hostfwd=tcp:%s-:22", q.sshAddrPort)
-	qemuArgs := []string{"-nographic",
+	qemuArgs = []string{"-nographic",
 		"-hda", q.drivePath,
 		"-kernel", q.kernel.KernelPath,
 		"-smp", fmt.Sprintf("%d", q.Cpus),
@@ -245,8 +247,14 @@ func (q *System) Start() (err error) {
 	}
 
 	qemuArgs = append(qemuArgs, "-append", q.cmdline())
+	return
+}
 
-	q.cmd = exec.Command("qemu-system-"+string(q.arch), qemuArgs...)
+// Start qemu process
+func (q *System) Start() (err error) {
+	rand.Seed(time.Now().UnixNano()) // Are you sure?
+
+	q.cmd = exec.Command(q.Executable(), q.Args()...)
 	q.log.Debug().Msgf("%v", q.cmd)
 
 	if q.pipe.stdin, err = q.cmd.StdinPipe(); err != nil {
