@@ -14,7 +14,7 @@ require (
 	github.com/naoina/toml v0.1.1
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/otiai10/copy v1.9.0
+	github.com/otiai10/copy v1.10.0
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/rs/zerolog v1.29.0
 	github.com/zcalusic/sysinfo v0.9.5
