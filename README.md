@@ -17,7 +17,7 @@ out-of-tree is for automating some routine actions for creating development envi
     $ curl -fsSL https://get.docker.com | sh
 	$ sudo usermod -aG docker user && newgrp docker
     $ curl -L https://nixos.org/nix/install | sh
-    $ nix-env -iA nixpkgs.out-of-tree
+    $ nix-env -iA nixpkgs.out-of-tree # Note: may not be up to date immediately, in this case consider installing from source
 
 Note that adding a user to group *docker* has serious security implications. Check Docker documentation for more information.
 
