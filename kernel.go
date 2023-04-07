@@ -753,7 +753,9 @@ func generateKernels(km config.KernelMask, registry string,
 				max--
 				break
 			} else if attempt >= retries {
-				log.Fatal().Err(err).Msg("install kernel")
+				log.Error().Err(err).Msg("install kernel")
+				log.Debug().Msg("skip")
+				break
 			} else {
 				log.Warn().Err(err).Msg("install kernel")
 				time.Sleep(time.Second)
