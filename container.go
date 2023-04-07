@@ -20,6 +20,8 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
+var containerRuntime = "docker"
+
 type ContainerCmd struct {
 	Filter string `help:"filter by name"`
 
@@ -56,7 +58,8 @@ type ContainerCleanupCmd struct{}
 func (cmd ContainerCleanupCmd) Run(containerCmd *ContainerCmd) (err error) {
 	var output []byte
 	for _, name := range containerCmd.Containers() {
-		output, err = exec.Command("docker", "image", "rm", name).CombinedOutput()
+		output, err = exec.Command(containerRuntime, "image", "rm", name).
+			CombinedOutput()
 		if err != nil {
 			log.Error().Err(err).Str("output", string(output)).Msg("")
 			return
@@ -72,7 +75,7 @@ type containerImageInfo struct {
 }
 
 func listContainerImages() (diis []containerImageInfo, err error) {
-	cmd := exec.Command("docker", "images")
+	cmd := exec.Command(containerRuntime, "images")
 	log.Debug().Msgf("%v", cmd)
 
 	rawOutput, err := cmd.CombinedOutput()
@@ -148,7 +151,7 @@ func (c container) Build(imagePath string) (output string, err error) {
 	args := []string{"build"}
 	args = append(args, "-t", c.name, imagePath)
 
-	cmd := exec.Command("docker", args...)
+	cmd := exec.Command(containerRuntime, args...)
 
 	flog := log.With().
 		Str("command", fmt.Sprintf("%v", cmd)).
@@ -207,7 +210,7 @@ func (c container) Run(workdir string, command string) (output string, err error
 		args = append(args, command)
 	}
 
-	cmd := exec.Command("docker", args...)
+	cmd := exec.Command(containerRuntime, args...)
 
 	log.Debug().Msgf("%v", cmd)
 

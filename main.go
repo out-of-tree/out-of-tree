@@ -9,6 +9,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"os/exec"
 	"os/user"
 	"runtime/debug"
 	"strconv"
@@ -44,6 +45,8 @@ type CLI struct {
 	Version VersionFlag `name:"version" help:"print version information and quit"`
 
 	LogLevel LogLevelFlag `enum:"trace,debug,info,warn,error" default:"info"`
+
+	ContainerRuntime string `enum:"podman,docker" default:"podman"`
 }
 
 type LogLevelFlag string
@@ -152,6 +155,22 @@ func main() {
 		log.Debug().Msgf("%v", buildInfo.GoVersion)
 		log.Debug().Msgf("%v", buildInfo.Settings)
 	}
+
+	_, err = exec.LookPath(cli.ContainerRuntime)
+	if err != nil {
+		if cli.ContainerRuntime == "podman" { // default value
+			log.Debug().Msgf("podman is not found in $PATH, " +
+				"fall back to docker")
+			cli.ContainerRuntime = "docker"
+		}
+
+		_, err = exec.LookPath(cli.ContainerRuntime)
+		if err != nil {
+			log.Fatal().Msgf("%v is not found in $PATH",
+				cli.ContainerRuntime)
+		}
+	}
+	containerRuntime = cli.ContainerRuntime
 
 	err = ctx.Run(&cli.Globals)
 	ctx.FatalIfErrorf(err)

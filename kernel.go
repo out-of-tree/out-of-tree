@@ -262,7 +262,8 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 
 	d := "# BASE\n"
 
-	cmd := exec.Command("docker", "images", "-q", sk.DockerName())
+	// TODO move as function to container.go
+	cmd := exec.Command(containerRuntime, "images", "-q", sk.DockerName())
 	log.Debug().Msgf("run %v", cmd)
 
 	rawOutput, err := cmd.CombinedOutput()
