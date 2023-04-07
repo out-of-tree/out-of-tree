@@ -172,7 +172,7 @@ func matchDebImagePkg(container, mask string) (pkgs []string, err error) {
 		return
 	}
 
-	output, err := c.Run("/tmp", cmd)
+	output, err := c.Run(tempDirBase, cmd)
 	if err != nil {
 		return
 	}
@@ -203,7 +203,7 @@ func matchCentOSDevelPkg(container, mask string, generic bool) (
 		return
 	}
 
-	output, err := c.Run("/tmp", cmd)
+	output, err := c.Run(tempDirBase, cmd)
 	if err != nil {
 		return
 	}
@@ -389,7 +389,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 }
 
 func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (err error) {
-	tmpdir, err := os.MkdirTemp("", "out-of-tree-"+pkgname+"-")
+	tmpdir, err := os.MkdirTemp(tempDirBase, "out-of-tree-"+pkgname+"-")
 	if err != nil {
 		log.Fatal().Err(err).Msg("make tmp directory")
 	}
@@ -445,7 +445,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 
 		cmd := fmt.Sprintf("apt-get install -y %s %s", pkgname, headerspkg)
 
-		_, err = c.Run("/tmp", cmd)
+		_, err = c.Run(tempDirBase, cmd)
 		if err != nil {
 			return
 		}
@@ -459,14 +459,14 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		}
 		cmd := fmt.Sprintf("yum -y install %s %s\n", imagepkg,
 			pkgname)
-		_, err = c.Run("/tmp", cmd)
+		_, err = c.Run(tempDirBase, cmd)
 		if err != nil {
 			return
 		}
 
 		cmd = fmt.Sprintf("dracut --add-drivers 'e1000 ext4' -f "+
 			"/boot/initramfs-%s.img %s\n", version, version)
-		_, err = c.Run("/tmp", cmd)
+		_, err = c.Run(tempDirBase, cmd)
 		if err != nil {
 			return
 		}
@@ -505,7 +505,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		cmd += " && cp -r /usr/src/* /target/usr/src/"
 	}
 
-	_, err = c.Run("/tmp", cmd)
+	_, err = c.Run(tempDirBase, cmd)
 	if err != nil {
 		return
 	}
@@ -676,7 +676,7 @@ func listContainersKernels(dii containerImageInfo, newkcfg *config.KernelConfig,
 	for _, cmd := range []string{
 		"find /boot -type f -exec chmod a+r {} \\;",
 	} {
-		_, err = c.Run("/tmp", cmd)
+		_, err = c.Run(tempDirBase, cmd)
 		if err != nil {
 			return
 		}

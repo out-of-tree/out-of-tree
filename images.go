@@ -159,7 +159,7 @@ func unpackTar(archive, destination string) (err error) {
 }
 
 func downloadImage(path, file string) (err error) {
-	tmp, err := ioutil.TempDir("/tmp/", "out-of-tree_")
+	tmp, err := ioutil.TempDir(tempDirBase, "out-of-tree_")
 	if err != nil {
 		return
 	}

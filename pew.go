@@ -14,7 +14,6 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
-	"os/user"
 	"strings"
 	"time"
 
@@ -599,14 +598,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		}
 	}()
 
-	usr, err := user.Current()
-	if err != nil {
-		return
-	}
-	tmpdir := usr.HomeDir + "/.out-of-tree/tmp"
-	os.MkdirAll(tmpdir, os.ModePerm)
-
-	tmp, err := ioutil.TempDir(tmpdir, "out-of-tree_")
+	tmp, err := ioutil.TempDir(tempDirBase, "out-of-tree_")
 	if err != nil {
 		slog.Error().Err(err).Msg("making tmp directory")
 		return

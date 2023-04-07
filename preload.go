@@ -61,7 +61,7 @@ func preload(q *qemu.System, ki config.KernelInfo, pm config.PreloadModule,
 func buildAndInsmod(workPath string, q *qemu.System, ki config.KernelInfo,
 	dockerTimeout time.Duration, cache string) (err error) {
 
-	tmp, err := ioutil.TempDir("", "out-of-tree_")
+	tmp, err := ioutil.TempDir(tempDirBase, "out-of-tree_")
 	if err != nil {
 		return
 	}

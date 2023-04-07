@@ -144,7 +144,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 	}
 	defer q.Stop()
 
-	tmp, err := ioutil.TempDir("/tmp/", "out-of-tree_")
+	tmp, err := ioutil.TempDir(tempDirBase, "out-of-tree_")
 	if err != nil {
 		return
 	}

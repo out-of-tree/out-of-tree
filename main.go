@@ -89,6 +89,8 @@ func (lw *LevelWriter) WriteLevel(l zerolog.Level, p []byte) (n int, err error) 
 	return len(p), nil
 }
 
+var tempDirBase string
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -101,7 +103,7 @@ func main() {
 			Compact: true,
 		}),
 		kong.Vars{
-			"version": "2.0.5",
+			"version": "2.0.6",
 		},
 	)
 
@@ -123,6 +125,9 @@ func main() {
 	if err != nil {
 		return
 	}
+
+	tempDirBase = usr.HomeDir + "/.out-of-tree/tmp/"
+	os.MkdirAll(tempDirBase, os.ModePerm)
 
 	log.Logger = log.Output(zerolog.MultiLevelWriter(
 		&LevelWriter{Writer: zerolog.NewConsoleWriter(
