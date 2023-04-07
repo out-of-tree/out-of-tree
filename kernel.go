@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"os/signal"
 	"os/user"
 	"regexp"
 	"runtime"
@@ -68,6 +69,9 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		return
 	}
 
+	shutdown := false
+	setSigintHandler(&shutdown)
+
 	for _, sk := range ka.SupportedKernels {
 		if sk.DistroRelease == "" {
 			err = errors.New("Please set distro_release")
@@ -82,9 +86,13 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			kernelCmd.Force,
 			!kernelCmd.NoHeaders,
 			kernelCmd.Shuffle,
+			&shutdown,
 		)
 		if err != nil {
 			return
+		}
+		if shutdown {
+			break
 		}
 	}
 
@@ -102,6 +110,9 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		return
 	}
 
+	shutdown := false
+	setSigintHandler(&shutdown)
+
 	km := config.KernelMask{
 		DistroType:    distroType,
 		DistroRelease: cmd.Ver,
@@ -115,6 +126,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		kernelCmd.Force,
 		!kernelCmd.NoHeaders,
 		kernelCmd.Shuffle,
+		&shutdown,
 	)
 	if err != nil {
 		return
@@ -135,6 +147,9 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		return
 	}
 
+	shutdown := false
+	setSigintHandler(&shutdown)
+
 	km := config.KernelMask{
 		DistroType:    distroType,
 		DistroRelease: cmd.Ver,
@@ -148,6 +163,7 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		kernelCmd.Force,
 		!kernelCmd.NoHeaders,
 		kernelCmd.Shuffle,
+		&shutdown,
 	)
 	if err != nil {
 		return
@@ -659,20 +675,40 @@ func shuffleStrings(a []string) []string {
 	return a
 }
 
+func setSigintHandler(variable *bool) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		counter := 0
+		for _ = range c {
+			if counter == 0 {
+				*variable = true
+				log.Warn().Msg("shutdown requested, finishing work")
+				log.Info().Msg("^C a couple of times more for an unsafe exit")
+			} else if counter >= 3 {
+				log.Fatal().Msg("unsafe exit")
+			}
+
+			counter += 1
+		}
+	}()
+
+}
+
 func generateKernels(km config.KernelMask, registry string,
 	commands []config.DockerCommand, max, retries int64,
-	download, force, headers, shuffle bool) (err error) {
+	download, force, headers, shuffle bool, shutdown *bool) (err error) {
 
 	log.Info().Msgf("Generating for kernel mask %v", km)
 
 	_, err = genRootfsImage(containerImageInfo{Name: km.DockerName()},
 		download)
-	if err != nil {
+	if err != nil || *shutdown {
 		return
 	}
 
 	err = generateBaseDockerImage(registry, commands, km)
-	if err != nil {
+	if err != nil || *shutdown {
 		return
 	}
 
@@ -686,7 +722,7 @@ func generateKernels(km config.KernelMask, registry string,
 	default:
 		err = fmt.Errorf("%s not yet supported", km.DistroType.String())
 	}
-	if err != nil {
+	if err != nil || *shutdown {
 		return
 	}
 
@@ -704,6 +740,11 @@ func generateKernels(km config.KernelMask, registry string,
 		var attempt int64
 		for {
 			attempt++
+
+			if *shutdown {
+				err = nil
+				return
+			}
 
 			err = installKernel(km, pkg, force, headers)
 			if err == nil {
