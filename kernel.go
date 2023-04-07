@@ -389,17 +389,10 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 }
 
 func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (err error) {
-	tmpdir, err := os.MkdirTemp(tempDirBase, "out-of-tree-"+pkgname+"-")
-	if err != nil {
-		log.Fatal().Err(err).Msg("make tmp directory")
-	}
-	defer os.RemoveAll(tmpdir)
-
 	slog := log.With().
 		Str("distro_type", sk.DistroType.String()).
 		Str("distro_release", sk.DistroRelease).
 		Str("pkg", pkgname).
-		Str("tmpdir", tmpdir).
 		Logger()
 
 	c, err := NewContainer(sk.DockerName(), time.Hour) // TODO conf
@@ -425,16 +418,13 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 
 	volumes := c.Volumes
 
-	c.Volumes.LibModules = fmt.Sprintf("%s/libmodules", tmpdir)
-	os.MkdirAll(c.Volumes.LibModules, 0777)
-
-	c.Volumes.UsrSrc = fmt.Sprintf("%s/usrsrc", tmpdir)
-	os.MkdirAll(c.Volumes.UsrSrc, 0777)
-
-	c.Volumes.Boot = fmt.Sprintf("%s/boot", tmpdir)
-	os.MkdirAll(c.Volumes.Boot, 0777)
+	c.Volumes.LibModules = ""
+	c.Volumes.UsrSrc = ""
+	c.Volumes.Boot = ""
 
 	slog.Debug().Msgf("Installing kernel")
+
+	cmd := "true"
 
 	switch sk.DistroType {
 	case config.Ubuntu:
@@ -443,12 +433,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 			headerspkg = strings.Replace(pkgname, "image", "headers", -1)
 		}
 
-		cmd := fmt.Sprintf("apt-get install -y %s %s", pkgname, headerspkg)
-
-		_, err = c.Run(tempDirBase, cmd)
-		if err != nil {
-			return
-		}
+		cmd += fmt.Sprintf(" && apt-get install -y %s %s", pkgname, headerspkg)
 	case config.CentOS:
 		imagepkg := strings.Replace(pkgname, "-devel", "", -1)
 
@@ -457,19 +442,11 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		if !headers {
 			pkgname = ""
 		}
-		cmd := fmt.Sprintf("yum -y install %s %s\n", imagepkg,
+		cmd += fmt.Sprintf(" && yum -y install %s %s", imagepkg,
 			pkgname)
-		_, err = c.Run(tempDirBase, cmd)
-		if err != nil {
-			return
-		}
 
-		cmd = fmt.Sprintf("dracut --add-drivers 'e1000 ext4' -f "+
-			"/boot/initramfs-%s.img %s\n", version, version)
-		_, err = c.Run(tempDirBase, cmd)
-		if err != nil {
-			return
-		}
+		cmd += fmt.Sprintf(" && dracut --add-drivers 'e1000 ext4' -f "+
+			"/boot/initramfs-%s.img %s", version, version)
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
@@ -479,33 +456,11 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 	c.Args = append(c.Args, "-v", volumes.UsrSrc+":/target/usr/src")
 	c.Args = append(c.Args, "-v", volumes.Boot+":/target/boot")
 
-	cmd := "true"
+	cmd += " && cp -r /boot /target/"
+	cmd += " && cp -r /lib/modules /target/lib/"
+	cmd += " && cp -r /usr/src /target/usr/"
 
-	files, err := ioutil.ReadDir(c.Volumes.Boot)
-	if err != nil {
-		return
-	}
-	if len(files) != 0 {
-		cmd += " && cp -r /boot/* /target/boot/"
-	}
-
-	files, err = ioutil.ReadDir(c.Volumes.LibModules)
-	if err != nil {
-		return
-	}
-	if len(files) != 0 {
-		cmd += " && cp -r /lib/modules/* /target/lib/modules/"
-	}
-
-	files, err = ioutil.ReadDir(c.Volumes.UsrSrc)
-	if err != nil {
-		return
-	}
-	if len(files) != 0 {
-		cmd += " && cp -r /usr/src/* /target/usr/src/"
-	}
-
-	_, err = c.Run(tempDirBase, cmd)
+	_, err = c.Run("", cmd)
 	if err != nil {
 		return
 	}
