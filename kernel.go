@@ -307,7 +307,8 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		d += "RUN apt-get install -y wget git\n"
 		// Install a single kernel and headers to ensure all dependencies are cached
 		d += "RUN export PKGNAME=$(apt-cache search --names-only '^linux-headers-[0-9\\.\\-]*-generic' | awk '{ print $1 }' | head -n 1); " +
-			"apt-get install -y $PKGNAME $(echo $PKGNAME | sed 's/headers/image/')\n"
+			"apt-get install -y $PKGNAME $(echo $PKGNAME | sed 's/headers/image/'); " +
+			"apt-get remove -y $PKGNAME $(echo $PKGNAME | sed 's/headers/image/')\n"
 		if sk.DistroRelease >= "14.04" {
 			d += "RUN apt-get install -y libseccomp-dev\n"
 		}
