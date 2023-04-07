@@ -735,6 +735,10 @@ func generateKernels(km config.KernelMask, registry string,
 			break
 		}
 
+		if *shutdown {
+			err = nil
+			return
+		}
 		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
 
 		var attempt int64
