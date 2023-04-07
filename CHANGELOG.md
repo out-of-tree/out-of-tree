@@ -4,6 +4,30 @@
 
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0]
+
+### Added
+
+- Graceful shutdown on ^C while kernels generation.
+
+- Flag to set the container runtime command.
+
+- out-of-tree image --dry-run for printing full qemu command.
+
+### Changed
+
+- No exit at the end of the retries, will continue with the other
+  kernels.
+
+- All temporary files moved to ~/.out-of-tree/tmp/.
+
+### Fixed
+
+- Discrepancies between /lib/modules and /boot should no longer lead
+  to fatal errors.
+
+- Podman support on macOS.
+
 ## [2.0.0]
 
 ### Breaking
