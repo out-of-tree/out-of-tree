@@ -200,7 +200,12 @@ func (c container) Run(workdir string, command string) (output string, err error
 	if c.Volumes.Boot != "" {
 		args = append(args, "-v", c.Volumes.Boot+":/boot")
 	}
-	args = append(args, c.name, "bash", "-c", "cd /work && "+command)
+	args = append(args, c.name, "bash", "-c")
+	if workdir != "" {
+		args = append(args, "cd /work && "+command)
+	} else {
+		args = append(args, command)
+	}
 
 	cmd := exec.Command("docker", args...)
 
