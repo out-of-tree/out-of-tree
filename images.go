@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"strings"
 	"time"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
@@ -46,7 +47,8 @@ func (cmd *ImageListCmd) Run(g *Globals) (err error) {
 }
 
 type ImageEditCmd struct {
-	Name string `help:"image name" required:""`
+	Name   string `help:"image name" required:""`
+	DryRun bool   `help:"do nothing, just print commands"`
 }
 
 func (cmd *ImageEditCmd) Run(g *Globals) (err error) {
@@ -85,6 +87,22 @@ func (cmd *ImageEditCmd) Run(g *Globals) (err error) {
 	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)
 
 	q.Mutable = true
+
+	if cmd.DryRun {
+		s := q.Executable()
+		for _, arg := range q.Args() {
+			if strings.Contains(arg, " ") ||
+				strings.Contains(arg, ",") {
+
+				s += fmt.Sprintf(` "%s"`, arg)
+			} else {
+				s += fmt.Sprintf(" %s", arg)
+			}
+		}
+		fmt.Println(s)
+		fmt.Println(q.GetSSHCommand())
+		return
+	}
 
 	err = q.Start()
 	if err != nil {
