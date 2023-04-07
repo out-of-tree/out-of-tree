@@ -37,7 +37,7 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 	}
 
 	kernelsBase := "/boot/"
-	files, err := ioutil.ReadDir(kernelsBase)
+	bootfiles, err := ioutil.ReadDir(kernelsBase)
 	if err != nil {
 		return
 	}
@@ -55,20 +55,35 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 		return
 	}
 
-	for _, k := range strings.Fields(string(rawOutput)) {
+	for _, krel := range strings.Fields(string(rawOutput)) {
+		log.Debug().Msgf("generate config entry for %s", krel)
+
+		var kernelFile, initrdFile string
+		kernelFile, err = findKernelFile(bootfiles, krel)
+		if err != nil {
+			log.Warn().Msgf("cannot find kernel %s", krel)
+			continue
+		}
+
+		initrdFile, err = findInitrdFile(bootfiles, krel)
+		if err != nil {
+			log.Warn().Msgf("cannot find initrd %s", krel)
+			continue
+		}
+
 		ki := config.KernelInfo{
 			DistroType:    distroType,
 			DistroRelease: si.OS.Version,
-			KernelRelease: k,
+			KernelRelease: krel,
 
-			KernelSource: "/lib/modules/" + k + "/build",
+			KernelSource: "/lib/modules/" + krel + "/build",
 
-			KernelPath: kernelsBase + genKernelPath(files, k),
-			InitrdPath: kernelsBase + genInitrdPath(files, k),
+			KernelPath: kernelsBase + kernelFile,
+			InitrdPath: kernelsBase + initrdFile,
 			RootFS:     rootfs,
 		}
 
-		vmlinux := "/usr/lib/debug/boot/vmlinux-" + k
+		vmlinux := "/usr/lib/debug/boot/vmlinux-" + krel
 		log.Print("vmlinux", vmlinux)
 		if exists(vmlinux) {
 			ki.VmlinuxPath = vmlinux

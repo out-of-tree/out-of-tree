@@ -513,32 +513,34 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 	return
 }
 
-func genKernelPath(files []os.FileInfo, kname string) string {
+func findKernelFile(files []os.FileInfo, kname string) (name string, err error) {
 	for _, file := range files {
 		if strings.HasPrefix(file.Name(), "vmlinuz") {
 			if strings.Contains(file.Name(), kname) {
-				return file.Name()
+				name = file.Name()
+				return
 			}
 		}
 	}
 
-	log.Fatal().Msgf("cannot find kernel %s", kname)
-	return ""
+	err = errors.New("cannot find kernel")
+	return
 }
 
-func genInitrdPath(files []os.FileInfo, kname string) string {
+func findInitrdFile(files []os.FileInfo, kname string) (name string, err error) {
 	for _, file := range files {
 		if strings.HasPrefix(file.Name(), "initrd") ||
 			strings.HasPrefix(file.Name(), "initramfs") {
 
 			if strings.Contains(file.Name(), kname) {
-				return file.Name()
+				name = file.Name()
+				return
 			}
 		}
 	}
 
-	log.Fatal().Msgf("cannot find initrd %s", kname)
-	return ""
+	err = errors.New("cannot find kernel")
+	return
 }
 
 func genRootfsImage(d containerImageInfo, download bool) (rootfs string, err error) {
@@ -640,16 +642,29 @@ func listContainersKernels(dii containerImageInfo, newkcfg *config.KernelConfig,
 	}
 
 	for _, krel := range moddirs {
+		log.Debug().Msgf("generate config entry for %s", krel.Name())
+
+		var kernelFile, initrdFile string
+		kernelFile, err = findKernelFile(bootfiles, krel.Name())
+		if err != nil {
+			log.Warn().Msgf("cannot find kernel %s", krel.Name())
+			continue
+		}
+
+		initrdFile, err = findInitrdFile(bootfiles, krel.Name())
+		if err != nil {
+			log.Warn().Msgf("cannot find initrd %s", krel.Name())
+			continue
+		}
+
 		ki := config.KernelInfo{
 			DistroType:    dii.DistroType,
 			DistroRelease: dii.DistroRelease,
 			KernelRelease: krel.Name(),
 			ContainerName: dii.Name,
 
-			KernelPath: c.Volumes.Boot + "/" +
-				genKernelPath(bootfiles, krel.Name()),
-			InitrdPath: c.Volumes.Boot + "/" +
-				genInitrdPath(bootfiles, krel.Name()),
+			KernelPath:  c.Volumes.Boot + "/" + kernelFile,
+			InitrdPath:  c.Volumes.Boot + "/" + initrdFile,
 			ModulesPath: c.Volumes.LibModules + "/" + krel.Name(),
 
 			RootFS: rootfs,
