@@ -23,7 +23,7 @@ Note that adding a user to group *docker* has serious security implications. Che
 
 ### macOS
 
-Note: case-insensitive FS is required for the ~/.out-of-tree directory.
+Note: case-sensitive FS is required for the ~/.out-of-tree directory.
 
     $ brew install podman
     $ podman machine stop || true
