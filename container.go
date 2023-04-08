@@ -222,6 +222,13 @@ func (c container) Run(workdir string, command string) (output string, err error
 
 	timer := time.AfterFunc(c.timeout, func() {
 		flog.Info().Msg("killing container by timeout")
+
+		flog.Debug().Msg("SIGINT")
+		cmd.Process.Signal(os.Interrupt)
+
+		time.Sleep(time.Minute)
+
+		flog.Debug().Msg("SIGKILL")
 		cmd.Process.Kill()
 	})
 	defer timer.Stop()
