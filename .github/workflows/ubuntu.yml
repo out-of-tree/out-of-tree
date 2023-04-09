@@ -24,7 +24,7 @@ jobs:
         sudo apt-get install qemu-system-x86
 
     - name: Bootstrap
-      run: ./tools/qemu-debian-img/bootstrap.sh
+      run: ./tools/qemu-ubuntu-img/bootstrap.sh
 
     - name: Unit Testing
       run: go test -parallel 1 -v ./...

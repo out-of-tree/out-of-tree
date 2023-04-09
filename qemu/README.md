@@ -30,7 +30,7 @@ Note: qemu on macOS since v2.12 (24 April 2018) supports Hypervisor.framework.
 
 #### Generate image
 
-    $ cd $GOPATH/src/code.dumpstack.io/tools/out-of-tree/tools/qemu-debian-img
+    $ cd $GOPATH/src/code.dumpstack.io/tools/out-of-tree/tools/qemu-ubuntu-img
     $ ./bootstrap.sh
 
 ### Fill configuration file
