@@ -378,7 +378,11 @@ func (q System) Command(user, cmd string) (output string, err error) {
 	if err != nil {
 		return
 	}
-	session.Stderr = session.Stdout
+
+	stderr, err := session.StderrPipe()
+	if err != nil {
+		return
+	}
 
 	err = session.Start(cmd)
 	if err != nil {
@@ -390,6 +394,17 @@ func (q System) Command(user, cmd string) (output string, err error) {
 		for scanner.Scan() {
 			m := scanner.Text()
 			output += m + "\n"
+			flog.Trace().Str("stdout", m).Msg("")
+		}
+		output = strings.TrimSuffix(output, "\n")
+	}()
+
+	go func() {
+		scanner := bufio.NewScanner(stderr)
+		for scanner.Scan() {
+			m := scanner.Text()
+			output += m + "\n"
+			// Note: it prints stderr as stdout
 			flog.Trace().Str("stdout", m).Msg("")
 		}
 		output = strings.TrimSuffix(output, "\n")
