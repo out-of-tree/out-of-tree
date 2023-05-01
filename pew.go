@@ -642,6 +642,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 
 	remoteTest, err := copyTest(q, cmd.Test, ka)
 	if err != nil {
+		slog.Error().Err(err).Msg("copy test script")
 		return
 	}
 
