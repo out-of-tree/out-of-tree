@@ -651,7 +651,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		start := time.Now()
 		err = copyStandardModules(q, ki)
 		if err != nil {
-			slog.Fatal().Err(err).Msg("copy standard modules")
+			slog.Error().Err(err).Msg("copy standard modules")
 			return
 		}
 		slog.Debug().Str("duration", time.Now().Sub(start).String()).
