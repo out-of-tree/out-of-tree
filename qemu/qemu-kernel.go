@@ -69,6 +69,10 @@ type System struct {
 
 	Died        bool
 	sshAddrPort string
+	SCP         struct {
+		Retries      int
+		RetryTimeout time.Duration
+	}
 
 	// accessible while qemu is running
 	cmd  *exec.Cmd
@@ -112,6 +116,8 @@ func NewSystem(arch arch, kernel Kernel, drivePath string) (q *System, err error
 	// Default values
 	q.Cpus = 1
 	q.Memory = 512 // megabytes
+	q.SCP.Retries = 16
+	q.SCP.RetryTimeout = time.Second
 
 	return
 }
@@ -485,14 +491,28 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 	return
 }
 
+func (q System) scpWithRetry(user, localPath, remotePath string, recursive bool) (err error) {
+	for retries := q.SCP.Retries; retries > 0; retries-- {
+		err = q.scp(user, localPath, remotePath, recursive)
+		if err == nil {
+			break
+		}
+
+		q.log.Warn().Err(err).Msg("scp: failed")
+		time.Sleep(q.SCP.RetryTimeout)
+		q.log.Warn().Msgf("scp: %d retries left", retries)
+	}
+	return
+}
+
 // CopyFile from local machine to remote via scp
 func (q System) CopyFile(user, localPath, remotePath string) (err error) {
-	return q.scp(user, localPath, remotePath, false)
+	return q.scpWithRetry(user, localPath, remotePath, false)
 }
 
 // CopyDirectory from local machine to remote via scp
 func (q System) CopyDirectory(user, localPath, remotePath string) (err error) {
-	return q.scp(user, localPath, remotePath, true)
+	return q.scpWithRetry(user, localPath, remotePath, true)
 }
 
 // CopyAndInsmod copy kernel module to temporary file on qemu then insmod it
