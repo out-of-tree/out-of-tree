@@ -198,7 +198,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 	// Copy all test files to the remote machine
 	for _, f := range ka.TestFiles {
 		if f.Local[0] != '/' {
-			if res.BuildDir != "" {
+			if buildDir != "" {
 				f.Local = buildDir + "/" + f.Local
 			}
 		}
