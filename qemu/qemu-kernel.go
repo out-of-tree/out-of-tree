@@ -87,13 +87,13 @@ type System struct {
 	// accessible after qemu is closed
 	exitErr error
 
-	log zerolog.Logger
+	Log zerolog.Logger
 }
 
 // NewSystem constructor
 func NewSystem(arch arch, kernel Kernel, drivePath string) (q *System, err error) {
 	q = &System{}
-	q.log = log.With().
+	q.Log = log.With().
 		Str("kernel", kernel.KernelPath).
 		Logger()
 
@@ -183,7 +183,7 @@ func (q *System) panicWatcher() {
 		time.Sleep(time.Second)
 		if strings.Contains(q.Stdout, "Kernel panic") {
 			q.KernelPanic = true
-			q.log.Debug().Msg("kernel panic")
+			q.Log.Debug().Msg("kernel panic")
 			time.Sleep(time.Second)
 			// There is no reason to stay alive after kernel panic
 			q.Stop()
@@ -261,7 +261,7 @@ func (q *System) Start() (err error) {
 	rand.Seed(time.Now().UnixNano()) // Are you sure?
 
 	q.cmd = exec.Command(q.Executable(), q.Args()...)
-	q.log.Debug().Msgf("%v", q.cmd)
+	q.Log.Debug().Msgf("%v", q.cmd)
 
 	if q.pipe.stdin, err = q.cmd.StdinPipe(); err != nil {
 		return
@@ -285,7 +285,7 @@ func (q *System) Start() (err error) {
 		for scanner.Scan() {
 			m := scanner.Text()
 			q.Stdout += m + "\n"
-			q.log.Trace().Str("stdout", m).Msg("")
+			q.Log.Trace().Str("stdout", m).Msg("qemu")
 		}
 	}()
 
@@ -294,7 +294,7 @@ func (q *System) Start() (err error) {
 		for scanner.Scan() {
 			m := scanner.Text()
 			q.Stderr += m + "\n"
-			q.log.Trace().Str("stderr", m).Msg("")
+			q.Log.Trace().Str("stderr", m).Msg("qemu")
 		}
 	}()
 
@@ -361,13 +361,11 @@ func (q System) ssh(user string) (client *ssh.Client, err error) {
 
 // Command executes shell commands on qemu system
 func (q System) Command(user, cmd string) (output string, err error) {
-	flog := log.With().
-		Str("kernel", q.kernel.KernelPath).
+	q.Log.With().Str("kernel", q.kernel.KernelPath).
 		Str("user", user).
-		Str("cmd", cmd).
-		Logger()
+		Str("cmd", cmd)
 
-	flog.Debug().Msg("qemu command")
+	q.Log.Debug().Msg("qemu command")
 
 	client, err := q.ssh(user)
 	if err != nil {
@@ -400,7 +398,7 @@ func (q System) Command(user, cmd string) (output string, err error) {
 		for scanner.Scan() {
 			m := scanner.Text()
 			output += m + "\n"
-			flog.Trace().Str("stdout", m).Msg("")
+			q.Log.Trace().Str("stdout", m).Msg("qemu command")
 		}
 		output = strings.TrimSuffix(output, "\n")
 	}()
@@ -411,7 +409,7 @@ func (q System) Command(user, cmd string) (output string, err error) {
 			m := scanner.Text()
 			output += m + "\n"
 			// Note: it prints stderr as stdout
-			flog.Trace().Str("stdout", m).Msg("")
+			q.Log.Trace().Str("stdout", m).Msg("qemu command")
 		}
 		output = strings.TrimSuffix(output, "\n")
 	}()
@@ -452,7 +450,7 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 	if recursive {
 		cmd := exec.Command("ssh", "-V")
 
-		log.Debug().Msgf("%v", cmd)
+		q.Log.Debug().Msgf("%v", cmd)
 
 		var output []byte
 		output, err = cmd.CombinedOutput()
@@ -461,7 +459,7 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 		}
 		sshVersion := string(output)
 
-		log.Debug().Str("ssh version", sshVersion).Msg("")
+		q.Log.Debug().Str("ssh version", sshVersion).Msg("qemu scp")
 
 		if strings.Contains(sshVersion, "OpenSSH_9") {
 			// This release switches scp from using the
@@ -481,7 +479,7 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 	args = append(args, localPath, user+"@"+addr+":"+remotePath)
 
 	cmd := exec.Command("scp", args...)
-	log.Debug().Msgf("%v", cmd)
+	q.Log.Debug().Msgf("%v", cmd)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil || string(output) != "" {
@@ -498,9 +496,9 @@ func (q System) scpWithRetry(user, localPath, remotePath string, recursive bool)
 			break
 		}
 
-		q.log.Warn().Err(err).Msg("scp: failed")
+		q.Log.Warn().Err(err).Msg("scp: failed")
 		time.Sleep(q.SCP.RetryTimeout)
-		q.log.Warn().Msgf("scp: %d retries left", retries)
+		q.Log.Warn().Msgf("scp: %d retries left", retries)
 	}
 	return
 }

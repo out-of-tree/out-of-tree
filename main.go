@@ -94,6 +94,10 @@ func (lw *LevelWriter) WriteLevel(l zerolog.Level, p []byte) (n int, err error) 
 
 var tempDirBase string
 
+var consoleWriter, fileWriter LevelWriter
+
+var loglevel zerolog.Level
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -110,7 +114,6 @@ func main() {
 		},
 	)
 
-	var loglevel zerolog.Level
 	switch cli.LogLevel {
 	case "trace":
 		loglevel = zerolog.TraceLevel
@@ -132,19 +135,23 @@ func main() {
 	tempDirBase = usr.HomeDir + "/.out-of-tree/tmp/"
 	os.MkdirAll(tempDirBase, os.ModePerm)
 
+	consoleWriter = LevelWriter{Writer: zerolog.NewConsoleWriter(
+		func(w *zerolog.ConsoleWriter) {
+			w.Out = os.Stderr
+		},
+	),
+		Level: loglevel,
+	}
+
+	fileWriter = LevelWriter{Writer: &lumberjack.Logger{
+		Filename: usr.HomeDir + "/.out-of-tree/logs/out-of-tree.log",
+	},
+		Level: zerolog.TraceLevel,
+	}
+
 	log.Logger = log.Output(zerolog.MultiLevelWriter(
-		&LevelWriter{Writer: zerolog.NewConsoleWriter(
-			func(w *zerolog.ConsoleWriter) {
-				w.Out = os.Stderr
-			},
-		),
-			Level: loglevel,
-		},
-		&LevelWriter{Writer: &lumberjack.Logger{
-			Filename: usr.HomeDir + "/.out-of-tree/logs/out-of-tree.log",
-		},
-			Level: zerolog.TraceLevel,
-		},
+		&consoleWriter,
+		&fileWriter,
 	))
 
 	log.Trace().Msg("start out-of-tree")

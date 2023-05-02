@@ -178,7 +178,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 			return
 		}
 	} else {
-		buildDir, outFile, output, err = build(tmp, ka, ki, g.Config.Docker.Timeout.Duration)
+		buildDir, outFile, output, err = build(log.Logger, tmp, ka, ki, g.Config.Docker.Timeout.Duration)
 		if err != nil {
 			log.Print(err, output)
 			return

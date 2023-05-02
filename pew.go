@@ -117,7 +117,7 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 	if cmd.Tag == "" {
 		cmd.Tag = fmt.Sprintf("%d", time.Now().Unix())
 	}
-	log.Info().Str("tag", cmd.Tag).Msg("log")
+	log.Info().Str("tag", cmd.Tag).Msg("")
 
 	err = cmd.performCI(ka)
 	if err != nil {
@@ -227,8 +227,9 @@ func applyPatches(src string, ka config.Artifact) (err error) {
 	return
 }
 
-func build(tmp string, ka config.Artifact, ki config.KernelInfo,
-	dockerTimeout time.Duration) (outdir, outpath, output string, err error) {
+func build(flog zerolog.Logger, tmp string, ka config.Artifact,
+	ki config.KernelInfo, dockerTimeout time.Duration) (
+	outdir, outpath, output string, err error) {
 
 	target := fmt.Sprintf("%d_%s", rand.Int(), ki.KernelRelease)
 
@@ -262,6 +263,7 @@ func build(tmp string, ka config.Artifact, ki config.KernelInfo,
 	if ki.ContainerName != "" {
 		var c container
 		c, err = NewContainer(ki.ContainerName, dockerTimeout)
+		c.Log = flog
 		if err != nil {
 			log.Fatal().Err(err).Msg("container creation failure")
 		}
@@ -375,24 +377,19 @@ func copyFile(sourcePath, destinationPath string) (err error) {
 func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 	res *phasesResult, dist, tag, binary string, db *sql.DB) {
 
-	// TODO merge (problem is it's not 100% same) with log.go:logLogEntry
-
-	distroInfo := fmt.Sprintf("%s-%s {%s}", ki.DistroType,
-		ki.DistroRelease, ki.KernelRelease)
-
 	colored := ""
 	switch ka.Type {
 	case config.KernelExploit:
-		colored = aurora.Sprintf("[*] %40s: %s %s", distroInfo,
+		colored = aurora.Sprintf("%s %s",
 			genOkFail("BUILD", res.Build.Ok),
 			genOkFail("LPE", res.Test.Ok))
 	case config.KernelModule:
-		colored = aurora.Sprintf("[*] %40s: %s %s %s", distroInfo,
+		colored = aurora.Sprintf("%s %s %s",
 			genOkFail("BUILD", res.Build.Ok),
 			genOkFail("INSMOD", res.Run.Ok),
 			genOkFail("TEST", res.Test.Ok))
 	case config.Script:
-		colored = aurora.Sprintf("[*] %40s: %s", distroInfo,
+		colored = aurora.Sprintf("%s",
 			genOkFail("", res.Test.Ok))
 	}
 
@@ -404,14 +401,14 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 	}
 
 	if additional != "" {
-		fmt.Println(colored, additional)
+		q.Log.Info().Msgf("%v %v", colored, additional)
 	} else {
-		fmt.Println(colored)
+		q.Log.Info().Msgf("%v", colored)
 	}
 
 	err := addToLog(db, q, ka, ki, res, tag)
 	if err != nil {
-		log.Warn().Err(err).Msgf("[db] addToLog (%v)", ka)
+		q.Log.Warn().Err(err).Msgf("[db] addToLog (%v)", ka)
 	}
 
 	if binary == "" && dist != pathDevNull {
@@ -549,7 +546,38 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 
 	defer swg.Done()
 
-	slog := log.With().
+	logdir := "logs/" + cmd.Tag
+	err := os.MkdirAll(logdir, os.ModePerm)
+	if err != nil {
+		log.Error().Err(err).Msgf("mkdir %s", logdir)
+		return
+	}
+
+	logfile := fmt.Sprintf("logs/%s/%s-%s-%s.log",
+		cmd.Tag,
+		ki.DistroType.String(),
+		ki.DistroRelease,
+		ki.KernelRelease,
+	)
+	f, err := os.Create(logfile)
+	if err != nil {
+		log.Error().Err(err).Msgf("create %s", logfile)
+		return
+	}
+	defer f.Close()
+
+	slog := zerolog.New(zerolog.MultiLevelWriter(
+		&consoleWriter,
+		&fileWriter,
+		&zerolog.ConsoleWriter{Out: f},
+	))
+
+	switch loglevel {
+	case zerolog.TraceLevel, zerolog.DebugLevel:
+		slog = slog.With().Caller().Logger()
+	}
+
+	slog = slog.With().Timestamp().
 		Str("distro_type", ki.DistroType.String()).
 		Str("distro_release", ki.DistroRelease).
 		Str("kernel", ki.KernelRelease).
@@ -563,6 +591,8 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		slog.Error().Err(err).Msg("qemu init")
 		return
 	}
+	q.Log = slog
+
 	q.Timeout = cmd.QemuTimeout
 
 	if ka.Qemu.Timeout.Duration != 0 {
@@ -615,7 +645,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		// TODO: build should return structure
 		start := time.Now()
 		result.BuildDir, result.BuildArtifact, result.Build.Output, err =
-			build(tmp, ka, ki, cmd.DockerTimeout)
+			build(slog, tmp, ka, ki, cmd.DockerTimeout)
 		slog.Debug().Str("duration", time.Now().Sub(start).String()).
 			Msg("build done")
 		if err != nil {
@@ -631,7 +661,10 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	if cmd.Test == "" {
 		cmd.Test = result.BuildArtifact + "_test"
 		if !exists(cmd.Test) {
+			slog.Debug().Msgf("%s does not exist", cmd.Test)
 			cmd.Test = tmp + "/source/" + "test.sh"
+		} else {
+			slog.Debug().Msgf("%s exist", cmd.Test)
 		}
 	}
 
@@ -667,7 +700,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	start := time.Now()
 	copyArtifactAndTest(slog, q, ka, &result, remoteTest)
 	slog.Debug().Str("duration", time.Now().Sub(start).String()).
-		Msg("test completed")
+		Msgf("test completed (success: %v)", result.Test.Ok)
 }
 
 func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
@@ -723,10 +756,8 @@ func (cmd PewCmd) performCI(ka config.Artifact) (err error) {
 
 func exists(path string) bool {
 	if _, err := os.Stat(path); err != nil {
-		log.Debug().Msgf("%s does not exist", path)
 		return false
 	}
-	log.Debug().Msgf("%s exist", path)
 	return true
 }
 

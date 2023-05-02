@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
@@ -112,18 +113,27 @@ func listContainerImages() (diis []containerImageInfo, err error) {
 }
 
 type container struct {
-	name    string
+	name string
+
 	timeout time.Duration
+
 	Volumes struct {
 		LibModules string
 		UsrSrc     string
 		Boot       string
 	}
+
 	// Additional arguments
 	Args []string
+
+	Log zerolog.Logger
 }
 
 func NewContainer(name string, timeout time.Duration) (c container, err error) {
+	c.Log = log.With().
+		Str("container", name).
+		Logger()
+
 	c.name = name
 	c.timeout = timeout
 
@@ -153,7 +163,7 @@ func (c container) Build(imagePath string) (output string, err error) {
 
 	cmd := exec.Command(containerRuntime, args...)
 
-	flog := log.With().
+	flog := c.Log.With().
 		Str("command", fmt.Sprintf("%v", cmd)).
 		Logger()
 
@@ -182,8 +192,7 @@ func (c container) Build(imagePath string) (output string, err error) {
 }
 
 func (c container) Run(workdir string, command string) (output string, err error) {
-	flog := log.With().
-		Str("container", c.name).
+	flog := c.Log.With().
 		Str("workdir", workdir).
 		Str("command", command).
 		Logger()
@@ -212,7 +221,7 @@ func (c container) Run(workdir string, command string) (output string, err error
 
 	cmd := exec.Command(containerRuntime, args...)
 
-	log.Debug().Msgf("%v", cmd)
+	flog.Debug().Msgf("%v", cmd)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
