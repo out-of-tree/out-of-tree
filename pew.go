@@ -576,6 +576,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 				"distro_type",
 				"kernel",
 			},
+			NoColor: true,
 		},
 	))
 
