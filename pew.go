@@ -569,7 +569,14 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	slog := zerolog.New(zerolog.MultiLevelWriter(
 		&consoleWriter,
 		&fileWriter,
-		&zerolog.ConsoleWriter{Out: f},
+		&zerolog.ConsoleWriter{
+			Out: f,
+			FieldsExclude: []string{
+				"distro_release",
+				"distro_type",
+				"kernel",
+			},
+		},
 	))
 
 	switch loglevel {
