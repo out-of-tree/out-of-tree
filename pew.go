@@ -564,10 +564,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		log.Error().Err(err).Msgf("create %s", logfile)
 		return
 	}
-	defer func() {
-		time.Sleep(time.Minute) // FIXME
-		f.Close()
-	}()
+	defer f.Close()
 
 	slog := zerolog.New(zerolog.MultiLevelWriter(
 		&consoleWriter,
