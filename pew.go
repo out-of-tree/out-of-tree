@@ -515,7 +515,14 @@ func copyTest(q *qemu.System, testPath string, ka config.Artifact) (
 }
 
 func copyStandardModules(q *qemu.System, ki config.KernelInfo) (err error) {
-	_, err = q.Command("root", "mkdir -p /lib/modules")
+	_, err = q.Command("root", "mkdir -p /lib/modules/"+ki.KernelRelease)
+	if err != nil {
+		return
+	}
+
+	remotePath := "/lib/modules/" + ki.KernelRelease + "/"
+
+	err = q.CopyDirectory("root", ki.ModulesPath+"/kernel", remotePath+"/kernel")
 	if err != nil {
 		return
 	}
@@ -525,17 +532,14 @@ func copyStandardModules(q *qemu.System, ki config.KernelInfo) (err error) {
 		return
 	}
 
-	// FIXME scp cannot ignore symlinks
 	for _, f := range files {
 		if f.Mode()&os.ModeSymlink == os.ModeSymlink {
 			continue
 		}
-
-		path := ki.ModulesPath + "/" + f.Name()
-		err = q.CopyDirectory("root", path, "/lib/modules/"+ki.KernelRelease+"/")
-		if err != nil {
-			return
+		if !strings.HasPrefix(f.Name(), "modules") {
+			continue
 		}
+		err = q.CopyFile("root", ki.ModulesPath+"/"+f.Name(), remotePath)
 	}
 
 	return

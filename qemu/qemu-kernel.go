@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/povsister/scp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/ssh"
@@ -450,56 +451,31 @@ func (q System) AsyncCommand(user, cmd string) (err error) {
 }
 
 func (q System) scp(user, localPath, remotePath string, recursive bool) (err error) {
-	addrPort := strings.Split(q.sshAddrPort, ":")
-	addr := addrPort[0]
-	port := addrPort[1]
+	q.Log.Debug().Msgf("scp[%s] %s -> %s", user, localPath, remotePath)
 
-	args := []string{
-		"-P", port,
-		"-o", "StrictHostKeyChecking=no",
-		"-o", "UserKnownHostsFile=/dev/null",
-		"-o", "LogLevel=error",
+	cfg := &ssh.ClientConfig{
+		User:            user,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	client, err := scp.NewClient(q.sshAddrPort, cfg, &scp.ClientOption{})
+	if err != nil {
+		return
 	}
 
 	if recursive {
-		cmd := exec.Command("ssh", "-V")
-
-		q.Log.Debug().Msgf("%v", cmd)
-
-		var output []byte
-		output, err = cmd.CombinedOutput()
-		if err != nil {
-			return
-		}
-		sshVersion := string(output)
-
-		q.Log.Debug().Str("ssh version", sshVersion).Msg("qemu scp")
-
-		if strings.Contains(sshVersion, "OpenSSH_9") {
-			// This release switches scp from using the
-			// legacy scp/rcp protocol to using the SFTP
-			// protocol by default.
-			//
-			// To keep compatibility with old distros,
-			// using -O flag to use the legacy scp/rcp.
-			//
-			// Note: old ssh doesn't support -O flag
-			args = append(args, "-O")
-		}
-
-		args = append(args, "-r")
+		err = client.CopyDirToRemote(
+			localPath,
+			remotePath,
+			&scp.DirTransferOption{},
+		)
+	} else {
+		err = client.CopyFileToRemote(
+			localPath,
+			remotePath,
+			&scp.FileTransferOption{},
+		)
 	}
-
-	args = append(args, localPath, user+"@"+addr+":"+remotePath)
-
-	cmd := exec.Command("scp", args...)
-	q.Log.Debug().Msgf("%v", cmd)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil || string(output) != "" {
-		return errors.New(string(output))
-	}
-
 	return
 }
 
