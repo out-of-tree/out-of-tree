@@ -630,9 +630,10 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	defer q.Stop()
 
 	go func() {
+		time.Sleep(time.Minute)
 		for !q.Died {
-			time.Sleep(time.Minute)
 			slog.Debug().Msg("still alive")
+			time.Sleep(time.Minute)
 		}
 	}()
 
