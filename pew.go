@@ -564,7 +564,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		log.Error().Err(err).Msgf("create %s", logfile)
 		return
 	}
-	defer f.Close()
+	// Make sure the file is closed on each return before !q.Died logging
 
 	slog := zerolog.New(zerolog.MultiLevelWriter(
 		&consoleWriter,
@@ -597,6 +597,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)
 	if err != nil {
 		slog.Error().Err(err).Msg("qemu init")
+		f.Close()
 		return
 	}
 	q.Log = slog
@@ -625,6 +626,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	err = q.Start()
 	if err != nil {
 		slog.Error().Err(err).Msg("qemu start")
+		f.Close()
 		return
 	}
 	defer q.Stop()
@@ -634,6 +636,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 			time.Sleep(time.Minute)
 			slog.Debug().Msg("still alive")
 		}
+		f.Close()
 	}()
 
 	tmp, err := ioutil.TempDir(tempDirBase, "out-of-tree_")
