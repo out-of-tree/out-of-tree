@@ -337,11 +337,25 @@ func (q *System) Stop() {
 
 func (q System) WaitForSSH(timeout time.Duration) error {
 	for start := time.Now(); time.Since(start) < timeout; {
+		time.Sleep(time.Second / 4)
+
 		client, err := q.ssh("root")
 		if err != nil {
-			time.Sleep(time.Second / 10)
 			continue
 		}
+
+		session, err := client.NewSession()
+		if err != nil {
+			client.Close()
+			continue
+		}
+
+		_, err = session.CombinedOutput("echo")
+		if err != nil {
+			client.Close()
+			continue
+		}
+
 		client.Close()
 		return nil
 	}
