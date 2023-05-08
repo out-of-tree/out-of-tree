@@ -48,6 +48,9 @@ type PewCmd struct {
 
 	Threshold float64 `help:"reliablity threshold for exit code" default:"1.00"`
 
+	Endless        bool          `help:"endless tests"`
+	EndlessTimeout time.Duration `help:"timeout between tests" default:"1m"`
+
 	db              *sql.DB
 	kcfg            config.KernelConfig
 	timeoutDeadline time.Time
@@ -627,6 +630,10 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	q.SetSMAP(!ka.Mitigations.DisableSmap)
 	q.SetKPTI(!ka.Mitigations.DisableKpti)
 
+	if cmd.Endless {
+		q.Timeout = 0
+	}
+
 	err = q.Start()
 	if err != nil {
 		slog.Error().Err(err).Msg("qemu start")
@@ -653,7 +660,9 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	defer os.RemoveAll(tmp)
 
 	result := phasesResult{}
-	defer dumpResult(q, ka, ki, &result, cmd.Dist, cmd.Tag, cmd.Binary, cmd.db)
+	if !cmd.Endless {
+		defer dumpResult(q, ka, ki, &result, cmd.Dist, cmd.Tag, cmd.Binary, cmd.db)
+	}
 
 	if ka.Type == config.Script {
 		result.Build.Ok = true
@@ -718,6 +727,32 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	copyArtifactAndTest(slog, q, ka, &result, remoteTest)
 	slog.Debug().Str("duration", time.Now().Sub(start).String()).
 		Msgf("test completed (success: %v)", result.Test.Ok)
+
+	if !cmd.Endless {
+		return
+	}
+
+	dumpResult(q, ka, ki, &result, cmd.Dist, cmd.Tag, cmd.Binary, cmd.db)
+
+	if !result.Build.Ok || !result.Run.Ok || !result.Test.Ok {
+		return
+	}
+
+	slog.Info().Msg("start endless tests")
+
+	for {
+		output, err := q.Command("root", remoteTest)
+		if err != nil {
+			slog.Error().Err(err).Msg(output)
+			return
+		}
+		slog.Debug().Msg(output)
+
+		slog.Info().Msg("test success")
+
+		slog.Debug().Msgf("wait %v", cmd.EndlessTimeout)
+		time.Sleep(cmd.EndlessTimeout)
+	}
 }
 
 func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
