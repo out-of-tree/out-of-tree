@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -421,7 +422,12 @@ func (q System) Command(user, cmd string) (output string, err error) {
 		return
 	}
 
+	var wg sync.WaitGroup
+
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
+
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
 			m := scanner.Text()
@@ -431,7 +437,10 @@ func (q System) Command(user, cmd string) (output string, err error) {
 		output = strings.TrimSuffix(output, "\n")
 	}()
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
+
 		scanner := bufio.NewScanner(stderr)
 		for scanner.Scan() {
 			m := scanner.Text()
@@ -443,6 +452,8 @@ func (q System) Command(user, cmd string) (output string, err error) {
 	}()
 
 	err = session.Wait()
+
+	wg.Wait()
 	return
 }
 
