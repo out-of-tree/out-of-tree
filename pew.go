@@ -50,6 +50,7 @@ type PewCmd struct {
 
 	Endless        bool          `help:"endless tests"`
 	EndlessTimeout time.Duration `help:"timeout between tests" default:"1m"`
+	EndlessStress  string        `help:"endless stress script" type:"existingfile"`
 
 	db              *sql.DB
 	kcfg            config.KernelConfig
@@ -739,6 +740,16 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	}
 
 	slog.Info().Msg("start endless tests")
+
+	if cmd.EndlessStress != "" {
+		slog.Debug().Msg("copy and run endless stress script")
+		err = q.CopyAndRunAsync("root", cmd.EndlessStress)
+		if err != nil {
+			q.Stop()
+			slog.Fatal().Err(err).Msg("cannot copy/run stress")
+			return
+		}
+	}
 
 	for {
 		output, err := q.Command("root", remoteTest)

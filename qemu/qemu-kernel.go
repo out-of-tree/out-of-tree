@@ -550,6 +550,17 @@ func (q *System) CopyAndRun(user, path string) (output string, err error) {
 	return q.Command(user, "chmod +x "+remotePath+" && "+remotePath)
 }
 
+// CopyAndRunAsync is copy local file to qemu vm then run it w/o wait for exit
+func (q *System) CopyAndRunAsync(user, path string) (err error) {
+	remotePath := fmt.Sprintf("/tmp/executable_%d", rand.Int())
+	err = q.CopyFile(user, path, remotePath)
+	if err != nil {
+		return
+	}
+
+	return q.AsyncCommand(user, "chmod +x "+remotePath+" && "+remotePath)
+}
+
 // Debug is for enable qemu debug and set hostname and port for listen
 func (q *System) Debug(conn string) {
 	q.debug = true
