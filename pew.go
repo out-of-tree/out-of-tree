@@ -42,8 +42,9 @@ type PewCmd struct {
 
 	ArtifactConfig string `help:"path to artifact config" type:"path"`
 
-	QemuTimeout   time.Duration `help:"timeout for qemu"`
-	DockerTimeout time.Duration `help:"timeout for docker"`
+	QemuTimeout           time.Duration `help:"timeout for qemu"`
+	QemuAfterStartTimeout time.Duration `help:"timeout after starting of the qemu vm before tests"`
+	DockerTimeout         time.Duration `help:"timeout for docker"`
 
 	Threshold float64 `help:"reliablity threshold for exit code" default:"1.00"`
 
@@ -632,6 +633,9 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		return
 	}
 	defer q.Stop()
+
+	slog.Debug().Msgf("wait %v", cmd.QemuAfterStartTimeout)
+	time.Sleep(cmd.QemuAfterStartTimeout)
 
 	go func() {
 		time.Sleep(time.Minute)
