@@ -750,6 +750,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		err = q.CopyAndRunAsync("root", cmd.EndlessStress)
 		if err != nil {
 			q.Stop()
+			f.Sync()
 			slog.Fatal().Err(err).Msg("cannot copy/run stress")
 			return
 		}
@@ -759,6 +760,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		output, err := q.Command("root", remoteTest)
 		if err != nil {
 			q.Stop()
+			f.Sync()
 			slog.Fatal().Err(err).Msg(output)
 			return
 		}
