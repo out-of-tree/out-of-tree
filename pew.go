@@ -743,7 +743,8 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	for {
 		output, err := q.Command("root", remoteTest)
 		if err != nil {
-			slog.Error().Err(err).Msg(output)
+			q.Stop()
+			slog.Fatal().Err(err).Msg(output)
 			return
 		}
 		slog.Debug().Msg(output)
