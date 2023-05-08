@@ -68,9 +68,10 @@ type System struct {
 
 	KernelPanic bool
 
-	Died        bool
-	sshAddrPort string
-	SCP         struct {
+	Died bool
+
+	SSH struct {
+		AddrPort     string
 		Retries      int
 		RetryTimeout time.Duration
 	}
@@ -117,15 +118,15 @@ func NewSystem(arch arch, kernel Kernel, drivePath string) (q *System, err error
 	// Default values
 	q.Cpus = 1
 	q.Memory = 512 // megabytes
-	q.SCP.Retries = 16
-	q.SCP.RetryTimeout = time.Second
+	q.SSH.Retries = 16
+	q.SSH.RetryTimeout = time.Second / 4
 
 	return
 }
 
 func (q *System) SetSSHAddrPort(addr string, port int) (err error) {
 	// TODO validate
-	q.sshAddrPort = fmt.Sprintf("%s:%d", addr, port)
+	q.SSH.AddrPort = fmt.Sprintf("%s:%d", addr, port)
 	return
 }
 
@@ -220,10 +221,10 @@ func (q System) Executable() string {
 }
 
 func (q *System) Args() (qemuArgs []string) {
-	if q.sshAddrPort == "" {
-		q.sshAddrPort = getFreeAddrPort()
+	if q.SSH.AddrPort == "" {
+		q.SSH.AddrPort = getFreeAddrPort()
 	}
-	hostfwd := fmt.Sprintf("hostfwd=tcp:%s-:22", q.sshAddrPort)
+	hostfwd := fmt.Sprintf("hostfwd=tcp:%s-:22", q.SSH.AddrPort)
 	qemuArgs = []string{"-nographic",
 		"-hda", q.drivePath,
 		"-kernel", q.kernel.KernelPath,
@@ -370,7 +371,13 @@ func (q System) ssh(user string) (client *ssh.Client, err error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	client, err = ssh.Dial("tcp", q.sshAddrPort, cfg)
+	for retries := q.SSH.Retries; retries > 0; retries-- {
+		client, err = ssh.Dial("tcp", q.SSH.AddrPort, cfg)
+		if err == nil {
+			break
+		}
+		time.Sleep(q.SSH.RetryTimeout)
+	}
 	return
 }
 
@@ -459,12 +466,13 @@ func (q System) AsyncCommand(user, cmd string) (err error) {
 func (q System) scp(user, localPath, remotePath string, recursive bool) (err error) {
 	q.Log.Debug().Msgf("scp[%s] %s -> %s", user, localPath, remotePath)
 
-	cfg := &ssh.ClientConfig{
-		User:            user,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	sshClient, err := q.ssh(user)
+	if err != nil {
+		return
 	}
+	defer sshClient.Close()
 
-	client, err := scp.NewClient(q.sshAddrPort, cfg, &scp.ClientOption{})
+	client, err := scp.NewClientFromExistingSSH(sshClient, &scp.ClientOption{})
 	if err != nil {
 		return
 	}
@@ -486,14 +494,14 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 }
 
 func (q System) scpWithRetry(user, localPath, remotePath string, recursive bool) (err error) {
-	for retries := q.SCP.Retries; retries > 0; retries-- {
+	for retries := q.SSH.Retries; retries > 0; retries-- {
 		err = q.scp(user, localPath, remotePath, recursive)
 		if err == nil {
 			break
 		}
 
 		q.Log.Warn().Err(err).Msg("scp: failed")
-		time.Sleep(q.SCP.RetryTimeout)
+		time.Sleep(q.SSH.RetryTimeout)
 		q.Log.Warn().Msgf("scp: %d retries left", retries)
 	}
 	return
@@ -579,7 +587,7 @@ func (q *System) GetKPTI() bool {
 
 // GetSSHCommand returns command for connect to qemu machine over ssh
 func (q System) GetSSHCommand() (cmd string) {
-	addrPort := strings.Split(q.sshAddrPort, ":")
+	addrPort := strings.Split(q.SSH.AddrPort, ":")
 	addr := addrPort[0]
 	port := addrPort[1]
 
