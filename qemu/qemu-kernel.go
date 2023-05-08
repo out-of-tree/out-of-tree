@@ -15,7 +15,6 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -365,12 +364,7 @@ func (q System) WaitForSSH(timeout time.Duration) error {
 	return errors.New("no ssh (timeout)")
 }
 
-var sshMu sync.Mutex
-
 func (q System) ssh(user string) (client *ssh.Client, err error) {
-	sshMu.Lock()
-	defer sshMu.Unlock()
-
 	cfg := &ssh.ClientConfig{
 		User:            user,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
@@ -470,9 +464,7 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	sshMu.Lock()
 	client, err := scp.NewClient(q.sshAddrPort, cfg, &scp.ClientOption{})
-	sshMu.Unlock()
 	if err != nil {
 		return
 	}
