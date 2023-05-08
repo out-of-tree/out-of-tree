@@ -31,6 +31,7 @@ type PewCmd struct {
 	Max     int64         `help:"test no more than X kernels" default:"100500"`
 	Runs    int64         `help:"runs per each kernel" default:"1"`
 	Kernel  string        `help:"override kernel regex"`
+	RootFS  string        `help:"override rootfs image" type:"existingfile"`
 	Guess   bool          `help:"try all defined kernels"`
 	Shuffle bool          `help:"randomize kernels test order"`
 	Binary  string        `help:"use binary, do not build"`
@@ -603,6 +604,9 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	slog.Info().Msg("start")
 
 	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
+	if cmd.RootFS != "" {
+		ki.RootFS = cmd.RootFS
+	}
 	q, err := qemu.NewSystem(qemu.X86x64, kernel, ki.RootFS)
 	if err != nil {
 		slog.Error().Err(err).Msg("qemu init")
