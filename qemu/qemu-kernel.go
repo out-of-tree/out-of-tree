@@ -376,35 +376,41 @@ func (q System) ssh(user string) (client *ssh.Client, err error) {
 
 // Command executes shell commands on qemu system
 func (q System) Command(user, cmd string) (output string, err error) {
-	q.Log.With().Str("kernel", q.kernel.KernelPath).
+	flog := q.Log.With().Str("kernel", q.kernel.KernelPath).
 		Str("user", user).
-		Str("cmd", cmd)
+		Str("cmd", cmd).
+		Logger()
 
-	q.Log.Debug().Msg("qemu command")
+	flog.Debug().Msg("qemu command")
 
 	client, err := q.ssh(user)
 	if err != nil {
+		flog.Debug().Err(err).Msg("ssh connection")
 		return
 	}
 	defer client.Close()
 
 	session, err := client.NewSession()
 	if err != nil {
+		flog.Debug().Err(err).Msg("new session")
 		return
 	}
 
 	stdout, err := session.StdoutPipe()
 	if err != nil {
+		flog.Debug().Err(err).Msg("get stdout pipe")
 		return
 	}
 
 	stderr, err := session.StderrPipe()
 	if err != nil {
+		flog.Debug().Err(err).Msg("get stderr pipe")
 		return
 	}
 
 	err = session.Start(cmd)
 	if err != nil {
+		flog.Debug().Err(err).Msg("start session")
 		return
 	}
 
@@ -413,7 +419,7 @@ func (q System) Command(user, cmd string) (output string, err error) {
 		for scanner.Scan() {
 			m := scanner.Text()
 			output += m + "\n"
-			q.Log.Trace().Str("stdout", m).Msg("qemu command")
+			flog.Trace().Str("stdout", m).Msg("qemu command")
 		}
 		output = strings.TrimSuffix(output, "\n")
 	}()
@@ -424,7 +430,7 @@ func (q System) Command(user, cmd string) (output string, err error) {
 			m := scanner.Text()
 			output += m + "\n"
 			// Note: it prints stderr as stdout
-			q.Log.Trace().Str("stdout", m).Msg("qemu command")
+			flog.Trace().Str("stdout", m).Msg("qemu command")
 		}
 		output = strings.TrimSuffix(output, "\n")
 	}()
