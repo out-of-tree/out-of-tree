@@ -1,4 +1,6 @@
-#!/bin/sh -eux
+#!/usr/bin/env bash
+
+set -eux
 
 for version in 6 7 8 9; do
     mkdir $version
