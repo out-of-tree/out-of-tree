@@ -425,6 +425,9 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		d += "RUN yum -y update\n"
 		d += "RUN yum -y groupinstall 'Development Tools'\n"
 		d += "RUN yum -y install linux-firmware grubby\n"
+		if sk.DistroRelease <= "6" {
+			d += "RUN yum -y install libdtrace-ctf\n"
+		}
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
