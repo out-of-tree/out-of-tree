@@ -238,6 +238,40 @@ func matchCentOSDevelPkg(container, mask string, generic bool) (
 	return
 }
 
+func matchOracleLinuxPkg(container, mask string) (
+	pkgs []string, err error) {
+
+	cmd := "yum search kernel --showduplicates " +
+		"| grep '^kernel-[0-9]\\|^kernel-uek-[0-9]' " +
+		"| grep -v src " +
+		"| cut -d ' ' -f 1"
+
+	// FIXME timeout should be in global out-of-tree config
+	c, err := NewContainer(container, time.Hour)
+	if err != nil {
+		return
+	}
+
+	output, err := c.Run(tempDirBase, cmd)
+	if err != nil {
+		return
+	}
+
+	r, err := regexp.Compile("kernel-" + mask)
+	if err != nil {
+		return
+	}
+
+	for _, pkg := range strings.Fields(output) {
+		if r.MatchString(pkg) || strings.Contains(pkg, mask) {
+			log.Trace().Msg(pkg)
+			pkgs = append(pkgs, pkg)
+		}
+	}
+
+	return
+}
+
 func dockerImagePath(sk config.KernelMask) (path string, err error) {
 	usr, err := user.Current()
 	if err != nil {
@@ -377,6 +411,16 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 				"$(echo $PKGNAME | sed 's/-devel//') "+
 				"$(echo $PKGNAME | sed 's/-devel/-modules/') "+
 				"$(echo $PKGNAME | sed 's/-devel/-core/') %s\n", flags)
+	case config.OracleLinux:
+		if sk.DistroRelease < "6" {
+			err = fmt.Errorf("no support for pre-EL6")
+			return
+		}
+		d += "RUN sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/*\n"
+		d += "RUN sed -i 's;installonly_limit=;installonly_limit=100500;' /etc/yum.conf /etc/dnf/dnf.conf || true\n"
+		d += "RUN yum -y update\n"
+		d += "RUN yum -y groupinstall 'Development Tools'\n"
+		d += "RUN yum -y install linux-firmware grubby\n"
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
@@ -465,7 +509,30 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		cmd += fmt.Sprintf(" && yum -y install %s %s", imagepkg,
 			pkgname)
 
-		cmd += fmt.Sprintf(" && dracut --add-drivers 'e1000 ext4' -f "+
+		cmd += fmt.Sprintf(" && dracut --add-drivers 'e1000 ext4' -fv "+
+			"/boot/initramfs-%s.img %s", version, version)
+	case config.OracleLinux:
+		var headerspkg string
+		if headers {
+			if strings.Contains(pkgname, "uek") {
+				headerspkg = strings.Replace(pkgname,
+					"kernel-uek", "kernel-uek-devel", -1)
+			} else {
+				headerspkg = strings.Replace(pkgname,
+					"kernel", "kernel-devel", -1)
+			}
+		}
+
+		cmd += fmt.Sprintf(" && yum -y install %s %s", pkgname, headerspkg)
+
+		var version string
+		if strings.Contains(pkgname, "uek") {
+			version = strings.Replace(pkgname, "kernel-uek-", "", -1)
+		} else {
+			version = strings.Replace(pkgname, "kernel-", "", -1)
+		}
+
+		cmd += fmt.Sprintf(" && dracut --add-drivers 'e1000 ext4' -f -v "+
 			"/boot/initramfs-%s.img %s", version, version)
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
@@ -722,6 +789,8 @@ func generateKernels(km config.KernelMask, registry string,
 	case config.CentOS:
 		pkgs, err = matchCentOSDevelPkg(km.DockerName(),
 			km.ReleaseMask, true)
+	case config.OracleLinux:
+		pkgs, err = matchOracleLinuxPkg(km.DockerName(), km.ReleaseMask)
 	default:
 		err = fmt.Errorf("%s not yet supported", km.DistroType.String())
 	}

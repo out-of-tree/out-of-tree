@@ -205,10 +205,17 @@ const (
 	CentOS
 	// Debian https://www.debian.org/
 	Debian
+	// OracleLinux https://www.oracle.com/linux/
+	OracleLinux
 )
 
 // DistroTypeStrings is the string version of enum DistroType
-var DistroTypeStrings = [...]string{"Ubuntu", "CentOS", "Debian"}
+var DistroTypeStrings = [...]string{
+	"Ubuntu",
+	"CentOS",
+	"Debian",
+	"OracleLinux",
+}
 
 // NewDistroType is create new Distro object
 func NewDistroType(dType string) (dt DistroType, err error) {
@@ -229,6 +236,8 @@ func (dt *DistroType) UnmarshalTOML(data []byte) (err error) {
 		*dt = CentOS
 	} else if strings.EqualFold(sDistro, "Debian") {
 		*dt = Debian
+	} else if strings.EqualFold(sDistro, "OracleLinux") {
+		*dt = OracleLinux
 	} else {
 		err = fmt.Errorf("Distro %s is unsupported", sDistro)
 	}
@@ -245,6 +254,8 @@ func (dt DistroType) MarshalTOML() (data []byte, err error) {
 		s = "CentOS"
 	case Debian:
 		s = "Debian"
+	case OracleLinux:
+		s = "OracleLinux"
 	default:
 		err = fmt.Errorf("Cannot marshal %d", dt)
 	}
