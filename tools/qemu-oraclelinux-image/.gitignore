@@ -1,0 +1,4 @@
+*
+!.gitignore
+!Dockerfile.template
+!generate-images.sh
