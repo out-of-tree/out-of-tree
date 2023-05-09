@@ -536,8 +536,13 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 			version = strings.Replace(pkgname, "kernel-", "", -1)
 		}
 
-		cmd += fmt.Sprintf(" && dracut -v --add-drivers 'ata_piix libata' --force-drivers 'e1000 ext4 sd_mod' -f "+
-			"/boot/initramfs-%s.img %s", version, version)
+		if sk.DistroRelease <= "7" {
+			cmd += fmt.Sprintf(" && dracut -v --add-drivers 'e1000 ext4' -f "+
+				"/boot/initramfs-%s.img %s", version, version)
+		} else {
+			cmd += fmt.Sprintf(" && dracut -v --add-drivers 'ata_piix libata' --force-drivers 'e1000 ext4 sd_mod' -f "+
+				"/boot/initramfs-%s.img %s", version, version)
+		}
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
