@@ -269,6 +269,10 @@ func matchOracleLinuxPkg(container, mask string) (
 		}
 	}
 
+	if len(pkgs) == 0 {
+		log.Warn().Msg("no packages matched")
+	}
+
 	return
 }
 
