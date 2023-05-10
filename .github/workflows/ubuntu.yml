@@ -200,3 +200,46 @@ jobs:
       with:
         name: test-end-to-end-list-remote-logs
         path: /home/runner/.out-of-tree/logs/out-of-tree.log
+
+  test-end-to-end-ubuntu:
+    name: End-to-End Testing (Ubuntu)
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        release: [12.04, 14.04, 16.04, 18.04, 20.04, 22.04]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: go build
+
+    - name: Install dependencies for tests
+      run: |
+        sudo apt-get update
+        sudo apt-get install qemu-system-x86
+
+    - name: End-to-End Testing [Ubuntu ${{ matrix.release }}]
+      run: |
+        mkdir test
+        cd test
+
+        echo 'name = "out-of-tree script"' >> .out-of-tree.toml
+        echo 'type = "script"' >> .out-of-tree.toml
+        echo 'script = "script.sh"' >> .out-of-tree.toml
+        echo '[[supported_kernels]]' >> .out-of-tree.toml
+        echo 'distro_type = "Ubuntu"' >> .out-of-tree.toml
+        echo 'distro_release = "${{ matrix.release }}"' >> .out-of-tree.toml
+        echo 'release_mask = ".*"' >> .out-of-tree.toml
+
+        echo -e '#!/bin/sh\necho ok' >> script.sh
+
+        ../out-of-tree --log-level=debug kernel autogen --max=1 --shuffle
+        ../out-of-tree --log-level=debug pew --qemu-timeout=10m
+
+    - name: Archive logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-end-to-end-ubuntu
+        path: /home/runner/.out-of-tree/logs/out-of-tree.log
