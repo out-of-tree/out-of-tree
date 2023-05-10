@@ -342,6 +342,10 @@ func (q System) WaitForSSH(timeout time.Duration) error {
 	for start := time.Now(); time.Since(start) < timeout; {
 		time.Sleep(time.Second / 4)
 
+		if q.Died || q.KernelPanic {
+			return errors.New("no ssh (qemu is dead)")
+		}
+
 		client, err := q.ssh("root")
 		if err != nil {
 			continue
@@ -360,6 +364,7 @@ func (q System) WaitForSSH(timeout time.Duration) error {
 		}
 
 		client.Close()
+		q.Log.Debug().Msg("ssh is available")
 		return nil
 	}
 
