@@ -181,19 +181,19 @@ jobs:
 
     - name: End-to-End Testing [List available Oracle Linux 6 kernels]
       run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=Oracle Linux --ver=6
+        ./out-of-tree --log-level=debug kernel list-remote --distro=OracleLinux --ver=6
 
     - name: End-to-End Testing [List available Oracle Linux 7 kernels]
       run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=Oracle Linux --ver=7
+        ./out-of-tree --log-level=debug kernel list-remote --distro=OracleLinux --ver=7
 
     - name: End-to-End Testing [List available Oracle Linux 8 kernels]
       run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=Oracle Linux --ver=8
+        ./out-of-tree --log-level=debug kernel list-remote --distro=OracleLinux --ver=8
 
     - name: End-to-End Testing [List available Oracle Linux 9 kernels]
       run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=Oracle Linux --ver=9
+        ./out-of-tree --log-level=debug kernel list-remote --distro=OracleLinux --ver=9
 
     - name: Archive logs
       uses: actions/upload-artifact@v3
