@@ -128,3 +128,75 @@ jobs:
       with:
         name: test-end-to-end-genall-logs
         path: /home/runner/.out-of-tree/logs/out-of-tree.log
+
+  test-end-to-end-list-remote:
+    name: End-to-End Testing (list-remote)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: go build
+
+    - name: Install dependencies for tests
+      run: |
+        sudo apt-get update
+        sudo apt-get install qemu-system-x86
+
+    - name: End-to-End Testing [List available Ubuntu 12.04 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=12.04
+
+    - name: End-to-End Testing [List available Ubuntu 14.04 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=14.04
+
+    - name: End-to-End Testing [List available Ubuntu 16.04 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=16.04
+
+    - name: End-to-End Testing [List available Ubuntu 18.04 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=18.04
+
+    - name: End-to-End Testing [List available Ubuntu 20.04 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=20.04
+
+    - name: End-to-End Testing [List available Ubuntu 22.04 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=22.04
+
+    - name: End-to-End Testing [List available CentOS 6 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=CentOS --ver=6
+
+    - name: End-to-End Testing [List available CentOS 7 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=CentOS --ver=7
+
+    - name: End-to-End Testing [List available CentOS 8 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=CentOS --ver=8
+
+    - name: End-to-End Testing [List available Oracle Linux 6 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=Oracle Linux --ver=6
+
+    - name: End-to-End Testing [List available Oracle Linux 7 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=Oracle Linux --ver=7
+
+    - name: End-to-End Testing [List available Oracle Linux 8 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=Oracle Linux --ver=8
+
+    - name: End-to-End Testing [List available Oracle Linux 9 kernels]
+      run: |
+        ./out-of-tree --log-level=debug kernel list-remote --distro=Oracle Linux --ver=9
+
+    - name: Archive logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-end-to-end-list-remote-logs
+        path: /home/runner/.out-of-tree/logs/out-of-tree.log
