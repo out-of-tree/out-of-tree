@@ -32,6 +32,7 @@ type KernelCmd struct {
 	NoHeaders  bool  `help:"do not install kernel headers"`
 	Shuffle    bool  `help:"randomize kernels installation order"`
 	Retries    int64 `help:"amount of tries for each kernel" default:"10"`
+	Update     bool  `help:"update container"`
 
 	List        KernelListCmd        `cmd:"" help:"list kernels"`
 	ListRemote  KernelListRemoteCmd  `cmd:"" help:"list remote kernels"`
@@ -63,10 +64,9 @@ func (cmd *KernelListCmd) Run(g *Globals) (err error) {
 type KernelListRemoteCmd struct {
 	Distro string `required:"" help:"distribution"`
 	Ver    string `required:"" help:"distro version"`
-	Update bool   `help:"update Containerfile"`
 }
 
-func (cmd *KernelListRemoteCmd) Run(g *Globals) (err error) {
+func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	distroType, err := config.NewDistroType(cmd.Distro)
 	if err != nil {
 		return
@@ -87,7 +87,7 @@ func (cmd *KernelListRemoteCmd) Run(g *Globals) (err error) {
 		g.Config.Docker.Registry,
 		g.Config.Docker.Commands,
 		km,
-		cmd.Update,
+		kernelCmd.Update,
 	)
 	if err != nil {
 		return
@@ -129,6 +129,7 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			kernelCmd.Force,
 			!kernelCmd.NoHeaders,
 			kernelCmd.Shuffle,
+			kernelCmd.Update,
 			&shutdown,
 		)
 		if err != nil {
@@ -169,6 +170,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		kernelCmd.Force,
 		!kernelCmd.NoHeaders,
 		kernelCmd.Shuffle,
+		kernelCmd.Update,
 		&shutdown,
 	)
 	if err != nil {
@@ -206,6 +208,7 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		kernelCmd.Force,
 		!kernelCmd.NoHeaders,
 		kernelCmd.Shuffle,
+		kernelCmd.Update,
 		&shutdown,
 	)
 	if err != nil {
@@ -811,9 +814,11 @@ func setSigintHandler(variable *bool) {
 
 }
 
+// FIXME too many parameters
 func generateKernels(km config.KernelMask, registry string,
 	commands []config.DockerCommand, max, retries int64,
-	download, force, headers, shuffle bool, shutdown *bool) (err error) {
+	download, force, headers, shuffle, update bool,
+	shutdown *bool) (err error) {
 
 	log.Info().Msgf("Generating for kernel mask %v", km)
 
@@ -823,7 +828,7 @@ func generateKernels(km config.KernelMask, registry string,
 		return
 	}
 
-	err = generateBaseDockerImage(registry, commands, km, false)
+	err = generateBaseDockerImage(registry, commands, km, update)
 	if err != nil || *shutdown {
 		return
 	}
