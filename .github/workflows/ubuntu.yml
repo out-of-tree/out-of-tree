@@ -129,78 +129,6 @@ jobs:
         name: test-end-to-end-genall-logs
         path: /home/runner/.out-of-tree/logs/out-of-tree.log
 
-  test-end-to-end-list-remote:
-    name: End-to-End Testing (list-remote)
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-
-    - name: Build
-      run: go build
-
-    - name: Install dependencies for tests
-      run: |
-        sudo apt-get update
-        sudo apt-get install qemu-system-x86
-
-    - name: End-to-End Testing [List available Ubuntu 12.04 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=12.04
-
-    - name: End-to-End Testing [List available Ubuntu 14.04 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=14.04
-
-    - name: End-to-End Testing [List available Ubuntu 16.04 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=16.04
-
-    - name: End-to-End Testing [List available Ubuntu 18.04 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=18.04
-
-    - name: End-to-End Testing [List available Ubuntu 20.04 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=20.04
-
-    - name: End-to-End Testing [List available Ubuntu 22.04 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=22.04
-
-    - name: End-to-End Testing [List available CentOS 6 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=CentOS --ver=6
-
-    - name: End-to-End Testing [List available CentOS 7 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=CentOS --ver=7
-
-    - name: End-to-End Testing [List available CentOS 8 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=CentOS --ver=8
-
-    - name: End-to-End Testing [List available Oracle Linux 6 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=OracleLinux --ver=6
-
-    - name: End-to-End Testing [List available Oracle Linux 7 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=OracleLinux --ver=7
-
-    - name: End-to-End Testing [List available Oracle Linux 8 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=OracleLinux --ver=8
-
-    - name: End-to-End Testing [List available Oracle Linux 9 kernels]
-      run: |
-        ./out-of-tree --log-level=debug kernel list-remote --distro=OracleLinux --ver=9
-
-    - name: Archive logs
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-end-to-end-list-remote-logs
-        path: /home/runner/.out-of-tree/logs/out-of-tree.log
-
   test-end-to-end-ubuntu:
     name: End-to-End Testing (Ubuntu)
     runs-on: ubuntu-latest
@@ -235,11 +163,100 @@ jobs:
 
         echo -e '#!/bin/sh\necho ok' >> script.sh
 
+        ../out-of-tree --log-level=debug kernel list-remote --distro=Ubuntu --ver=${{ matrix.release }}
         ../out-of-tree --log-level=debug kernel autogen --max=1 --shuffle
         ../out-of-tree --log-level=debug pew --qemu-timeout=10m
 
     - name: Archive logs
       uses: actions/upload-artifact@v3
       with:
-        name: test-end-to-end-ubuntu
+        name: test-end-to-end-ubuntu-${{ matrix.release }}
+        path: /home/runner/.out-of-tree/logs/out-of-tree.log
+
+  test-end-to-end-centos:
+    name: End-to-End Testing (CentOS)
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        release: [6, 7, 8]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: go build
+
+    - name: Install dependencies for tests
+      run: |
+        sudo apt-get update
+        sudo apt-get install qemu-system-x86
+
+    - name: End-to-End Testing [Ubuntu ${{ matrix.release }}]
+      run: |
+        mkdir test
+        cd test
+
+        echo 'name = "out-of-tree script"' >> .out-of-tree.toml
+        echo 'type = "script"' >> .out-of-tree.toml
+        echo 'script = "script.sh"' >> .out-of-tree.toml
+        echo '[[supported_kernels]]' >> .out-of-tree.toml
+        echo 'distro_type = "CentOS"' >> .out-of-tree.toml
+        echo 'distro_release = "${{ matrix.release }}"' >> .out-of-tree.toml
+        echo 'release_mask = ".*"' >> .out-of-tree.toml
+
+        echo -e '#!/bin/sh\necho ok' >> script.sh
+
+        ../out-of-tree --log-level=debug kernel list-remote --distro=CentOS --ver=${{ matrix.release }}
+        ../out-of-tree --log-level=debug kernel autogen --max=1 --shuffle
+        ../out-of-tree --log-level=debug pew --qemu-timeout=10m
+
+    - name: Archive logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-end-to-end-centos-${{ matrix.release }}
+        path: /home/runner/.out-of-tree/logs/out-of-tree.log
+
+  test-end-to-end-oracle-linux:
+    name: End-to-End Testing (Oracle Linux)
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        release: [6, 7, 8, 9]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: go build
+
+    - name: Install dependencies for tests
+      run: |
+        sudo apt-get update
+        sudo apt-get install qemu-system-x86
+
+    - name: End-to-End Testing [Ubuntu ${{ matrix.release }}]
+      run: |
+        mkdir test
+        cd test
+
+        echo 'name = "out-of-tree script"' >> .out-of-tree.toml
+        echo 'type = "script"' >> .out-of-tree.toml
+        echo 'script = "script.sh"' >> .out-of-tree.toml
+        echo '[[supported_kernels]]' >> .out-of-tree.toml
+        echo 'distro_type = "OracleLinux"' >> .out-of-tree.toml
+        echo 'distro_release = "${{ matrix.release }}"' >> .out-of-tree.toml
+        echo 'release_mask = ".*"' >> .out-of-tree.toml
+
+        echo -e '#!/bin/sh\necho ok' >> script.sh
+
+        ../out-of-tree --log-level=debug kernel list-remote --distro=OracleLinux --ver=${{ matrix.release }}
+        ../out-of-tree --log-level=debug kernel autogen --max=1 --shuffle
+        ../out-of-tree --log-level=debug pew --qemu-timeout=10m
+
+    - name: Archive logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-end-to-end-centos-${{ matrix.release }}
         path: /home/runner/.out-of-tree/logs/out-of-tree.log
