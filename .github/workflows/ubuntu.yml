@@ -30,7 +30,7 @@ jobs:
       run: go test -parallel 1 -v ./...
 
   test-end-to-end:
-    name: E2E Test module/exploit
+    name: E2E Testing (Examples)
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -55,6 +55,18 @@ jobs:
         ../../out-of-tree --log-level=debug kernel autogen --max=1
         ../../out-of-tree --log-level=debug pew --threshold=0 --qemu-timeout=10m
 
+    - name: End-to-End Testing [Script]
+      run: |
+        cd examples/script
+        ../../out-of-tree --log-level=debug kernel autogen --max=1
+        ../../out-of-tree --log-level=debug pew --qemu-timeout=10m
+
+    - name: End-to-End Testing [Preload]
+      run: |
+        cd examples/preload
+        ../../out-of-tree --log-level=debug kernel autogen --max=1
+        ../../out-of-tree --log-level=debug pew --qemu-timeout=10m
+
     - name: Archive logs
       uses: actions/upload-artifact@v3
       with:
@@ -62,7 +74,7 @@ jobs:
         path: /home/runner/.out-of-tree/logs/out-of-tree.log
 
   test-end-to-end-distros:
-    name: E2E Test script
+    name: E2E Testing
     runs-on: ubuntu-latest
 
     strategy:
