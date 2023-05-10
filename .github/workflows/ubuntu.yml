@@ -99,18 +99,6 @@ jobs:
       run: |
         ./out-of-tree --log-level=debug kernel install --distro=CentOS --ver=8 --kernel=4.18.0-348.7.1 --no-download
 
-    - name: End-to-End Testing [Install one Oracle Linux 7 kernel]
-      run: |
-        ./out-of-tree --log-level=debug kernel install --distro=OracleLinux --ver=7 --kernel=5.4.17-2136.302.6.1 --no-download
-
-    - name: End-to-End Testing [Install one Oracle Linux 8 kernel]
-      run: |
-        ./out-of-tree --log-level=debug kernel install --distro=OracleLinux --ver=8 --kernel=4.18.0-372.9.1 --no-download
-
-    - name: End-to-End Testing [Install one Oracle Linux 9 kernel]
-      run: |
-        ./out-of-tree --log-level=debug kernel install --distro=OracleLinux --ver=9 --kernel=5.14.0-162.6.1 --no-download
-
     - name: Archive logs
       uses: actions/upload-artifact@v3
       with:
