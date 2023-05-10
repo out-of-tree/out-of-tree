@@ -373,11 +373,6 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		sk.DistroRelease,
 	)
 
-	vsyscall, err := vsyscallAvailable()
-	if err != nil {
-		return
-	}
-
 	for _, c := range commands {
 		d += "RUN " + c.Command + "\n"
 	}
@@ -397,27 +392,51 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		}
 		d += "RUN mkdir -p /lib/modules\n"
 	case config.CentOS:
-		if sk.DistroRelease < "7" && !vsyscall {
-			log.Print("Old CentOS requires `vsyscall=emulate` " +
-				"on the latest kernels")
-			log.Print("Check out `A note about vsyscall` " +
-				"at https://hub.docker.com/_/centos")
-			log.Print("See also https://lwn.net/Articles/446528/")
-			err = fmt.Errorf("vsyscall is not available")
-			return
-		} else if sk.DistroRelease == "8" {
-			// CentOS 8 doesn't have Vault repos by default
-			for _, repover := range []string{
-				"8.0.1905", "8.1.1911", "8.2.2004", "8.3.2011", "8.4.2105", "8.5.2111",
-			} {
-				repo := fmt.Sprintf("[%s]\\nbaseurl=http://vault.centos.org/%s/BaseOS/$basearch/os/\\ngpgcheck=0", repover, repover)
-				d += fmt.Sprintf("RUN echo -e '%s' >> /etc/yum.repos.d/CentOS-Vault.repo\n", repo)
+		var repos []string
+
+		switch sk.DistroRelease {
+		case "6":
+			repofmt := "[6.%d-%s]\\nbaseurl=https://vault.centos.org/6.%d/%s/$basearch/\\ngpgcheck=0"
+			for i := 0; i <= 10; i++ {
+				repos = append(repos, fmt.Sprintf(repofmt, i, "os", i, "os"))
+				repos = append(repos, fmt.Sprintf(repofmt, i, "updates", i, "updates"))
 			}
-			d += "RUN sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/*\n"
+			d += "RUN rm /etc/yum.repos.d/*\n"
+		case "7":
+			repofmt := "[%s-%s]\\nbaseurl=https://vault.centos.org/%s/%s/$basearch/\\ngpgcheck=0"
+			for _, ver := range []string{
+				"7.0.1406", "7.1.1503", "7.2.1511",
+				"7.3.1611", "7.4.1708", "7.5.1804",
+				"7.6.1810", "7.7.1908", "7.8.2003",
+			} {
+				repos = append(repos, fmt.Sprintf(repofmt, ver, "os", ver, "os"))
+				repos = append(repos, fmt.Sprintf(repofmt, ver, "updates", ver, "updates"))
+			}
+
+			// FIXME http/gpgcheck=0
+			repofmt = "[%s-%s]\\nbaseurl=http://mirror.centos.org/centos-7/%s/%s/$basearch/\\ngpgcheck=0"
+			repos = append(repos, fmt.Sprintf(repofmt, "7.9.2009", "os", "7.9.2009", "os"))
+			repos = append(repos, fmt.Sprintf(repofmt, "7.9.2009", "updates", "7.9.2009", "updates"))
+		case "8":
+			repofmt := "[%s]\\nbaseurl=https://vault.centos.org/%s/BaseOS/$basearch/os/\\ngpgcheck=0"
+
+			for _, ver := range []string{
+				"8.0.1905", "8.1.1911", "8.2.2004",
+				"8.3.2011", "8.4.2105", "8.5.2111",
+			} {
+				repos = append(repos, fmt.Sprintf(repofmt, ver, ver))
+			}
+		default:
+			err = fmt.Errorf("no support for %s %s", sk.DistroType, sk.DistroRelease)
+			return
 		}
 
-		// enable rpms from old minor releases
-		d += "RUN sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Vault.repo\n"
+		d += "RUN sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/* || true\n"
+
+		for _, repo := range repos {
+			d += fmt.Sprintf("RUN echo -e '%s' >> /etc/yum.repos.d/oot.repo\n", repo)
+		}
+
 		// do not remove old kernels
 		d += "RUN sed -i 's;installonly_limit=;installonly_limit=100500;' /etc/yum.conf\n"
 		d += "RUN yum -y update\n"
