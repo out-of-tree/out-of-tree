@@ -34,6 +34,7 @@ type KernelCmd struct {
 	Retries    int64 `help:"amount of tries for each kernel" default:"10"`
 
 	List        KernelListCmd        `cmd:"" help:"list kernels"`
+	ListRemote  KernelListRemoteCmd  `cmd:"" help:"list remote kernels"`
 	Autogen     KernelAutogenCmd     `cmd:"" help:"generate kernels based on the current config"`
 	Genall      KernelGenallCmd      `cmd:"" help:"generate all kernels for distro"`
 	Install     KernelInstallCmd     `cmd:"" help:"install specific kernel"`
@@ -54,6 +55,48 @@ func (cmd *KernelListCmd) Run(g *Globals) (err error) {
 
 	for _, k := range kcfg.Kernels {
 		fmt.Println(k.DistroType, k.DistroRelease, k.KernelRelease)
+	}
+
+	return
+}
+
+type KernelListRemoteCmd struct {
+	Distro string `required:"" help:"distribution"`
+	Ver    string `required:"" help:"distro version"`
+	Update bool   `required:"" help:"update Containerfile"`
+}
+
+func (cmd *KernelListRemoteCmd) Run(g *Globals) (err error) {
+	distroType, err := config.NewDistroType(cmd.Distro)
+	if err != nil {
+		return
+	}
+
+	km := config.KernelMask{
+		DistroType:    distroType,
+		DistroRelease: cmd.Ver,
+		ReleaseMask:   ".*",
+	}
+
+	_, err = genRootfsImage(containerImageInfo{Name: km.DockerName()}, false)
+	if err != nil {
+		return
+	}
+
+	err = generateBaseDockerImage(
+		g.Config.Docker.Registry,
+		g.Config.Docker.Commands,
+		km,
+		cmd.Update,
+	)
+	if err != nil {
+		return
+	}
+
+	pkgs, err := matchPackages(km)
+
+	for _, k := range pkgs {
+		fmt.Println(k)
 	}
 
 	return
@@ -207,37 +250,6 @@ func matchDebImagePkg(container, mask string) (pkgs []string, err error) {
 	return
 }
 
-func matchCentOSDevelPkg(container, mask string, generic bool) (
-	pkgs []string, err error) {
-
-	cmd := "yum search kernel-devel --showduplicates | " +
-		"grep '^kernel-devel' | cut -d ' ' -f 1"
-
-	// FIXME timeout should be in global out-of-tree config
-	c, err := NewContainer(container, time.Hour)
-	if err != nil {
-		return
-	}
-
-	output, err := c.Run(tempDirBase, cmd)
-	if err != nil {
-		return
-	}
-
-	r, err := regexp.Compile("kernel-devel-" + mask)
-	if err != nil {
-		return
-	}
-
-	for _, pkg := range strings.Fields(output) {
-		if r.MatchString(pkg) || strings.Contains(pkg, mask) {
-			pkgs = append(pkgs, pkg)
-		}
-	}
-
-	return
-}
-
 func matchOracleLinuxPkg(container, mask string) (
 	pkgs []string, err error) {
 
@@ -276,6 +288,18 @@ func matchOracleLinuxPkg(container, mask string) (
 	return
 }
 
+func matchPackages(km config.KernelMask) (pkgs []string, err error) {
+	switch km.DistroType {
+	case config.Ubuntu:
+		pkgs, err = matchDebImagePkg(km.DockerName(), km.ReleaseMask)
+	case config.OracleLinux, config.CentOS:
+		pkgs, err = matchOracleLinuxPkg(km.DockerName(), km.ReleaseMask)
+	default:
+		err = fmt.Errorf("%s not yet supported", km.DistroType.String())
+	}
+	return
+}
+
 func dockerImagePath(sk config.KernelMask) (path string, err error) {
 	usr, err := user.Current()
 	if err != nil {
@@ -306,7 +330,7 @@ func vsyscallAvailable() (available bool, err error) {
 }
 
 func generateBaseDockerImage(registry string, commands []config.DockerCommand,
-	sk config.KernelMask) (err error) {
+	sk config.KernelMask, forceUpdate bool) (err error) {
 
 	imagePath, err := dockerImagePath(sk)
 	if err != nil {
@@ -328,7 +352,11 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	if exists(dockerPath) && string(rawOutput) != "" {
 		log.Info().Msgf("Base image for %s:%s found",
 			sk.DistroType.String(), sk.DistroRelease)
-		return
+		if !forceUpdate {
+			return
+		} else {
+			log.Info().Msgf("Update Containerfile")
+		}
 	}
 
 	log.Info().Msgf("Base image for %s:%s not found, start generating",
@@ -505,20 +533,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		}
 
 		cmd += fmt.Sprintf(" && apt-get install -y %s %s", pkgname, headerspkg)
-	case config.CentOS:
-		imagepkg := strings.Replace(pkgname, "-devel", "", -1)
-
-		version := strings.Replace(pkgname, "kernel-devel-", "", -1)
-
-		if !headers {
-			pkgname = ""
-		}
-		cmd += fmt.Sprintf(" && yum -y install %s %s", imagepkg,
-			pkgname)
-
-		cmd += fmt.Sprintf(" && dracut -v --add-drivers 'e1000 ext4' -f "+
-			"/boot/initramfs-%s.img %s", version, version)
-	case config.OracleLinux:
+	case config.OracleLinux, config.CentOS:
 		var headerspkg string
 		if headers {
 			if strings.Contains(pkgname, "uek") {
@@ -789,23 +804,12 @@ func generateKernels(km config.KernelMask, registry string,
 		return
 	}
 
-	err = generateBaseDockerImage(registry, commands, km)
+	err = generateBaseDockerImage(registry, commands, km, false)
 	if err != nil || *shutdown {
 		return
 	}
 
-	var pkgs []string
-	switch km.DistroType {
-	case config.Ubuntu:
-		pkgs, err = matchDebImagePkg(km.DockerName(), km.ReleaseMask)
-	case config.CentOS:
-		pkgs, err = matchCentOSDevelPkg(km.DockerName(),
-			km.ReleaseMask, true)
-	case config.OracleLinux:
-		pkgs, err = matchOracleLinuxPkg(km.DockerName(), km.ReleaseMask)
-	default:
-		err = fmt.Errorf("%s not yet supported", km.DistroType.String())
-	}
+	pkgs, err := matchPackages(km)
 	if err != nil || *shutdown {
 		return
 	}
