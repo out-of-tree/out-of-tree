@@ -516,7 +516,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		cmd += fmt.Sprintf(" && yum -y install %s %s", imagepkg,
 			pkgname)
 
-		cmd += fmt.Sprintf(" && dracut --add-drivers 'e1000 ext4' -fv "+
+		cmd += fmt.Sprintf(" && dracut -v --add-drivers 'e1000 ext4' -f "+
 			"/boot/initramfs-%s.img %s", version, version)
 	case config.OracleLinux:
 		var headerspkg string
