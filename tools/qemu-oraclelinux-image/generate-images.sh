@@ -14,4 +14,5 @@ for version in 6 7 8 9; do
     docker build -t gen-oraclelinux${version}-image $version
     rm -rf $version
     docker run --privileged -v $(pwd):/shared -t gen-oraclelinux${version}-image
+    tar -Szcf out_of_tree_oraclelinux_${version}.img.tar.gz out_of_tree_oraclelinux_${version}.img
 done
