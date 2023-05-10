@@ -30,7 +30,7 @@ jobs:
       run: go test -parallel 1 -v ./...
 
   test-end-to-end:
-    name: End-to-End Testing
+    name: E2E Test module/exploit
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -62,7 +62,7 @@ jobs:
         path: /home/runner/.out-of-tree/logs/out-of-tree.log
 
   test-end-to-end-distros:
-    name: End-to-End Testing
+    name: E2E Test script
     runs-on: ubuntu-latest
 
     strategy:
