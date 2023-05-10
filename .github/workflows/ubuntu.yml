@@ -135,7 +135,22 @@ jobs:
 
     strategy:
       matrix:
-        os: [ { distro: Ubuntu, release: 12.04 }, distro: Ubuntu, release: 14.04 }, distro: Ubuntu, release: 16.04 }, distro: Ubuntu, release: 18.04 }, distro: Ubuntu, release: 20.04 }, distro: Ubuntu, release: 22.04 }, { distro: CentOS, release: 6 }, { distro: CentOS, release: 7 }, { distro: CentOS, release: 8 }, { distro: OracleLinux, release: 6 }, { distro: OracleLinux, release: 7 }, { distro: OracleLinux, release: 8 }, { distro: OracleLinux, release: 9 } ]
+        os: |
+          [
+            { distro: Ubuntu, release: 12.04 },
+            { distro: Ubuntu, release: 14.04 },
+            { distro: Ubuntu, release: 16.04 },
+            { distro: Ubuntu, release: 18.04 },
+            { distro: Ubuntu, release: 20.04 },
+            { distro: Ubuntu, release: 22.04 },
+            { distro: CentOS, release: 6 },
+            { distro: CentOS, release: 7 },
+            { distro: CentOS, release: 8 },
+            { distro: OracleLinux, release: 6 },
+            { distro: OracleLinux, release: 7 },
+            { distro: OracleLinux, release: 8 },
+            { distro: OracleLinux, release: 9 }
+          ]
 
     steps:
     - uses: actions/checkout@v1
