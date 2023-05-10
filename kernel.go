@@ -382,15 +382,18 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 
 	switch sk.DistroType {
 	case config.Ubuntu:
+		if sk.DistroRelease < "14.04" {
+			d += "RUN sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/' /etc/apt/sources.list\n"
+		}
 		d += "ENV DEBIAN_FRONTEND=noninteractive\n"
 		d += "RUN apt-get update\n"
 		d += "RUN apt-get install -y build-essential libelf-dev\n"
 		d += "RUN apt-get install -y wget git\n"
 		// Install a single kernel and headers to ensure all dependencies are cached
-		d += "RUN export PKGNAME=$(apt-cache search --names-only '^linux-headers-[0-9\\.\\-]*-generic' | awk '{ print $1 }' | head -n 1); " +
-			"apt-get install -y $PKGNAME $(echo $PKGNAME | sed 's/headers/image/'); " +
-			"apt-get remove -y $PKGNAME $(echo $PKGNAME | sed 's/headers/image/')\n"
 		if sk.DistroRelease >= "14.04" {
+			d += "RUN export PKGNAME=$(apt-cache search --names-only '^linux-headers-[0-9\\.\\-]*-generic' | awk '{ print $1 }' | head -n 1); " +
+				"apt-get install -y $PKGNAME $(echo $PKGNAME | sed 's/headers/image/'); " +
+				"apt-get remove -y $PKGNAME $(echo $PKGNAME | sed 's/headers/image/')\n"
 			d += "RUN apt-get install -y libseccomp-dev\n"
 		}
 		d += "RUN mkdir -p /lib/modules\n"
