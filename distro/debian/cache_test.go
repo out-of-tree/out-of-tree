@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/rapidloop/skv"
-
-	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 )
 
 func TestCache(t *testing.T) {
@@ -24,23 +22,24 @@ func TestCache(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	packages, err := snapshot.Packages("linux", "4.17.14-1", "amd64",
-		`^linux-(image|headers)-[0-9\.\-]*-(amd64|amd64-unsigned)$`)
+	version := "4.17.14-1"
+
+	dk, err := GetDebianKernel(version)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = c.Put(packages[0])
+	err = c.Put(dk)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	p, err := c.Get(packages[0].Version)
+	dk2, err := c.Get(version)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if p.Deb.Hash != packages[0].Deb.Hash {
+	if dk.Image.Deb.Hash != dk2.Image.Deb.Hash {
 		t.Fatalf("mismatch")
 	}
 
@@ -52,16 +51,16 @@ func TestCache(t *testing.T) {
 	}
 	defer c.Close()
 
-	p, err = c.Get(packages[0].Version)
+	dk3, err := c.Get(version)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if p.Deb.Hash != packages[0].Deb.Hash {
+	if dk.Image.Deb.Hash != dk3.Image.Deb.Hash {
 		t.Fatalf("mismatch")
 	}
 
-	p, err = c.Get("key not exist")
+	_, err = c.Get("key not exist")
 	if err == nil || err != skv.ErrNotFound {
 		t.Fatal(err)
 	}

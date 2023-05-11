@@ -19,6 +19,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/otiai10/copy v1.11.0
 	github.com/povsister/scp v0.0.0-20210427074412-33febfd9f13e
+	github.com/rapidloop/skv v0.0.0-20180909015525-9def2caac4cc
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/rs/zerolog v1.29.1
 	github.com/ulikunitz/xz v0.5.11
@@ -34,6 +35,7 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
+	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect

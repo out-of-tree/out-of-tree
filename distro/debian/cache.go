@@ -2,8 +2,6 @@ package debian
 
 import (
 	"github.com/rapidloop/skv"
-
-	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 )
 
 type Cache struct {
@@ -16,11 +14,11 @@ func NewCache(path string) (c *Cache, err error) {
 	return
 }
 
-func (c Cache) Put(p snapshot.Package) error {
-	return c.store.Put(p.Version, p)
+func (c Cache) Put(p DebianKernel) error {
+	return c.store.Put(p.Version.Package, p)
 }
 
-func (c Cache) Get(version string) (p snapshot.Package, err error) {
+func (c Cache) Get(version string) (p DebianKernel, err error) {
 	err = c.store.Get(version, &p)
 	return
 }
