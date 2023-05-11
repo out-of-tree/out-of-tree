@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -14,7 +15,18 @@ import (
 
 const apiURL = "https://snapshot.debian.org/mr"
 
-var Limiter = rate.NewLimiter(rate.Every(time.Second), 3)
+var (
+	limiterTimeout time.Duration = time.Second
+	limiterBurst   int           = 3
+
+	Limiter = rate.NewLimiter(rate.Every(limiterTimeout), limiterBurst)
+)
+
+func lowerLimit() {
+	limiterTimeout = limiterTimeout * 2
+	log.Info().Msgf("limiter timeout set to %v", limiterTimeout)
+	Limiter.SetLimit(rate.Every(limiterTimeout))
+}
 
 // Retries in case of 5xx errors
 var Retries = 10
@@ -90,6 +102,11 @@ func getJson(query string, target interface{}) (err error) {
 		flog.Trace().Msg("start")
 		resp, err = http.Get(query)
 		if err != nil {
+			if strings.Contains(err.Error(), "reset by peer") {
+				flog.Debug().Err(err).Msg("")
+				lowerLimit()
+				continue
+			}
 			flog.Error().Err(err).Msg("")
 			return
 		}
