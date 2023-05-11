@@ -21,7 +21,7 @@ RUN yum --installroot=$TMPDIR \
         --releasever=_VERSION_ \
         --disablerepo='*' \
         --enablerepo=ol_VERSION__baseos_latest \
-        -y install openssh-server openssh-clients dhclient
+        -y install openssh-server openssh-clients dhclient yum
 
 RUN chroot $TMPDIR /bin/sh -c 'useradd -m user'
 RUN sed -i 's/root:\*:/root::/' $TMPDIR/etc/shadow
