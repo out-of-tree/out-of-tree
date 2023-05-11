@@ -34,7 +34,7 @@ var (
 func GetDebianKernel(version string) (dk DebianKernel, err error) {
 	dk.Version.Package = version
 
-	regex := `^linux-(image|headers)-[bporcexp+~0-9\.\-]*-(amd64|amd64-unsigned)$`
+	regex := `^linux-(image|headers)-[dbporcexp+~0-9\.\-]*-(amd64|amd64-unsigned)$`
 
 	packages, err := snapshot.Packages("linux", version, "amd64", regex)
 	if err != nil {
