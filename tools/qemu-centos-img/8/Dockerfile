@@ -19,7 +19,7 @@ RUN cp /etc/yum.repos.d/* $TMPDIR/etc/yum.repos.d/
 
 RUN yum --installroot=$TMPDIR \
         --releasever=8 \
-        -y install openssh-server openssh-clients
+        -y install openssh-server openssh-clients yum dnf
 
 RUN chroot $TMPDIR /bin/sh -c 'useradd -m user'
 RUN sed -i 's/root:\*:/root::/' $TMPDIR/etc/shadow
