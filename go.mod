@@ -6,6 +6,8 @@ replace code.dumpstack.io/tools/out-of-tree/qemu => ./qemu
 
 replace code.dumpstack.io/tools/out-of-tree/config => ./config
 
+replace code.dumpstack.io/tools/out-of-tree/kernel => ./kernel
+
 require (
 	github.com/alecthomas/kong v0.7.1
 	github.com/go-git/go-git/v5 v5.6.1
