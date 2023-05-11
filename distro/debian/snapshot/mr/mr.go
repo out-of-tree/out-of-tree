@@ -1,14 +1,24 @@
 package mr
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
+
+	"github.com/rs/zerolog/log"
+	"golang.org/x/time/rate"
 )
 
 const apiURL = "https://snapshot.debian.org/mr"
+
+var Limiter = rate.NewLimiter(rate.Every(time.Second), 10)
+
+// Retries in case of 5xx errors
+var Retries = 10
 
 // https://salsa.debian.org/snapshot-team/snapshot/blob/master/API
 
@@ -70,15 +80,32 @@ type Info struct {
 	Result  []Fileinfo `json:"result"`
 }
 
-func getJson(url string, target interface{}) (err error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return
+func getJson(query string, target interface{}) (err error) {
+	flog := log.With().Str("url", query).Logger()
+
+	var resp *http.Response
+	for i := Retries; i > 0; i-- {
+		flog.Trace().Msg("wait")
+		Limiter.Wait(context.Background())
+
+		flog.Trace().Msg("start")
+		resp, err = http.Get(query)
+		if err != nil {
+			flog.Error().Err(err).Msg("")
+			return
+		}
+		defer resp.Body.Close()
+		flog.Debug().Msgf("%s", resp.Status)
+
+		if resp.StatusCode < 500 {
+			break
+		}
+
+		flog.Debug().Msgf("retry (%d left)", i)
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("%d", resp.StatusCode)
+		err = fmt.Errorf("%d (%s)", resp.StatusCode, query)
 	}
 	return json.NewDecoder(resp.Body).Decode(target)
 }
