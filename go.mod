@@ -6,7 +6,7 @@ replace code.dumpstack.io/tools/out-of-tree/qemu => ./qemu
 
 replace code.dumpstack.io/tools/out-of-tree/config => ./config
 
-replace code.dumpstack.io/tools/out-of-tree/kernel => ./kernel
+replace code.dumpstack.io/tools/out-of-tree/distro => ./distro
 
 require (
 	github.com/alecthomas/kong v0.7.1
