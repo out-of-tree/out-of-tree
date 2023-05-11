@@ -14,7 +14,7 @@ import (
 
 const apiURL = "https://snapshot.debian.org/mr"
 
-var Limiter = rate.NewLimiter(rate.Every(time.Second), 10)
+var Limiter = rate.NewLimiter(rate.Every(time.Second), 7)
 
 // Retries in case of 5xx errors
 var Retries = 10
