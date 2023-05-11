@@ -2,6 +2,7 @@ package mr
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -117,6 +118,14 @@ func GetInfo(hash string) (info Info, err error) {
 	query := fmt.Sprintf("%s/file/%s/info", apiURL,
 		url.QueryEscape(hash),
 	)
+
 	err = getJson(query, &info)
+	if err != nil {
+		return
+	}
+
+	if len(info.Result) != 1 {
+		err = errors.New("API mismatch")
+	}
 	return
 }
