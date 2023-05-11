@@ -1,4 +1,7 @@
 #!/bin/sh
+
+set -eux
+
 cd "$(dirname "$0")"
 
 sudo docker build -t gen-centos8-image .

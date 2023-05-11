@@ -1,18 +1,8 @@
-# Copyright 2020 Mikhail Klementev. All rights reserved.
-# Use of this source code is governed by a AGPLv3 license
-# (or later) that can be found in the LICENSE file.
-#
-# Usage:
-#
-#     $ sudo docker build -t gen-centos8-image .
-#     $ sudo docker run --privileged -v $(pwd):/shared -t gen-centos8-image
-#     $ tar -Szcf out_of_tree_centos_8.img.tar.gz out_of_tree_centos_8.img
-#
-# out_of_tree_centos_8.img will be created in current directory.
-# You can change $(pwd) to different directory to use different destination
-# for image.
-#
 FROM centos:8
+
+RUN sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/* || true
+RUN echo -e '[8.5.2111-os]\nbaseurl=https://vault.centos.org/8.5.2111/BaseOS/$basearch/os/\ngpgcheck=0' >> /etc/yum.repos.d/oot.repo
+RUN echo -e '[8.5.2111-appstream]\nbaseurl=https://vault.centos.org/8.5.2111/AppStream/$basearch/os/\ngpgcheck=0' >> /etc/yum.repos.d/oot.repo
 
 RUN yum -y update
 RUN yum -y groupinstall "Development Tools"
@@ -22,13 +12,13 @@ ENV TMPDIR=/tmp/centos
 
 RUN yum --installroot=$TMPDIR \
         --releasever=8 \
-        --disablerepo='*' \
-        --enablerepo=BaseOS \
         -y groupinstall Base
+
+RUN rm $TMPDIR/etc/yum.repos.d/*
+RUN cp /etc/yum.repos.d/* $TMPDIR/etc/yum.repos.d/
+
 RUN yum --installroot=$TMPDIR \
         --releasever=8 \
-        --disablerepo='*' \
-        --enablerepo=BaseOS \
         -y install openssh-server openssh-clients
 
 RUN chroot $TMPDIR /bin/sh -c 'useradd -m user'
