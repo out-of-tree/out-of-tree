@@ -285,6 +285,10 @@ func contains(pkgs []Package, pkg Package) bool {
 
 func Packages(srcname, version, arch, regex string) (pkgs []Package, err error) {
 	binpkgs, err := mr.GetBinpackages(srcname, version)
+	if err == mr.ErrNotFound {
+		err = nil
+		return
+	}
 	if err != nil {
 		return
 	}
