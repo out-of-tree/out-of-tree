@@ -77,6 +77,9 @@ func getJson(url string, target interface{}) (err error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("%d", resp.StatusCode)
+	}
 	return json.NewDecoder(resp.Body).Decode(target)
 }
 
