@@ -41,7 +41,9 @@ func (cmd *DebianCacheCmd) Run() (err error) {
 
 		var dk debian.DebianKernel
 		dk, err = debian.GetDebianKernel(version)
-		if err != nil {
+		if err == debian.ErrNoBinaryPackages {
+			slog.Warn().Err(err).Msg("")
+		} else if err != nil {
 			slog.Error().Err(err).Msg("get debian kernel")
 			continue
 		}
