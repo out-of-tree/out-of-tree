@@ -9,6 +9,7 @@ replace code.dumpstack.io/tools/out-of-tree/config => ./config
 replace code.dumpstack.io/tools/out-of-tree/distro => ./distro
 
 require (
+	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/alecthomas/kong v0.7.1
 	github.com/go-git/go-git/v5 v5.6.1
 	github.com/mattn/go-sqlite3 v1.14.16
@@ -20,8 +21,10 @@ require (
 	github.com/povsister/scp v0.0.0-20210427074412-33febfd9f13e
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/rs/zerolog v1.29.1
+	github.com/ulikunitz/xz v0.5.11
 	github.com/zcalusic/sysinfo v0.9.5
 	golang.org/x/crypto v0.8.0
+	golang.org/x/time v0.3.0
 	gopkg.in/logrusorgru/aurora.v2 v2.0.3
 )
 
@@ -30,6 +33,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
+	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect

@@ -23,6 +23,8 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot/mr"
 )
 
+const timeLayout = "20060102T150405Z"
+
 const URL = "https://snapshot.debian.org"
 
 var Limiter = rate.NewLimiter(rate.Every(time.Second), 1)
@@ -57,10 +59,11 @@ type Package struct {
 	}
 
 	Repo struct {
-		Snapshot string
-		Archive  string
+		Snapshot      string
+		SnapshotDists []string
 
-		Codename  string
+		Archive string
+
 		Component string
 	}
 }
@@ -99,7 +102,7 @@ func NewPackage(name, srcname, version, arch string) (p Package, err error) {
 	}
 	p.Repo.Component = split[2]
 
-	p.Repo.Codename, err = p.getCodename()
+	p.Repo.SnapshotDists, err = p.dists()
 	if err != nil {
 		return
 	}
@@ -124,13 +127,10 @@ func (p Package) getHash() (hash string, err error) {
 	return
 }
 
-func (p Package) getCodename() (dist string, err error) {
-	dists, err := p.dists()
-	if err != nil {
-		return
-	}
-
-	for _, dist = range dists {
+// Because the snapshot date is when the package was first introduced,
+// it will probably always be sid or experimental.
+func (p Package) GetCodename() (dist string, err error) {
+	for _, dist = range p.Repo.SnapshotDists {
 		var distHasPackage bool
 		distHasPackage, err = p.isDistHasPackage(dist)
 		if err != nil {
