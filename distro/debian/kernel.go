@@ -45,7 +45,11 @@ func GetDebianKernel(version string) (dk DebianKernel, err error) {
 	var packages []snapshot.Package
 	for _, p := range pkgs {
 		skip := false
-		for _, s := range []string{"rt-amd64", "cloud-amd64"} {
+		for _, s := range []string{
+			"rt-amd64",
+			"cloud-amd64",
+			"all-amd64",
+		} {
 			if strings.Contains(p.Name, s) {
 				skip = true
 				break
