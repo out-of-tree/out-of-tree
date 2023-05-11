@@ -91,6 +91,8 @@ type Info struct {
 	Result  []Fileinfo `json:"result"`
 }
 
+var ErrNotFound = errors.New("404 not found")
+
 func getJson(query string, target interface{}) (err error) {
 	flog := log.With().Str("url", query).Logger()
 
@@ -111,7 +113,13 @@ func getJson(query string, target interface{}) (err error) {
 			return
 		}
 		defer resp.Body.Close()
+
 		flog.Debug().Msgf("%s", resp.Status)
+
+		if resp.StatusCode == 404 {
+			err = ErrNotFound
+			return
+		}
 
 		if resp.StatusCode < 500 {
 			break
