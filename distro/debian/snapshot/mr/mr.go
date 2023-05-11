@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -111,43 +110,33 @@ func getJson(query string, target interface{}) (err error) {
 }
 
 func GetPackage(name string) (pkg Package, err error) {
-	query := fmt.Sprintf("%s/package/%s/", apiURL,
-		url.QueryEscape(name),
-	)
+	query := fmt.Sprintf("%s/package/%s/", apiURL, name)
 	err = getJson(query, &pkg)
 	return
 }
 
 func GetBinpackages(name, version string) (binpkgs Binpackages, err error) {
-	query := fmt.Sprintf("%s/package/%s/%s/binpackages", apiURL,
-		url.QueryEscape(name),
-		url.QueryEscape(version),
-	)
+	query := fmt.Sprintf("%s/package/%s/%s/binpackages",
+		apiURL, name, version)
 	err = getJson(query, &binpkgs)
 	return
 }
 
 func GetBinary(pkg string) (binary Binary, err error) {
-	query := fmt.Sprintf("%s/binary/%s/", apiURL,
-		url.QueryEscape(pkg),
-	)
+	query := fmt.Sprintf("%s/binary/%s/", apiURL, pkg)
 	err = getJson(query, &binary)
 	return
 }
 
 func GetBinfiles(binpkg, binversion string) (binfiles Binfiles, err error) {
-	query := fmt.Sprintf("%s/binary/%s/%s/binfiles", apiURL,
-		url.QueryEscape(binpkg),
-		url.QueryEscape(binversion),
-	)
+	query := fmt.Sprintf("%s/binary/%s/%s/binfiles",
+		apiURL, binpkg, binversion)
 	err = getJson(query, &binfiles)
 	return
 }
 
 func GetInfo(hash string) (info Info, err error) {
-	query := fmt.Sprintf("%s/file/%s/info", apiURL,
-		url.QueryEscape(hash),
-	)
+	query := fmt.Sprintf("%s/file/%s/info", apiURL, hash)
 
 	err = getJson(query, &info)
 	if err != nil {
