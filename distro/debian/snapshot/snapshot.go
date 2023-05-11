@@ -2,10 +2,15 @@ package snapshot
 
 import (
 	"errors"
+	"fmt"
+	"net/url"
 	"regexp"
+	"strings"
 
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot/mr"
 )
+
+const URL = "https://snapshot.debian.org"
 
 func SourcePackageVersions(name string) (versions []string, err error) {
 	pkg, err := mr.GetPackage(name)
@@ -24,13 +29,18 @@ type Package struct {
 	Source  string
 	Version string
 	Arch    string
-	Binary  struct {
+
+	Deb struct {
 		Name string
 		Hash string
+		URL  string
 	}
+
 	Repo struct {
 		Snapshot string
 		Archive  string
+
+		Component string
 	}
 }
 
@@ -40,20 +50,33 @@ func NewPackage(name, srcname, version, arch string) (p Package, err error) {
 	p.Version = version
 	p.Arch = arch
 
-	p.Binary.Hash, err = p.getHash()
+	p.Deb.Hash, err = p.getHash()
 	if err != nil {
 		return
 	}
 
-	info, err := mr.GetInfo(p.Binary.Hash)
+	info, err := mr.GetInfo(p.Deb.Hash)
 	if err != nil {
 		return
 	}
 
-	p.Binary.Name = info.Result[0].Name
+	p.Deb.Name = info.Result[0].Name
 
 	p.Repo.Archive = info.Result[0].ArchiveName
 	p.Repo.Snapshot = info.Result[0].FirstSeen
+
+	p.Deb.URL, err = url.JoinPath(URL, "archive", p.Repo.Archive,
+		p.Repo.Snapshot, info.Result[0].Path, p.Deb.Name)
+	if err != nil {
+		return
+	}
+
+	split := strings.Split(info.Result[0].Path, "/")
+	if split[1] != "pool" || len(split) < 3 {
+		err = fmt.Errorf("incorrect path: %s", info.Result[0].Path)
+		return
+	}
+	p.Repo.Component = split[2]
 
 	return
 }
