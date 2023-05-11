@@ -160,8 +160,8 @@ func GetInfo(hash string) (info Info, err error) {
 		return
 	}
 
-	if len(info.Result) != 1 {
-		err = errors.New("API mismatch")
+	if len(info.Result) == 0 {
+		err = errors.New("empty response")
 	}
 	return
 }
