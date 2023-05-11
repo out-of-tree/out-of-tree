@@ -2,6 +2,7 @@ package debian
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
@@ -24,14 +25,34 @@ type DebianKernel struct {
 	Headers snapshot.Package
 }
 
+var (
+	ErrNoBinaryPackages = errors.New("no binary packages found")
+	ErrNoHeadersPackage = errors.New("no headers package found")
+	ErrNoImagePackage   = errors.New("no image package found")
+)
+
 func GetDebianKernel(version string) (dk DebianKernel, err error) {
 	dk.Version.Package = version
 
 	regex := `^linux-(image|headers)-[0-9\.\-]*-(amd64|amd64-unsigned)$`
 
 	packages, err := snapshot.Packages("linux", version, "amd64", regex)
-	if len(packages) != 2 {
-		err = errors.New("len(packages) != 2")
+	if len(packages) == 0 {
+		err = ErrNoBinaryPackages
+		return
+	} else if len(packages) == 1 {
+		if strings.Contains(packages[0].Name, "image") {
+			err = ErrNoHeadersPackage
+			return
+		} else if strings.Contains(packages[0].Name, "headers") {
+			err = ErrNoImagePackage
+			return
+		} else {
+			err = fmt.Errorf("wtf? %v", packages[0].Name)
+			return
+		}
+	} else if len(packages) > 2 {
+		err = errors.New("more than two binary packages found")
 		return
 	}
 
