@@ -287,12 +287,15 @@ func Packages(srcname, version, arch, regex string) (pkgs []Package, err error) 
 			continue
 		}
 
+		log.Trace().Msgf("matched %v", res.Name)
+
 		var pkg Package
 		pkg, err = NewPackage(res.Name, srcname, version, arch)
 		if err != nil {
 			return
 		}
 
+		log.Trace().Msgf("append %v", pkg.Name)
 		pkgs = append(pkgs, pkg)
 	}
 
