@@ -36,28 +36,16 @@ func GetDebianKernel(version string) (dk DebianKernel, err error) {
 
 	regex := `^linux-(image|headers)-[a-z+~0-9\.\-]*-(amd64|amd64-unsigned)$`
 
-	pkgs, err := snapshot.Packages("linux", version, "amd64", regex)
-	if err != nil {
-		return
+	filter := []string{
+		"rt-amd64",
+		"cloud-amd64",
+		"all-amd64",
 	}
 
-	// FIXME correct regex
-	var packages []snapshot.Package
-	for _, p := range pkgs {
-		skip := false
-		for _, s := range []string{
-			"rt-amd64",
-			"cloud-amd64",
-			"all-amd64",
-		} {
-			if strings.Contains(p.Name, s) {
-				skip = true
-				break
-			}
-		}
-		if !skip {
-			packages = append(packages, p)
-		}
+	packages, err := snapshot.Packages("linux", version, "amd64",
+		regex, filter)
+	if err != nil {
+		return
 	}
 
 	if len(packages) == 0 {

@@ -283,7 +283,18 @@ func contains(pkgs []Package, pkg Package) bool {
 	return false
 }
 
-func Packages(srcname, version, arch, regex string) (pkgs []Package, err error) {
+func filtered(s string, filter []string) bool {
+	for _, f := range filter {
+		if strings.Contains(s, f) {
+			return true
+		}
+	}
+	return false
+}
+
+func Packages(srcname, version, arch, regex string,
+	filter []string) (pkgs []Package, err error) {
+
 	binpkgs, err := mr.GetBinpackages(srcname, version)
 	if err == mr.ErrNotFound {
 		err = nil
@@ -296,7 +307,7 @@ func Packages(srcname, version, arch, regex string) (pkgs []Package, err error) 
 	r := regexp.MustCompile(regex)
 
 	for _, res := range binpkgs.Result {
-		if !r.MatchString(res.Name) {
+		if !r.MatchString(res.Name) || filtered(res.Name, filter) {
 			continue
 		}
 
