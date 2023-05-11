@@ -274,6 +274,15 @@ func httpGetWithRetry(query string) (resp *http.Response, err error) {
 	return
 }
 
+func contains(pkgs []Package, pkg Package) bool {
+	for _, p := range pkgs {
+		if p.Name == pkg.Name {
+			return true
+		}
+	}
+	return false
+}
+
 func Packages(srcname, version, arch, regex string) (pkgs []Package, err error) {
 	binpkgs, err := mr.GetBinpackages(srcname, version)
 	if err != nil {
@@ -293,6 +302,11 @@ func Packages(srcname, version, arch, regex string) (pkgs []Package, err error) 
 		pkg, err = NewPackage(res.Name, srcname, version, arch)
 		if err != nil {
 			return
+		}
+
+		if contains(pkgs, pkg) {
+			log.Trace().Msgf("%v already in slice O_o", pkg.Name)
+			continue
 		}
 
 		log.Trace().Msgf("append %v", pkg.Name)
