@@ -58,10 +58,8 @@ jobs:
 
         ssh root@$IP systemctl start images-debian --no-block
 
-        ssh root@$IP systemctl status images-debian
-        while [[ $? == 3 ]]; do
-          sleep 1s
-          ssh root@$IP systemctl status images-debian
+        while ssh root@$IP systemctl status images-debian; [[ $ret == 3 ]]; do
+          sleep 1m
         done
 
         scp root@$IP:/var/log/images-debian.log .
