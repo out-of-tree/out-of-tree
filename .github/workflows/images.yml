@@ -1,7 +1,9 @@
 name: Generate Images
 
 on:
-  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/**'
 
 jobs:
   debian-images:
