@@ -26,8 +26,8 @@ jobs:
       run: |
         IP=$(doctl compute droplet list --tag-name=github-actions --format "Name,Public IPv4" | grep -v ID | grep ga-out-of-tree-$GITHUB_SHA | awk '{print $2}')
         sleep 1m
-        ssh -o StrictHostKeyChecking=accept-new root@$IP apt update
-        ssh -o StrictHostKeyChecking=accept-new root@$IP apt install -y git podman
+        ssh -o StrictHostKeyChecking=accept-new root@$IP apt -o 'DPkg::Lock::Timeout=120' update
+        ssh -o StrictHostKeyChecking=accept-new root@$IP apt -o 'DPkg::Lock::Timeout=120' install -y git podman
         ssh -o StrictHostKeyChecking=accept-new root@$IP git clone https://github.com/out-of-tree/out-of-tree
         ssh -o StrictHostKeyChecking=accept-new root@$IP sh -c "cd out-of-tree && git checkout $GITHUB_SHA"
         ssh -o StrictHostKeyChecking=accept-new root@$IP ./out-of-tree/tools/qemu-debian-img/generate-images.sh
