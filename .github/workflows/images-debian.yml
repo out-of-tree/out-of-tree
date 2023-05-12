@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'tools/qemu-debian-img/**'
+      - '.github/workflows/images-debian.yml'
 
 jobs:
   images:

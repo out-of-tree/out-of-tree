@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'tools/qemu-oraclelinux-img/**'
+      - '.github/workflows/images-oraclelinux.yml'
 
 jobs:
   images-oraclelinux:

@@ -5,6 +5,7 @@ on:
   push:
     paths-ignore:
       - ".github/workflows/images-*"
+      - ".github/workflows/debian-cache.yml"
   pull_request:
 
 jobs:
