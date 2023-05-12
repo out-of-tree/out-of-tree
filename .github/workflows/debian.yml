@@ -1,6 +1,7 @@
 name: Debian
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '45 0 * * 5'
 
@@ -22,6 +23,16 @@ jobs:
       with:
         name: debian-cache
         path: /home/runner/debian.cache
+
+    - name: Upload cache
+      uses: BetaHuhn/do-spaces-action@v2
+        with:
+          access_key: ${{ secrets.ACCESS_KEY }}
+          secret_key: ${{ secrets.SECRET_KEY }}
+          space_name: ${{ secrets.SPACE_NAME }}
+          space_region: ${{ secrets.SPACE_REGION }}
+          source: /home/runner/debian.cache
+          out_dir: 1.0.0
 
     - name: Archive logs
       uses: actions/upload-artifact@v3
