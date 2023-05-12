@@ -20,7 +20,7 @@ jobs:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: create droplet
-      run: doctl compute droplet create --tag-name=github-actions ga-out-of-tree-$GITHUB_SHA --size s-1vcpu-1gb --image ubuntu-22-04-x64 --wait
+      run: doctl compute droplet create --ssh-keys='b4:4c:66:7d:be:19:25:43:1c:e0:02:61:9f:49:12:94' --tag-name=github-actions ga-out-of-tree-$GITHUB_SHA --size s-1vcpu-1gb --image ubuntu-22-04-x64 --wait
 
     - name: generate images
       run: |
