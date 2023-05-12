@@ -27,6 +27,8 @@ jobs:
     - name: generate images
       shell: bash
       run: |
+        sleep 1m
+
         IP=$(doctl compute droplet list --tag-name=github-actions --format "Name,Public IPv4" | grep -v ID | grep ga-out-of-tree-images-oraclelinux-$GITHUB_SHA | awk '{print $2}')
 
         while ! ssh -o StrictHostKeyChecking=accept-new root@$IP echo
