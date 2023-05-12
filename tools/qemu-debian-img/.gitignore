@@ -2,3 +2,4 @@
 !.gitignore
 !Dockerfile.template
 !generate-images.sh
+!setup.sh
