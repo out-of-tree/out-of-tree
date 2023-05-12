@@ -16,7 +16,7 @@ jobs:
       run: go build
 
     - name: Cache
-      run: ./out-of-tree --log-level=trace debian cache --path=/home/runner/debian.cache
+      run: ./out-of-tree --log-level=trace debian cache --path=debian.cache
 
     - name: Archive cache
       uses: actions/upload-artifact@v3
@@ -31,7 +31,7 @@ jobs:
         secret_key: ${{ secrets.SECRET_KEY }}
         space_name: ${{ secrets.SPACE_NAME }}
         space_region: ${{ secrets.SPACE_REGION }}
-        source: /home/runner/debian.cache
+        source: debian.cache
         out_dir: 1.0.0
 
     - name: Archive logs
