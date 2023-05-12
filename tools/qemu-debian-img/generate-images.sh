@@ -31,6 +31,10 @@ for version in 7 8 9 10 11; do
     sed "s/_VERSION_/${version}/" Dockerfile.template >> $version/Dockerfile
     sed -i "s/_RELEASE_/${release}/" $version/Dockerfile
 
+    if [[ $version -eq 11 ]]; then
+	sed -i "s/,policykit-1//" $version/Dockerfile
+    fi
+
     repository=$(wget -q -O - https://cdimage.debian.org/mirror/cdimage/archive/${last_version}/amd64/jigdo-bd/debian-${last_version}-amd64-BD-1.jigdo | gunzip | awk -F= '/snapshot.debian.org/ {print $2}' | cut -d ' ' -f 1)
 
     sed -i "s;_REPOSITORY_;${repository};" $version/Dockerfile
