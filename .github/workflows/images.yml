@@ -14,7 +14,9 @@ jobs:
     - uses: actions/checkout@v1
 
     - name: debootstrap
-      run: ./tools/qemu-debian-img/generate-images.sh
+      run: |
+        cd ./tools/qemu-debian-img/
+        ./generate-images.sh
 
     - name: Upload Debian 7 image
       uses: BetaHuhn/do-spaces-action@v2
