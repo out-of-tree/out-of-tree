@@ -39,10 +39,10 @@ for version in 7 8 9 10 11; do
 
     sed -i "s;_REPOSITORY_;${repository};" $version/Dockerfile
 
-    docker build -t gen-debian${version}-image $version
+    podman build -t gen-debian${version}-image $version
     rm -rf $version
 
-    docker run --privileged -v $(pwd):/shared -t gen-debian${version}-image
+    podman run --privileged -v $(pwd):/shared -t gen-debian${version}-image
 
     tar -Szcf out_of_tree_debian_${version}.img.tar.gz out_of_tree_debian_${version}.img
 done
