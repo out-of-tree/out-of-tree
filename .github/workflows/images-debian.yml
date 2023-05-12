@@ -41,7 +41,7 @@ jobs:
         ssh root@$IP git clone https://github.com/out-of-tree/out-of-tree
         ssh root@$IP "cd out-of-tree && git checkout $GITHUB_SHA"
 
-        ssh root@$IP "echo -e '[Unit]\nDescription=Debian image generator and uploader\n[Service]\nStandardError=append:/var/log/images-debian.log\nStandardOutput=append:/var/log/images-debian.log\nType=oneshot' >> /etc/systemd/system/images-debian.service"
+        ssh root@$IP "echo -e '[Unit]\nDescription=Debian image generator and uploader\n[Service]\nRemainAfterExit=yes\nStandardError=append:/var/log/images-debian.log\nStandardOutput=append:/var/log/images-debian.log\nType=oneshot' >> /etc/systemd/system/images-debian.service"
 
         ssh root@$IP "echo Environment=HOST=fra1.digitaloceanspaces.com >> /etc/systemd/system/images-debian.service"
         ssh root@$IP "echo Environment=HOST_BUCKET=out-of-tree.fra1.digitaloceanspaces.com >> /etc/systemd/system/images-debian.service"
@@ -58,13 +58,14 @@ jobs:
 
         ssh root@$IP systemctl start images-debian --no-block
 
-        sleep 1h
-
-        while ssh root@$IP systemctl status images-debian; [[ $ret == 3 ]]; do
-          sleep 1m
+        while ! ssh root@$IP systemctl show images-debian -p SubState --value | grep -E '(failed|exited)'
+        do
+          sleep 1s
         done
 
         scp root@$IP:/var/log/images-debian.log .
+
+        ssh root@$IP systemctl is-active images-debian
 
     - name: Archive logs
       if: always()
