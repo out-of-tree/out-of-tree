@@ -22,7 +22,7 @@ jobs:
       run: sudo apt install s3cmd
 
     - name: Upload cache
-      run:"s3cmd put /home/runner/debian.cache s3://out-of-tree/1.0.0 --host=fra1.digitaloceanspaces.com --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
+      run: s3cmd put /home/runner/debian.cache s3://out-of-tree/1.0.0 --host=fra1.digitaloceanspaces.com --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
 
     - name: Archive cache
       uses: actions/upload-artifact@v3
