@@ -68,6 +68,7 @@ jobs:
         ../../out-of-tree --log-level=debug pew --qemu-timeout=10m
 
     - name: Archive logs
+      if: always()
       uses: actions/upload-artifact@v3
       with:
         name: test-end-to-end-examples-logs
@@ -126,6 +127,7 @@ jobs:
         ../out-of-tree --log-level=debug pew --qemu-timeout=10m
 
     - name: Archive logs
+      if: always()
       uses: actions/upload-artifact@v3
       with:
         name: test-end-to-end-${{ matrix.os.distro }}-${{ matrix.os.release }}-logs

@@ -31,6 +31,7 @@ jobs:
         path: /home/runner/debian.cache
 
     - name: Archive logs
+      if: always()
       uses: actions/upload-artifact@v3
       with:
         name: debian-cache-logs
