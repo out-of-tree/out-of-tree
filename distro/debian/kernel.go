@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 )
 
@@ -97,6 +99,58 @@ func GetDebianKernel(version string) (dk DebianKernel, err error) {
 
 	s := strings.Replace(dk.Headers.Name, "linux-headers-", "", -1)
 	dk.Version.ABI = strings.Replace(s, "-amd64", "", -1)
+
+	return
+}
+
+func GetKernels(c *Cache, refetchDays int) (kernels []DebianKernel, err error) {
+	versions, err := snapshot.SourcePackageVersions("linux")
+	if err != nil {
+		log.Error().Err(err).Msg("get source package versions")
+		return
+	}
+
+	for i, version := range versions {
+		slog := log.With().Str("version", version).Logger()
+		slog.Debug().Msgf("%03d/%03d", i, len(versions))
+
+		var dk DebianKernel
+
+		dk, err = c.Get(version)
+		if err == nil && !dk.Internal.Invalid {
+			slog.Debug().Msgf("found in cache")
+			kernels = append(kernels, dk)
+			continue
+		}
+
+		if dk.Internal.Invalid {
+			refetch := dk.Internal.LastFetch.AddDate(0, 0, refetchDays)
+			if refetch.After(time.Now()) {
+				slog.Debug().Msgf("refetch at %v", refetchDays)
+				continue
+			}
+		}
+
+		dk, err = GetDebianKernel(version)
+		if err != nil {
+			if err == ErrNoBinaryPackages {
+				slog.Warn().Err(err).Msg("")
+			} else {
+				slog.Error().Err(err).Msg("get debian kernel")
+			}
+
+			dk.Internal.Invalid = true
+			dk.Internal.LastFetch = time.Now()
+		}
+
+		err = c.Put(dk)
+		if err != nil {
+			slog.Error().Err(err).Msg("put to cache")
+			return
+		}
+
+		slog.Debug().Msgf("%s cached", version)
+	}
 
 	return
 }
