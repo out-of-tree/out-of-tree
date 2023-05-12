@@ -30,7 +30,7 @@ jobs:
         ssh -o StrictHostKeyChecking=accept-new root@$IP apt-get update
         ssh -o StrictHostKeyChecking=accept-new root@$IP apt-get install -y git podman
         ssh -o StrictHostKeyChecking=accept-new root@$IP git clone https://github.com/out-of-tree/out-of-tree
-        ssh -o StrictHostKeyChecking=accept-new root@$IP sh -c "cd out-of-tree && git checkout $GITHUB_SHA"
+        ssh -o StrictHostKeyChecking=accept-new root@$IP "cd out-of-tree && git checkout $GITHUB_SHA"
         ssh -o StrictHostKeyChecking=accept-new root@$IP ./out-of-tree/tools/qemu-debian-img/generate-images.sh
 
     # - name: delete droplet
