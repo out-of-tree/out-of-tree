@@ -16,23 +16,19 @@ jobs:
       run: go build
 
     - name: Cache
-      run: ./out-of-tree --log-level=trace debian cache --path=debian.cache
+      run: ./out-of-tree --log-level=trace debian cache --path=/home/runner/debian.cache
+
+    - name: Install s3cmd
+      run: sudo apt install s3cmd
+
+    - name: Upload cache
+      run:"s3cmd put /home/runner/debian.cache s3://out-of-tree/1.0.0 --host=fra1.digitaloceanspaces.com --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
 
     - name: Archive cache
       uses: actions/upload-artifact@v3
       with:
         name: debian-cache
         path: /home/runner/debian.cache
-
-    - name: Upload cache
-      uses: BetaHuhn/do-spaces-action@v2
-      with:
-        access_key: ${{ secrets.ACCESS_KEY }}
-        secret_key: ${{ secrets.SECRET_KEY }}
-        space_name: ${{ secrets.SPACE_NAME }}
-        space_region: ${{ secrets.SPACE_REGION }}
-        source: debian.cache
-        out_dir: 1.0.0
 
     - name: Archive logs
       uses: actions/upload-artifact@v3
