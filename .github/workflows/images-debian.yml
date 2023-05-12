@@ -28,7 +28,7 @@ jobs:
       run: |
         IP=$(doctl compute droplet list --tag-name=github-actions --format "Name,Public IPv4" | grep -v ID | grep ga-out-of-tree-images-debian-$GITHUB_SHA | awk '{print $2}')
 
-        while ! ssh -o StrictHostKeyChecking=accept-new root@$IP pkill apt-get
+        while ! ssh -o StrictHostKeyChecking=accept-new root@$IP echo
         do
           sleep 1s
         done
