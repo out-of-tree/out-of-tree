@@ -27,7 +27,7 @@ type kernel struct {
 // KernelMask defines the kernel
 type KernelMask struct {
 	DistroType    DistroType
-	DistroRelease string // 18.04/7.4.1708/9.1
+	DistroRelease string // 18.04/7/9
 	ReleaseMask   string
 
 	// Overrides ReleaseMask
