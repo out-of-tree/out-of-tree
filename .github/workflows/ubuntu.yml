@@ -33,7 +33,9 @@ jobs:
       run: ./tools/qemu-ubuntu-img/bootstrap.sh
 
     - name: Unit Testing
-      run: go test -parallel 1 -v ./...
+      run: |
+        mkdir ~/.out-of-tree
+        go test -parallel 1 -v ./...
 
   test-end-to-end-examples:
     name: E2E Testing (Examples)
