@@ -34,7 +34,7 @@ jobs:
           sleep 1s
         done
 
-        ssh root@$IP "rm /etc/apt/apt.conf.d/*upgrades*"
+        sleep 5m
         ssh root@$IP pkill apt-get || true
 
         ssh root@$IP apt-get update
