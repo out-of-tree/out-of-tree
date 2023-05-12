@@ -15,8 +15,52 @@ jobs:
     - name: debootstrap
       run: ./tools/qemu-debian-img/generate-images.sh
 
-    - name: Archive images
-      uses: actions/upload-artifact@v3
+    - name: Upload Debian 7 image
+      uses: BetaHuhn/do-spaces-action@v2
       with:
-        name: debian-images
-        path: /home/runner/work/out-of-tree/out-of-tree/tools/qemu-debian-img/*.tar.gz
+        access_key: ${{ secrets.ACCESS_KEY }}
+        secret_key: ${{ secrets.SECRET_KEY }}
+        space_name: ${{ secrets.SPACE_NAME }}
+        space_region: ${{ secrets.SPACE_REGION }}
+        source: tools/qemu-debian-img/out_of_tree_debian_7.img
+        out_dir: 1.0.0
+
+    - name: Upload Debian 8 image
+      uses: BetaHuhn/do-spaces-action@v2
+      with:
+        access_key: ${{ secrets.ACCESS_KEY }}
+        secret_key: ${{ secrets.SECRET_KEY }}
+        space_name: ${{ secrets.SPACE_NAME }}
+        space_region: ${{ secrets.SPACE_REGION }}
+        source: tools/qemu-debian-img/out_of_tree_debian_7.img
+        out_dir: 1.0.0
+
+    - name: Upload Debian 9 image
+      uses: BetaHuhn/do-spaces-action@v2
+      with:
+        access_key: ${{ secrets.ACCESS_KEY }}
+        secret_key: ${{ secrets.SECRET_KEY }}
+        space_name: ${{ secrets.SPACE_NAME }}
+        space_region: ${{ secrets.SPACE_REGION }}
+        source: tools/qemu-debian-img/out_of_tree_debian_7.img
+        out_dir: 1.0.0
+
+    - name: Upload Debian 10 image
+      uses: BetaHuhn/do-spaces-action@v2
+      with:
+        access_key: ${{ secrets.ACCESS_KEY }}
+        secret_key: ${{ secrets.SECRET_KEY }}
+        space_name: ${{ secrets.SPACE_NAME }}
+        space_region: ${{ secrets.SPACE_REGION }}
+        source: tools/qemu-debian-img/out_of_tree_debian_7.img
+        out_dir: 1.0.0
+
+    - name: Upload Debian 11 image
+      uses: BetaHuhn/do-spaces-action@v2
+      with:
+        access_key: ${{ secrets.ACCESS_KEY }}
+        secret_key: ${{ secrets.SECRET_KEY }}
+        space_name: ${{ secrets.SPACE_NAME }}
+        space_region: ${{ secrets.SPACE_REGION }}
+        source: tools/qemu-debian-img/out_of_tree_debian_7.img
+        out_dir: 1.0.0
