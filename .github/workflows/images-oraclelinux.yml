@@ -1,0 +1,39 @@
+name: Oracle Linux images
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/qemu-oraclelinux-img/**'
+
+jobs:
+  images-oraclelinux:
+    name: Generate Oracle Linux images
+    runs-on: ubuntu-latest
+    steps:
+    - uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+    - uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: create droplet
+      run: doctl compute droplet create --ssh-keys='b4:4c:66:7d:be:19:25:43:1c:e0:02:61:9f:49:12:94' --tag-name=github-actions ga-out-of-tree-images-oraclelinux-$GITHUB_SHA --size s-1vcpu-1gb --image ubuntu-22-04-x64 --wait
+
+    - name: generate images
+      run: |
+        IP=$(doctl compute droplet list --tag-name=github-actions --format "Name,Public IPv4" | grep -v ID | grep ga-out-of-tree-images-oraclelinux-$GITHUB_SHA | awk '{print $2}')
+        sleep 1m
+        ssh -o StrictHostKeyChecking=accept-new root@$IP pkill apt-get
+        ssh root@$IP apt-get update
+        ssh root@$IP apt-get install -y git podman s3cmd
+        ssh root@$IP git clone https://github.com/out-of-tree/out-of-tree
+        ssh root@$IP "cd out-of-tree && git checkout $GITHUB_SHA"
+        ssh root@$IP ./out-of-tree/tools/qemu-oraclelinux-img/generate-images.sh
+        ssh root@$IP "s3cmd put ./out-of-tree/tools/qemu-oraclelinux-img/*.tar.gz s3://out-of-tree/1.0.0 --host=fra1.digitaloceanspaces.com --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
+
+    - name: delete droplet
+      if: always()
+      run: doctl compute droplet delete -f ga-out-of-tree-images-oraclelinux-$GITHUB_SHA
