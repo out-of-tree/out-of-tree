@@ -1,0 +1,29 @@
+FROM debian:_VERSION_
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN echo 'deb [check-valid-until=no trusted=yes] _REPOSITORY_ _RELEASE_ main contrib' > /etc/apt/sources.list
+RUN echo 'deb [check-valid-until=no trusted=yes] _REPOSITORY_ _RELEASE_-updates main contrib' >> /etc/apt/sources.list
+
+RUN apt-get update
+RUN apt-get remove -y iputils-ping
+RUN apt-get autoremove -y
+RUN apt-get install -y debootstrap qemu-utils
+
+ENV TMPDIR=/tmp/debian
+ENV IMAGEDIR=/tmp/image
+ENV IMAGE=/shared/out_of_tree_debian__VERSION_.img
+ENV REPOSITORY=_REPOSITORY_
+ENV RELEASE=_RELEASE_
+
+RUN mkdir $IMAGEDIR
+
+# Must be executed with --privileged because of /dev/loop
+CMD debootstrap --include=openssh-server,policykit-1 \
+	$RELEASE $TMPDIR $REPOSITORY && \
+	/shared/setup.sh $TMPDIR && \
+	qemu-img create $IMAGE 2G && \
+	mkfs.ext4 -F $IMAGE && \
+	mount -o loop $IMAGE $IMAGEDIR && \
+	cp -a $TMPDIR/* $IMAGEDIR/ && \
+	umount $IMAGEDIR

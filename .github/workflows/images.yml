@@ -1,0 +1,20 @@
+name: Generate Images
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debian-images:
+    name: Debian Images
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: debootstrap
+      run: ./tools/qemu-debian-img/generate-images.sh
+
+    - name: Archive images
+      uses: actions/upload-artifact@v3
+      with:
+        name: debian-images
+        path: /home/runner/work/out-of-tree/out-of-tree/tools/qemu-debian-img/*.tar.gz
