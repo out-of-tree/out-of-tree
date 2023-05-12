@@ -33,6 +33,9 @@ jobs:
           sleep 1s
         done
 
+        sleep 1m
+        ssh root@$IP pkill apt-get
+
         ssh root@$IP apt-get update
         ssh root@$IP apt-get install -y git podman s3cmd
         ssh root@$IP git clone https://github.com/out-of-tree/out-of-tree
