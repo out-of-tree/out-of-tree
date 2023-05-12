@@ -1,4 +1,4 @@
-name: Generate Images
+name: Generate images
 
 on:
   workflow_dispatch:
@@ -7,63 +7,29 @@ on:
       - 'tools/**'
 
 jobs:
-  debian-images:
-    name: Debian Images
+  images:
+    name: Images
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-    - name: debootstrap
+    - uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: create droplet
+      run: doctl compute droplet create --tag-name=github-actions ga-out-of-tree-$GITHUB_SHA --size s-1vcpu-1gb --image ubuntu-22-04-x64 --wait
+
+    - name: generate images
       run: |
-        cd ./tools/qemu-debian-img/
-        sudo ./generate-images.sh
+        IP=$(doctl compute droplet list --tag-name=github-actions --format "Name,Public IPv4" | grep -v ID | grep ga-out-of-tree-$GITHUB_SHA | awk "{print $2}")
+        ssh -o StrictHostKeyChecking=accept-new root@$IP apt update
+        ssh -o StrictHostKeyChecking=accept-new root@$IP apt install -y git podman
+        ssh -o StrictHostKeyChecking=accept-new root@$IP git clone https://github.com/out-of-tree/out-of-tree
+        ssh -o StrictHostKeyChecking=accept-new root@$IP sh -c "cd out-of-tree && git checkout $GITHUB_SHA"
 
-    - name: Upload Debian 7 image
-      uses: BetaHuhn/do-spaces-action@v2
-      with:
-        access_key: ${{ secrets.ACCESS_KEY }}
-        secret_key: ${{ secrets.SECRET_KEY }}
-        space_name: ${{ secrets.SPACE_NAME }}
-        space_region: ${{ secrets.SPACE_REGION }}
-        source: tools/qemu-debian-img/out_of_tree_debian_7.img
-        out_dir: 1.0.0
-
-    - name: Upload Debian 8 image
-      uses: BetaHuhn/do-spaces-action@v2
-      with:
-        access_key: ${{ secrets.ACCESS_KEY }}
-        secret_key: ${{ secrets.SECRET_KEY }}
-        space_name: ${{ secrets.SPACE_NAME }}
-        space_region: ${{ secrets.SPACE_REGION }}
-        source: tools/qemu-debian-img/out_of_tree_debian_7.img
-        out_dir: 1.0.0
-
-    - name: Upload Debian 9 image
-      uses: BetaHuhn/do-spaces-action@v2
-      with:
-        access_key: ${{ secrets.ACCESS_KEY }}
-        secret_key: ${{ secrets.SECRET_KEY }}
-        space_name: ${{ secrets.SPACE_NAME }}
-        space_region: ${{ secrets.SPACE_REGION }}
-        source: tools/qemu-debian-img/out_of_tree_debian_7.img
-        out_dir: 1.0.0
-
-    - name: Upload Debian 10 image
-      uses: BetaHuhn/do-spaces-action@v2
-      with:
-        access_key: ${{ secrets.ACCESS_KEY }}
-        secret_key: ${{ secrets.SECRET_KEY }}
-        space_name: ${{ secrets.SPACE_NAME }}
-        space_region: ${{ secrets.SPACE_REGION }}
-        source: tools/qemu-debian-img/out_of_tree_debian_7.img
-        out_dir: 1.0.0
-
-    - name: Upload Debian 11 image
-      uses: BetaHuhn/do-spaces-action@v2
-      with:
-        access_key: ${{ secrets.ACCESS_KEY }}
-        secret_key: ${{ secrets.SECRET_KEY }}
-        space_name: ${{ secrets.SPACE_NAME }}
-        space_region: ${{ secrets.SPACE_REGION }}
-        source: tools/qemu-debian-img/out_of_tree_debian_7.img
-        out_dir: 1.0.0
+    - name: delete droplet
+      if: always()
+      run: doctl compute droplet delete -f ga-out-of-tree-$GITHUB_SHA
