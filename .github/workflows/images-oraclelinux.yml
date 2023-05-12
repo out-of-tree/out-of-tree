@@ -23,17 +23,50 @@ jobs:
     - name: create droplet
       run: doctl compute droplet create --ssh-keys='b4:4c:66:7d:be:19:25:43:1c:e0:02:61:9f:49:12:94' --tag-name=github-actions ga-out-of-tree-images-oraclelinux-$GITHUB_SHA --size s-1vcpu-1gb --image ubuntu-22-04-x64 --wait
 
+      # TODO Move to common script
     - name: generate images
+      shell: bash
       run: |
         IP=$(doctl compute droplet list --tag-name=github-actions --format "Name,Public IPv4" | grep -v ID | grep ga-out-of-tree-images-oraclelinux-$GITHUB_SHA | awk '{print $2}')
+
+        while ! ssh -o StrictHostKeyChecking=accept-new root@$IP echo
+        do
+          sleep 1s
+        done
+
         sleep 1m
-        ssh -o StrictHostKeyChecking=accept-new root@$IP pkill apt-get
+        ssh root@$IP pkill apt-get || true
+
         ssh root@$IP apt-get update
         ssh root@$IP apt-get install -y git podman s3cmd
         ssh root@$IP git clone https://github.com/out-of-tree/out-of-tree
         ssh root@$IP "cd out-of-tree && git checkout $GITHUB_SHA"
-        ssh root@$IP ./out-of-tree/tools/qemu-oraclelinux-img/generate-images.sh
-        ssh root@$IP "s3cmd put ./out-of-tree/tools/qemu-oraclelinux-img/*.tar.gz s3://out-of-tree/1.0.0 --host=fra1.digitaloceanspaces.com --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
+
+        ssh root@$IP "echo -e '[Unit]\nDescription=Oracle Linux image generator and uploader\n[Service]\nRemainAfterExit=yes\nStandardError=append:/var/log/images-oraclelinux.log\nStandardOutput=append:/var/log/images-oraclelinux.log\nType=oneshot' >> /etc/systemd/system/images-oraclelinux.service"
+
+        ssh root@$IP "echo Environment=HOST=fra1.digitaloceanspaces.com >> /etc/systemd/system/images-oraclelinux.service"
+        ssh root@$IP "echo Environment=HOST_BUCKET=out-of-tree.fra1.digitaloceanspaces.com >> /etc/systemd/system/images-oraclelinux.service"
+        ssh root@$IP "echo Environment=ACCESS_KEY=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} >> /etc/systemd/system/images-oraclelinux.service"
+        ssh root@$IP "echo Environment=SECRET_KEY=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }} >> /etc/systemd/system/images-oraclelinux.service"
+
+        ssh root@$IP "echo 'ExecStart=/root/out-of-tree/tools/qemu-oraclelinux-img/generate-images.sh' >> /etc/systemd/system/images-oraclelinux.service"
+
+        ssh root@$IP 'echo ExecStart=/bin/sh -c \"s3cmd put --acl-public /root/out-of-tree/tools/qemu-oraclelinux-img/*.tar.gz s3://out-of-tree/1.0.0/ --host=\$HOST --host-bucket=\$HOST_BUCKET --access_key=\$ACCESS_KEY --secret_key=\$SECRET_KEY\" >> /etc/systemd/system/images-oraclelinux.service'
+
+        ssh root@$IP "echo TimeoutStopSec=1 >> /etc/systemd/system/images-oraclelinux.service"
+
+        ssh root@$IP systemctl daemon-reload
+
+        ssh root@$IP systemctl start images-oraclelinux --no-block
+
+        while ! ssh root@$IP systemctl show images-oraclelinux -p SubState --value | grep -E '(failed|exited)'
+        do
+          sleep 1s
+        done
+
+        scp root@$IP:/var/log/images-oraclelinux.log .
+
+        ssh root@$IP systemctl is-active images-oraclelinux
 
     - name: delete droplet
       if: always()
