@@ -1,6 +1,11 @@
 name: Build on macOS
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - ".github/workflows/images-*"
+  pull_request:
 
 jobs:
   build:
