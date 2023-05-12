@@ -22,6 +22,7 @@ RUN mkdir $IMAGEDIR
 CMD debootstrap --include=openssh-server,policykit-1 \
 	$RELEASE $TMPDIR $REPOSITORY && \
 	/shared/setup.sh $TMPDIR && \
+	cp /etc/apt/sources.list $TMPDIR/etc/apt/sources.list && \
 	qemu-img create $IMAGE 2G && \
 	mkfs.ext4 -F $IMAGE && \
 	mount -o loop $IMAGE $IMAGEDIR && \
