@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/distro/debian"
@@ -12,7 +14,8 @@ type DebianCmd struct {
 }
 
 type DebianCacheCmd struct {
-	Path string `help:"path to cache" default:"debian.cache"`
+	Path    string `help:"path to cache" default:"debian.cache"`
+	Refetch int    `help:"days before refetch versions without deb package" default:"7"`
 }
 
 func (cmd *DebianCacheCmd) Run() (err error) {
@@ -33,20 +36,32 @@ func (cmd *DebianCacheCmd) Run() (err error) {
 		slog := log.With().Str("version", version).Logger()
 		slog.Info().Msgf("%03d/%03d", i, len(versions))
 
-		_, err = c.Get(version)
-		if err == nil {
+		var dk debian.DebianKernel
+
+		dk, err = c.Get(version)
+		if err == nil && !dk.Internal.Invalid {
 			slog.Info().Msgf("found in cache")
 			continue
 		}
 
-		var dk debian.DebianKernel
+		if dk.Internal.Invalid {
+			refetch := dk.Internal.LastFetch.AddDate(0, 0, cmd.Refetch)
+			if refetch.After(time.Now()) {
+				slog.Info().Msgf("refetch at %v", refetch)
+				continue
+			}
+		}
+
 		dk, err = debian.GetDebianKernel(version)
-		if err == debian.ErrNoBinaryPackages {
-			slog.Warn().Err(err).Msg("")
-			continue
-		} else if err != nil {
-			slog.Error().Err(err).Msg("get debian kernel")
-			continue
+		if err != nil {
+			if err == debian.ErrNoBinaryPackages {
+				slog.Warn().Err(err).Msg("")
+			} else {
+				slog.Error().Err(err).Msg("get debian kernel")
+			}
+
+			dk.Internal.Invalid = true
+			dk.Internal.LastFetch = time.Now()
 		}
 
 		err = c.Put(dk)

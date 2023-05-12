@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 )
@@ -23,6 +24,12 @@ type DebianKernel struct {
 	Version DebianKernelVersion
 	Image   snapshot.Package
 	Headers snapshot.Package
+
+	// FIXME There is a better way
+	Internal struct {
+		Invalid   bool
+		LastFetch time.Time
+	}
 }
 
 var (
