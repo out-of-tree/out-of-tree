@@ -32,7 +32,7 @@ jobs:
         ssh root@$IP git clone https://github.com/out-of-tree/out-of-tree
         ssh root@$IP "cd out-of-tree && git checkout $GITHUB_SHA"
         ssh root@$IP ./out-of-tree/tools/qemu-debian-img/generate-images.sh
-        ssh root@$IP "s3cmd put ./out-of-tree/tools/qemu-debian-img/*.tar.gz s3://out-of-tree/1.0.0 --host=fra1.digitaloceanspaces.com --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
+        ssh root@$IP "s3cmd put ./out-of-tree/tools/qemu-debian-img/*.tar.gz s3://out-of-tree/1.0.0 --host=fra1.digitaloceanspaces.com --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
 
     - name: delete droplet
       if: always()
