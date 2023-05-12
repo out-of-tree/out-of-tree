@@ -16,7 +16,7 @@ jobs:
     - name: debootstrap
       run: |
         cd ./tools/qemu-debian-img/
-        ./generate-images.sh
+        sudo ./generate-images.sh
 
     - name: Upload Debian 7 image
       uses: BetaHuhn/do-spaces-action@v2
