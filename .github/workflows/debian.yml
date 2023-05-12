@@ -1,0 +1,30 @@
+name: Debian
+
+on:
+  schedule:
+    - cron: '45 0 * * 5'
+
+jobs:
+  debian-cache:
+    name: Build Cache
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: go build
+
+    - name: Cache
+      run: ./out-of-tree --log-level=trace debian cache --path=/home/runner/debian.cache
+
+    - name: Archive cache
+      uses: actions/upload-artifact@v3
+      with:
+        name: debian-cache
+        path: /home/runner/debian.cache
+
+    - name: Archive logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: debian-cache-logs
+        path: /home/runner/.out-of-tree/logs
