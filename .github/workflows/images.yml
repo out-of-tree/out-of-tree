@@ -26,7 +26,7 @@ jobs:
       run: |
         IP=$(doctl compute droplet list --tag-name=github-actions --format "Name,Public IPv4" | grep -v ID | grep ga-out-of-tree-$GITHUB_SHA | awk '{print $2}')
         sleep 1m
-        ssh -o StrictHostKeyChecking=accept-new root@$IP sh -c 'while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 1s; done'
+        ssh -o StrictHostKeyChecking=accept-new root@$IP pkill apt-get
         ssh -o StrictHostKeyChecking=accept-new root@$IP apt-get update
         ssh -o StrictHostKeyChecking=accept-new root@$IP apt-get install -y git podman
         ssh -o StrictHostKeyChecking=accept-new root@$IP git clone https://github.com/out-of-tree/out-of-tree
