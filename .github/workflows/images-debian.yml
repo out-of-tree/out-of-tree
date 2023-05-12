@@ -61,7 +61,7 @@ jobs:
 
         while ! ssh root@$IP systemctl show images-debian -p SubState --value | grep -E '(failed|exited)'
         do
-          sleep 1s
+          sleep 3m
         done
 
         scp root@$IP:/var/log/images-debian.log .
