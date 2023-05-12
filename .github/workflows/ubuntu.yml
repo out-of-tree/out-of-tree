@@ -1,4 +1,4 @@
-name: Ubuntu
+name: Build and test on Ubuntu
 
 on: [push, pull_request]
 
