@@ -24,6 +24,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro/debian"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -100,6 +101,8 @@ func MatchPackages(km config.KernelMask) (pkgs []string, err error) {
 		pkgs, err = matchDebImagePkg(km.DockerName(), km.ReleaseMask)
 	case config.OracleLinux, config.CentOS:
 		pkgs, err = matchOracleLinuxPkg(km.DockerName(), km.ReleaseMask)
+	case config.Debian:
+		pkgs, err = debian.MatchImagePkg(km)
 	default:
 		err = fmt.Errorf("%s not yet supported", km.DistroType.String())
 	}
