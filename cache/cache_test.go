@@ -10,7 +10,6 @@ import (
 )
 
 func TestDownloadQemuImage(t *testing.T) {
-
 	tmp, err := ioutil.TempDir("", "out-of-tree_")
 	if err != nil {
 		return
@@ -22,6 +21,27 @@ func TestDownloadQemuImage(t *testing.T) {
 	err = DownloadQemuImage(tmp, file)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	if !fs.PathExists(filepath.Join(tmp, file)) {
+		t.Fatalf("%s does not exist", file)
+	}
+}
+
+func TestDownloadDebianCache(t *testing.T) {
+	tmp, err := ioutil.TempDir("", "out-of-tree_")
+	if err != nil {
+		return
+	}
+	defer os.RemoveAll(tmp)
+
+	file := "debian.cache"
+
+	cachePath := filepath.Join(tmp, file)
+
+	err = DownloadDebianCache(cachePath)
+	if err != nil {
+		return
 	}
 
 	if !fs.PathExists(filepath.Join(tmp, file)) {
