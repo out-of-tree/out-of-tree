@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 	"github.com/rs/zerolog/log"
 )
@@ -58,7 +59,7 @@ func (cmd *ImageEditCmd) Run(g *Globals) (err error) {
 	}
 
 	image := usr.HomeDir + "/.out-of-tree/images/" + cmd.Name
-	if !exists(image) {
+	if !fs.PathExists(image) {
 		fmt.Println("image does not exist")
 	}
 

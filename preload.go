@@ -18,6 +18,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
@@ -68,7 +69,7 @@ func buildAndInsmod(workPath string, q *qemu.System, ki config.KernelInfo,
 	defer os.RemoveAll(tmp)
 
 	var artifact string
-	if exists(cache) {
+	if fs.PathExists(cache) {
 		artifact = cache
 	} else {
 		artifact, err = buildPreload(workPath, tmp, ki, dockerTimeout)
@@ -124,7 +125,7 @@ func cloneOrPull(repo string, ki config.KernelInfo) (workPath, cache string, err
 	workPath = filepath.Join(base, "/repos/", sha1sum(repo))
 
 	var r *git.Repository
-	if exists(workPath) {
+	if fs.PathExists(workPath) {
 		r, err = git.PlainOpen(workPath)
 		if err != nil {
 			return

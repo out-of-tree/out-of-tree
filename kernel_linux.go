@@ -16,6 +16,7 @@ import (
 	"github.com/zcalusic/sysinfo"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
@@ -85,7 +86,7 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 
 		vmlinux := "/usr/lib/debug/boot/vmlinux-" + krel
 		log.Print("vmlinux", vmlinux)
-		if exists(vmlinux) {
+		if fs.PathExists(vmlinux) {
 			ki.VmlinuxPath = vmlinux
 		}
 

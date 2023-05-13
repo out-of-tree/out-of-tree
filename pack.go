@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"time"
 
+	"code.dumpstack.io/tools/out-of-tree/fs"
+
 	"github.com/rs/zerolog/log"
 )
 
@@ -41,7 +43,7 @@ func (cmd *PackCmd) Run(g *Globals) (err error) {
 	for _, f := range files {
 		workPath := g.WorkDir + "/" + f.Name()
 
-		if !exists(workPath + "/.out-of-tree.toml") {
+		if !fs.PathExists(workPath + "/.out-of-tree.toml") {
 			continue
 		}
 

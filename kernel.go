@@ -23,6 +23,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 type KernelCmd struct {
@@ -352,7 +353,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		return
 	}
 
-	if exists(dockerPath) && string(rawOutput) != "" {
+	if fs.PathExists(dockerPath) && string(rawOutput) != "" {
 		log.Info().Msgf("Base image for %s:%s found",
 			sk.DistroType.String(), sk.DistroRelease)
 		if !forceUpdate {
@@ -650,7 +651,7 @@ func genRootfsImage(d containerImageInfo, download bool) (rootfs string, err err
 	os.MkdirAll(imagesPath, os.ModePerm)
 
 	rootfs = imagesPath + imageFile
-	if !exists(rootfs) {
+	if !fs.PathExists(rootfs) {
 		if download {
 			log.Info().Msgf("%v not available, start download", imageFile)
 			err = downloadImage(imagesPath, imageFile)

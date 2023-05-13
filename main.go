@@ -23,6 +23,7 @@ import (
 	"github.com/alecthomas/kong"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 type Globals struct {
@@ -92,37 +93,6 @@ func (lw *LevelWriter) WriteLevel(l zerolog.Level, p []byte) (n int, err error) 
 		return lw.Writer.Write(p)
 	}
 	return len(p), nil
-}
-
-func isFsCaseInsensitive(dir string) (yes bool, err error) {
-	pathLowercase := filepath.Join(dir, "file")
-	fLowercase, err := os.Create(pathLowercase)
-	if err != nil {
-		return
-	}
-	defer fLowercase.Close()
-	defer os.Remove(pathLowercase)
-
-	pathUppercase := filepath.Join(dir, "FILE")
-	fUppercase, err := os.Create(pathUppercase)
-	if err != nil {
-		return
-	}
-	defer fUppercase.Close()
-	defer os.Remove(pathUppercase)
-
-	statLowercase, err := fLowercase.Stat()
-	if err != nil {
-		return
-	}
-
-	statUppercase, err := fUppercase.Stat()
-	if err != nil {
-		return
-	}
-
-	yes = os.SameFile(statLowercase, statUppercase)
-	return
 }
 
 var tempDirBase string
@@ -197,7 +167,7 @@ func main() {
 	}
 
 	path := filepath.Join(usr.HomeDir, ".out-of-tree")
-	yes, err := isFsCaseInsensitive(path)
+	yes, err := fs.CaseInsensitive(path)
 	if err != nil {
 		log.Fatal().Err(err).Msg(path)
 	}

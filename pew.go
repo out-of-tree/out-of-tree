@@ -24,6 +24,7 @@ import (
 	"gopkg.in/logrusorgru/aurora.v2"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
@@ -691,7 +692,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 
 	if cmd.Test == "" {
 		cmd.Test = result.BuildArtifact + "_test"
-		if !exists(cmd.Test) {
+		if !fs.PathExists(cmd.Test) {
 			slog.Debug().Msgf("%s does not exist", cmd.Test)
 			cmd.Test = tmp + "/source/" + "test.sh"
 		} else {
@@ -822,13 +823,6 @@ func (cmd PewCmd) performCI(ka config.Artifact) (err error) {
 	}
 
 	return
-}
-
-func exists(path string) bool {
-	if _, err := os.Stat(path); err != nil {
-		return false
-	}
-	return true
 }
 
 func kernelMask(kernel string) (km config.KernelMask, err error) {
