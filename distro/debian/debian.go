@@ -121,6 +121,7 @@ func kernelRelease(deb string) (r Release, err error) {
 }
 
 var (
+	CacheURL    string
 	CachePath   string
 	RefetchDays int = 7
 )
