@@ -49,6 +49,8 @@ func DownloadQemuImage(path, file string) (err error) {
 		return
 	}
 
+	log.Debug().Msgf("download qemu image from %s", fileurl)
+
 	resp, err := grab.Get(tmp, fileurl)
 	if err != nil {
 		err = fmt.Errorf("Cannot download %s. It looks like you need "+
@@ -76,6 +78,8 @@ func DownloadDebianCache(cachePath string) (err error) {
 	if err != nil {
 		return
 	}
+
+	log.Debug().Msgf("download debian cache from %s", fileurl)
 
 	resp, err := grab.Get(tmp, fileurl)
 	if err != nil {
