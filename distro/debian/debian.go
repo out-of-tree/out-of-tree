@@ -104,19 +104,40 @@ func kernelRelease(deb string) (r Release, err error) {
 		return
 	}
 
+	// Wheezy 3.2
+	// Jessie 3.16
+	// Stretch 4.9
+	// Buster 4.19
+	// Bullseye 5.10
+
 	if major < 3 {
 		err = errors.New("not supported")
 		return
-	} else if major <= 3 && minor < 16 {
-		r = Wheezy // 3.2
-	} else if major <= 4 && minor < 9 {
-		r = Jessie // 3.16
-	} else if major <= 4 && minor < 19 {
-		r = Stretch // 4.9
-	} else if major <= 5 && minor < 10 {
-		r = Buster // 4.19
-	} else {
-		r = Bullseye // 5.10
+	}
+
+	switch major {
+	case 3:
+		if minor < 16 {
+			r = Wheezy
+		} else {
+			r = Jessie
+		}
+	case 4:
+		if minor < 9 {
+			r = Jessie
+		} else if minor < 19 {
+			r = Stretch
+		} else {
+			r = Buster
+		}
+	case 5:
+		if minor < 10 {
+			r = Buster
+		} else {
+			r = Bullseye
+		}
+	default:
+		r = Bullseye // latest release
 	}
 
 	return
