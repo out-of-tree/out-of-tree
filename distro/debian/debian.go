@@ -133,7 +133,7 @@ func MatchImagePkg(km config.KernelMask) (pkgs []string, err error) {
 
 		err = cache.DownloadDebianCache(CachePath)
 		if err != nil {
-			log.Debug().Msg("No remote cache, will take some time")
+			log.Debug().Err(err).Msg("No remote cache, will take some time")
 		}
 	} else {
 		log.Debug().Msgf("Debian kernels cache path: %s", CachePath)
