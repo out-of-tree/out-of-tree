@@ -6,7 +6,6 @@ package cache
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -15,7 +14,7 @@ import (
 	"github.com/cavaliergopher/grab/v3"
 	"github.com/rs/zerolog/log"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 var URL = "https://out-of-tree.fra1.digitaloceanspaces.com/1.0.0/"
@@ -39,7 +38,7 @@ func unpackTar(archive, destination string) (err error) {
 }
 
 func DownloadQemuImage(path, file string) (err error) {
-	tmp, err := ioutil.TempDir(config.Dir("tmp"), "out-of-tree_")
+	tmp, err := fs.TempDir()
 	if err != nil {
 		return
 	}
@@ -65,7 +64,7 @@ func DownloadQemuImage(path, file string) (err error) {
 }
 
 func DownloadDebianCache(cachePath string) (err error) {
-	tmp, err := ioutil.TempDir(config.Dir("tmp"), "out-of-tree_")
+	tmp, err := fs.TempDir()
 	if err != nil {
 		return
 	}
