@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/rapidloop/skv"
+
+	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 )
 
 func TestCache(t *testing.T) {
@@ -22,11 +24,14 @@ func TestCache(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	image := snapshot.Package{}
+	image.Deb.Hash = "12345"
+
 	version := "4.17.14-1"
 
-	dk, err := GetDebianKernel(version)
-	if err != nil {
-		t.Fatal(err)
+	dk := DebianKernel{
+		Version: DebianKernelVersion{Package: version},
+		Image:   image,
 	}
 
 	err = c.Put(dk)
