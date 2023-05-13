@@ -41,7 +41,7 @@ func TestDownloadDebianCache(t *testing.T) {
 
 	err = DownloadDebianCache(cachePath)
 	if err != nil {
-		return
+		t.Fatal(err)
 	}
 
 	if !fs.PathExists(filepath.Join(tmp, file)) {
