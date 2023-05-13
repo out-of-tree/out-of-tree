@@ -1,6 +1,8 @@
 package debian
 
 import (
+	"sync"
+
 	"github.com/rapidloop/skv"
 )
 
@@ -8,7 +10,12 @@ type Cache struct {
 	store *skv.KVStore
 }
 
+// cache is not thread-safe, so make sure there are only one user
+var mu sync.Mutex
+
 func NewCache(path string) (c *Cache, err error) {
+	mu.Lock()
+
 	c = &Cache{}
 	c.store, err = skv.Open(path)
 	return
@@ -32,6 +39,8 @@ func (c Cache) GetVersions() (versions []string, err error) {
 	return
 }
 
-func (c Cache) Close() error {
-	return c.store.Close()
+func (c Cache) Close() (err error) {
+	err = c.store.Close()
+	mu.Unlock()
+	return
 }
