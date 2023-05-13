@@ -81,6 +81,8 @@ func ReadOutOfTreeConf(path string) (c OutOfTree, err error) {
 
 	if c.Directory != "" {
 		Directory = c.Directory
+	} else {
+		c.Directory = Dir("")
 	}
 
 	if c.Kernels == "" {
