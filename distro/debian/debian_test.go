@@ -3,12 +3,10 @@ package debian
 import (
 	"testing"
 
-	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
 func TestMatchImagePkg(t *testing.T) {
-	cache.URL = "https://out-of-tree.fra1.digitaloceanspaces.com/1.0.0/"
 	t.Log("tested with cache by default")
 
 	km := config.KernelMask{

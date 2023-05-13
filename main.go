@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
@@ -33,7 +34,7 @@ type Globals struct {
 
 	WorkDir string `help:"path to work directory" default:"./" type:"path"`
 
-	CacheURL string `default:"https://out-of-tree.fra1.digitaloceanspaces.com/1.0.0/" hidden:""`
+	CacheURL url.URL
 }
 
 type CLI struct {
@@ -190,7 +191,10 @@ func main() {
 	}
 	container.Runtime = cli.ContainerRuntime
 
-	cache.URL = cli.Globals.CacheURL
+	if cli.Globals.CacheURL.String() != "" {
+		cache.URL = cli.Globals.CacheURL.String()
+	}
+	log.Debug().Msgf("set cache url to %s", cache.URL)
 
 	err = ctx.Run(&cli.Globals)
 	ctx.FatalIfErrorf(err)

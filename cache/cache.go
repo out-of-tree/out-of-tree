@@ -18,7 +18,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
-var URL string
+var URL = "https://out-of-tree.fra1.digitaloceanspaces.com/1.0.0/"
 
 func unpackTar(archive, destination string) (err error) {
 	// NOTE: If you're change anything in tar command please check also

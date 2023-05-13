@@ -17,7 +17,6 @@ func TestDownloadQemuImage(t *testing.T) {
 	}
 	defer os.RemoveAll(tmp)
 
-	URL = "https://out-of-tree.fra1.digitaloceanspaces.com/1.0.0/"
 	file := "out_of_tree_ubuntu_12__04.img"
 
 	err = DownloadQemuImage(tmp, file)
