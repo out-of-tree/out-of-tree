@@ -8,6 +8,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
@@ -121,7 +122,6 @@ func kernelRelease(deb string) (r Release, err error) {
 }
 
 var (
-	CacheURL    string
 	CachePath   string
 	RefetchDays int = 7
 )
@@ -130,6 +130,11 @@ func MatchImagePkg(km config.KernelMask) (pkgs []string, err error) {
 	if CachePath == "" {
 		CachePath = config.File("debian.cache")
 		log.Debug().Msgf("Use default kernels cache path: %s", CachePath)
+
+		err = cache.DownloadDebianCache(CachePath)
+		if err != nil {
+			log.Debug().Msg("No remote cache, will take some time")
+		}
 	} else {
 		log.Debug().Msgf("Debian kernels cache path: %s", CachePath)
 	}

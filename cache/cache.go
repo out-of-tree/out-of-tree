@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/cavaliergopher/grab/v3"
 	"github.com/rs/zerolog/log"
@@ -61,4 +62,26 @@ func DownloadQemuImage(path, file string) (err error) {
 
 	err = unpackTar(resp.Filename, path)
 	return
+}
+
+func DownloadDebianCache(cachePath string) (err error) {
+	tmp, err := ioutil.TempDir(config.Dir("tmp"), "out-of-tree_")
+	if err != nil {
+		return
+	}
+	defer os.RemoveAll(tmp)
+
+	file := filepath.Base(cachePath)
+
+	fileurl, err := url.JoinPath(URL, file)
+	if err != nil {
+		return
+	}
+
+	resp, err := grab.Get(tmp, fileurl)
+	if err != nil {
+		return
+	}
+
+	return os.Rename(filepath.Join(tmp, resp.Filename), cachePath)
 }
