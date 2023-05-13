@@ -70,3 +70,35 @@ func TestCache(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestVersionsCache(t *testing.T) {
+	dir, err := os.MkdirTemp("", "out-of-tree_cache_test_")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	path := filepath.Join(dir, "debian.cache")
+
+	c, err := NewCache(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	versions := []string{"a", "b", "c"}
+
+	err = c.PutVersions(versions)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := c.GetVersions()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(versions) != len(result) {
+		t.Fatal("mismatch")
+	}
+}

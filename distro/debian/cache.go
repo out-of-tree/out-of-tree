@@ -23,6 +23,15 @@ func (c Cache) Get(version string) (p DebianKernel, err error) {
 	return
 }
 
+func (c Cache) PutVersions(versions []string) error {
+	return c.store.Put("versions", versions)
+}
+
+func (c Cache) GetVersions() (versions []string, err error) {
+	err = c.store.Get("versions", &versions)
+	return
+}
+
 func (c Cache) Close() error {
 	return c.store.Close()
 }
