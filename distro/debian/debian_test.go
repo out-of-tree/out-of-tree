@@ -3,8 +3,6 @@ package debian
 import (
 	"testing"
 
-	"github.com/cavaliergopher/grab/v3"
-
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
@@ -16,11 +14,6 @@ func TestMatchImagePkg(t *testing.T) {
 	km := config.KernelMask{
 		ReleaseMask:   "3.2.0-4",
 		DistroRelease: "7",
-	}
-
-	resp, err := grab.Get(tmp, fileurl)
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	pkgs, err := MatchImagePkg(km)
