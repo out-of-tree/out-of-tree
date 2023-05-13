@@ -7,19 +7,20 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
 	"strings"
 	"time"
 
+	"github.com/cavaliergopher/grab/v3"
+	"github.com/rs/zerolog/log"
+
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
-	"github.com/rs/zerolog/log"
 )
 
 type ImageCmd struct {
@@ -126,39 +127,6 @@ func (cmd *ImageEditCmd) Run(g *Globals) (err error) {
 	return
 }
 
-// inspired by Edd Turtle code
-func downloadFile(filepath string, url string) (err error) {
-	out, err := os.Create(filepath)
-	if err != nil {
-		return
-	}
-	defer out.Close()
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	switch resp.StatusCode {
-	case http.StatusOK:
-		break
-	case http.StatusForbidden, http.StatusNotFound:
-		err = fmt.Errorf("Cannot download %s. It looks like you need "+
-			"to generate it manually and place it "+
-			"to ~/.out-of-tree/images/. "+
-			"Check documentation for additional information.", url)
-		return
-	default:
-		err = fmt.Errorf("Something weird happens while "+
-			"download file: %d", resp.StatusCode)
-		return
-	}
-
-	_, err = io.Copy(out, resp.Body)
-	return
-}
-
 func unpackTar(archive, destination string) (err error) {
 	// NOTE: If you're change anything in tar command please check also
 	// BSD tar (or if you're using macOS, do not forget to check GNU Tar)
@@ -184,14 +152,21 @@ func downloadImage(path, file string) (err error) {
 	}
 	defer os.RemoveAll(tmp)
 
-	archive := tmp + "/" + file + ".tar.gz"
-	url := imagesBaseURL + file + ".tar.gz"
-
-	err = downloadFile(archive, url)
+	fileurl, err := url.JoinPath(imagesBaseURL, file+".tar.gz")
 	if err != nil {
 		return
 	}
 
-	err = unpackTar(archive, path)
+	resp, err := grab.Get(tmp, fileurl)
+	if err != nil {
+		err = fmt.Errorf("Cannot download %s. It looks like you need "+
+			"to generate it manually and place it "+
+			"to ~/.out-of-tree/images/. "+
+			"Check documentation for additional information.",
+			fileurl)
+		return
+	}
+
+	err = unpackTar(resp.Filename, path)
 	return
 }
