@@ -156,7 +156,7 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 	}
 
 	if fs.PathExists(dockerPath) && string(rawOutput) != "" {
-		log.Info().Msgf("Base image for %s:%s found",
+		log.Debug().Msgf("Base image for %s:%s found",
 			sk.DistroType.String(), sk.DistroRelease)
 		if !forceUpdate {
 			return
@@ -165,7 +165,7 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 		}
 	}
 
-	log.Info().Msgf("Base image for %s:%s not found, start generating",
+	log.Debug().Msgf("Base image for %s:%s not found, start generating",
 		sk.DistroType.String(), sk.DistroRelease)
 	os.MkdirAll(imagePath, os.ModePerm)
 
@@ -310,7 +310,7 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 		return
 	}
 
-	log.Info().Msgf("Base image for %s:%s generating success",
+	log.Debug().Msgf("Base image for %s:%s generating success",
 		sk.DistroType.String(), sk.DistroRelease)
 
 	return
