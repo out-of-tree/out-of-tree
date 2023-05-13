@@ -103,10 +103,48 @@ func GetDebianKernel(version string) (dk DebianKernel, err error) {
 	return
 }
 
+// GetCachedKernel by deb package name
+func GetCachedKernel(deb string) (dk DebianKernel, err error) {
+	c, err := NewCache(CachePath)
+	if err != nil {
+		log.Error().Err(err).Msg("cache")
+		return
+	}
+	defer c.Close()
+
+	versions, err := c.GetVersions()
+	if err != nil {
+		log.Error().Err(err).Msg("get source package versions from cache")
+		return
+	}
+
+	for _, version := range versions {
+		var tmpdk DebianKernel
+		tmpdk, err = c.Get(version)
+		if err != nil {
+			continue
+		}
+
+		switch deb {
+		case tmpdk.Image.Deb.Name, tmpdk.Headers.Deb.Name:
+			dk = tmpdk
+			return
+		}
+	}
+
+	return
+}
+
 func GetKernels(c *Cache, refetchDays int) (kernels []DebianKernel, err error) {
 	versions, err := snapshot.SourcePackageVersions("linux")
 	if err != nil {
 		log.Error().Err(err).Msg("get source package versions")
+		return
+	}
+
+	err = c.PutVersions(versions)
+	if err != nil {
+		log.Error().Err(err).Msg("put source package versions to cache")
 		return
 	}
 
