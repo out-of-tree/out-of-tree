@@ -1,13 +1,23 @@
 package debian
 
 import (
+	"os"
 	"testing"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 func TestMatchImagePkg(t *testing.T) {
 	t.Log("tested with cache by default")
+
+	tmp, err := fs.TempDir()
+	if err != nil {
+		return
+	}
+	defer os.RemoveAll(tmp)
+
+	config.Directory = tmp
 
 	km := config.KernelMask{
 		ReleaseMask:   "3.2.0-4",
