@@ -10,6 +10,7 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 type Release int
@@ -131,9 +132,13 @@ func MatchImagePkg(km config.KernelMask) (pkgs []string, err error) {
 		CachePath = config.File("debian.cache")
 		log.Debug().Msgf("Use default kernels cache path: %s", CachePath)
 
-		err = cache.DownloadDebianCache(CachePath)
-		if err != nil {
-			log.Debug().Err(err).Msg("No remote cache, will take some time")
+		if !fs.PathExists(CachePath) {
+			log.Debug().Msgf("No cache, download")
+			err = cache.DownloadDebianCache(CachePath)
+			if err != nil {
+				log.Debug().Err(err).Msg(
+					"No remote cache, will take some time")
+			}
 		}
 	} else {
 		log.Debug().Msgf("Debian kernels cache path: %s", CachePath)
