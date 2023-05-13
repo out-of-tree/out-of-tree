@@ -7,7 +7,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"gopkg.in/logrusorgru/aurora.v2"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
@@ -144,7 +144,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 	}
 	defer q.Stop()
 
-	tmp, err := ioutil.TempDir(tempDirBase, "out-of-tree_")
+	tmp, err := fs.TempDir()
 	if err != nil {
 		return
 	}

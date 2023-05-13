@@ -659,7 +659,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		}
 	}()
 
-	tmp, err := ioutil.TempDir(tempDirBase, "out-of-tree_")
+	tmp, err := fs.TempDir()
 	if err != nil {
 		slog.Error().Err(err).Msg("making tmp directory")
 		return

@@ -99,8 +99,6 @@ func (lw *LevelWriter) WriteLevel(l zerolog.Level, p []byte) (n int, err error) 
 	return len(p), nil
 }
 
-var tempDirBase string
-
 var consoleWriter, fileWriter LevelWriter
 
 var loglevel zerolog.Level
@@ -138,9 +136,6 @@ func main() {
 	if err != nil {
 		return
 	}
-
-	tempDirBase = usr.HomeDir + "/.out-of-tree/tmp/"
-	os.MkdirAll(tempDirBase, os.ModePerm)
 
 	consoleWriter = LevelWriter{Writer: zerolog.NewConsoleWriter(
 		func(w *zerolog.ConsoleWriter) {

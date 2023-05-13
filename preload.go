@@ -8,7 +8,6 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -62,7 +61,7 @@ func preload(q *qemu.System, ki config.KernelInfo, pm config.PreloadModule,
 func buildAndInsmod(workPath string, q *qemu.System, ki config.KernelInfo,
 	dockerTimeout time.Duration, cache string) (err error) {
 
-	tmp, err := ioutil.TempDir(tempDirBase, "out-of-tree_")
+	tmp, err := fs.TempDir()
 	if err != nil {
 		return
 	}
