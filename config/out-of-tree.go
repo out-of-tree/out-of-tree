@@ -7,7 +7,6 @@ package config
 import (
 	"errors"
 	"os"
-	"os/user"
 	"time"
 
 	"github.com/alecthomas/kong"
@@ -21,6 +20,9 @@ type DockerCommand struct {
 }
 
 type OutOfTree struct {
+	// Directory for all files if not explicitly specified
+	Directory string
+
 	Kernels     string
 	UserKernels string
 
@@ -77,21 +79,20 @@ func ReadOutOfTreeConf(path string) (c OutOfTree, err error) {
 		err = nil
 	}
 
-	usr, err := user.Current()
-	if err != nil {
-		return
+	if c.Directory != "" {
+		Directory = c.Directory
 	}
 
 	if c.Kernels == "" {
-		c.Kernels = usr.HomeDir + "/.out-of-tree/kernels.toml"
+		c.Kernels = File("kernels.toml")
 	}
 
 	if c.UserKernels == "" {
-		c.UserKernels = usr.HomeDir + "/.out-of-tree/kernels.user.toml"
+		c.Kernels = File("kernels.user.toml")
 	}
 
 	if c.Database == "" {
-		c.Database = usr.HomeDir + "/.out-of-tree/db.sqlite"
+		c.Kernels = File("db.sqlite")
 	}
 
 	if c.Qemu.Timeout.Duration == 0 {
