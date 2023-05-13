@@ -82,5 +82,5 @@ func DownloadDebianCache(cachePath string) (err error) {
 		return
 	}
 
-	return os.Rename(filepath.Join(tmp, resp.Filename), cachePath)
+	return os.Rename(resp.Filename, cachePath)
 }

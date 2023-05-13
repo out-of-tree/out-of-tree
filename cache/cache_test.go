@@ -29,7 +29,7 @@ func TestDownloadQemuImage(t *testing.T) {
 }
 
 func TestDownloadDebianCache(t *testing.T) {
-	tmp, err := ioutil.TempDir("", "out-of-tree_")
+	tmp, err := fs.TempDir()
 	if err != nil {
 		return
 	}
