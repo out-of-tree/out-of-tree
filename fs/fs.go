@@ -3,6 +3,8 @@ package fs
 import (
 	"os"
 	"path/filepath"
+
+	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
 // CaseInsensitive check
@@ -43,4 +45,9 @@ func PathExists(path string) bool {
 		return false
 	}
 	return true
+}
+
+// TempDir that exist relative to config directory
+func TempDir() (string, error) {
+	return os.MkdirTemp(config.Dir("tmp"), "")
 }
