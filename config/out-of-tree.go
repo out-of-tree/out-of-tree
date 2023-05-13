@@ -88,11 +88,11 @@ func ReadOutOfTreeConf(path string) (c OutOfTree, err error) {
 	}
 
 	if c.UserKernels == "" {
-		c.Kernels = File("kernels.user.toml")
+		c.UserKernels = File("kernels.user.toml")
 	}
 
 	if c.Database == "" {
-		c.Kernels = File("db.sqlite")
+		c.Database = File("db.sqlite")
 	}
 
 	if c.Qemu.Timeout.Duration == 0 {
