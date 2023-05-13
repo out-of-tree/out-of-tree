@@ -33,18 +33,18 @@ const (
 
 var ReleaseStrings = [...]string{
 	"",
-	"Buzz",
-	"Hamm",
-	"Woody",
-	"Etch",
-	"Lenny",
-	"Squeeze",
-	"Wheezy",
-	"Jessie",
-	"Stretch",
-	"Buster",
-	"Bullseye",
-	"Bookworm",
+	"buzz",
+	"hamm",
+	"woody",
+	"etch",
+	"lenny",
+	"squeeze",
+	"wheezy",
+	"jessie",
+	"stretch",
+	"buster",
+	"bullseye",
+	"bookworm",
 }
 
 func (cn Release) String() string {
