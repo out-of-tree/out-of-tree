@@ -2,7 +2,6 @@ package debian
 
 import (
 	"errors"
-	"os/user"
 	"regexp"
 	"strconv"
 	"strings"
@@ -128,13 +127,7 @@ var (
 
 func MatchImagePkg(km config.KernelMask) (pkgs []string, err error) {
 	if CachePath == "" {
-		var usr *user.User
-		usr, err = user.Current()
-		if err != nil {
-			return
-		}
-
-		CachePath = usr.HomeDir + "/.out-of-tree/debian.cache"
+		CachePath = config.File("debian.cache")
 		log.Debug().Msgf("Use default kernels cache path: %s", CachePath)
 	} else {
 		log.Debug().Msgf("Debian kernels cache path: %s", CachePath)
