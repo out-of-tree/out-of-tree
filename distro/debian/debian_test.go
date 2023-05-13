@@ -2,30 +2,36 @@ package debian
 
 import (
 	"testing"
-	// "github.com/cavaliergopher/grab/v3"
-	// "code.dumpstack.io/tools/out-of-tree/config"
+
+	"github.com/cavaliergopher/grab/v3"
+
+	"code.dumpstack.io/tools/out-of-tree/cache"
+	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
-// func TestMatchImagePkg(t *testing.T) {
-// 	km := config.KernelMask{
-// 		ReleaseMask:   "3.2.0-4",
-// 		DistroRelease: "7",
-// 	}
+func TestMatchImagePkg(t *testing.T) {
+	cache.URL = "https://out-of-tree.fra1.digitaloceanspaces.com/1.0.0/"
+	t.Log("tested with cache by default")
 
-// 	resp, err := grab.Get(tmp, fileurl)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	km := config.KernelMask{
+		ReleaseMask:   "3.2.0-4",
+		DistroRelease: "7",
+	}
 
-// 	pkgs, err := MatchImagePkg(km)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	resp, err := grab.Get(tmp, fileurl)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	if len(pkgs) == 0 {
-// 		t.Fatal("no packages")
-// 	}
-// }
+	pkgs, err := MatchImagePkg(km)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(pkgs) == 0 {
+		t.Fatal("no packages")
+	}
+}
 
 func TestParseKernelMajorMinor(t *testing.T) {
 	type testcase struct {
