@@ -22,6 +22,7 @@ import (
 
 	"github.com/alecthomas/kong"
 
+	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/fs"
@@ -31,6 +32,8 @@ type Globals struct {
 	Config config.OutOfTree `help:"path to out-of-tree configuration" default:"~/.out-of-tree/out-of-tree.toml"`
 
 	WorkDir string `help:"path to work directory" default:"./" type:"path"`
+
+	CacheURL string `default:"https://out-of-tree.fra1.digitaloceanspaces.com/1.0.0/" hidden:""`
 }
 
 type CLI struct {
@@ -191,6 +194,8 @@ func main() {
 		}
 	}
 	container.Runtime = cli.ContainerRuntime
+
+	cache.URL = cli.Globals.CacheURL
 
 	err = ctx.Run(&cli.Globals)
 	ctx.FatalIfErrorf(err)
