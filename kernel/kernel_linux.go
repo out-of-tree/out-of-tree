@@ -5,7 +5,7 @@
 //go:build linux
 // +build linux
 
-package main
+package kernel
 
 import (
 	"io/ioutil"
@@ -52,7 +52,7 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 		}.DockerName(),
 	}
 
-	rootfs, err := genRootfsImage(dii, download)
+	rootfs, err := GenRootfsImage(dii, download)
 	if err != nil {
 		return
 	}
