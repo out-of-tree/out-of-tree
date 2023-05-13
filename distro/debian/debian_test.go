@@ -71,6 +71,18 @@ func TestKernelRelease(t *testing.T) {
 		testcase{"linux-image-6.1.0-0.deb11.7-amd64-unsigned", Bullseye},
 		testcase{"linux-image-3.2.0-0.bpo.4-amd64_3.2.41-2+deb7u2~bpo60+1_amd64", Wheezy},
 		testcase{"linux-image-5.16.0-rc5-amd64-unsigned_5.16~rc5-1~exp1_amd64", Bullseye},
+		testcase{"linux-image-3.15-trunk-amd64_3.15.5-1~exp1_amd64", Wheezy},
+		testcase{"linux-image-3.16-rc5-amd64_3.16~rc5-1~exp1_amd64", Jessie},
+		testcase{"linux-image-4.8.0-2-amd64-unsigned_4.8.15-2_amd64", Jessie},
+		testcase{"linux-image-4.9.0-rc3-amd64-unsigned_4.9~rc3-1~exp1_amd64", Stretch},
+		testcase{"linux-image-4.15.0-3-amd64_4.15.17-1_amd64", Stretch},
+		testcase{"linux-image-4.16.0-rc5-amd64_4.16~rc5-1~exp1_amd64", Stretch},
+		testcase{"linux-image-4.18.0-0.bpo.3-amd64_4.18.20-2~bpo9+1_amd64", Stretch},
+		testcase{"linux-image-4.19.0-rc2-amd64-unsigned_4.19~rc2-1~exp1_amd64", Buster},
+		testcase{"linux-image-4.20.0-trunk-amd64-unsigned_4.20-1~exp1_amd64", Buster},
+		testcase{"linux-image-5.0.0-trunk-amd64-unsigned_5.0.1-1~exp1_amd64", Buster},
+		testcase{"linux-image-5.9.0-rc4-amd64-unsigned_5.9~rc4-1~exp1_amd64", Buster},
+		testcase{"linux-image-5.10.0-rc4-amd64-unsigned_5.10~rc4-1~exp1_amd64", Bullseye},
 	} {
 		r, err := kernelRelease(tc.Deb)
 		if err != nil {
