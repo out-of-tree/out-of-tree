@@ -288,6 +288,13 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 			packages += " libdtrace-ctf"
 		}
 		d += fmt.Sprintf("RUN yum -y install %s\n", packages)
+	case config.Debian:
+		for _, e := range debian.DockerEnvs(sk) {
+			d += "ENV " + e + "\n"
+		}
+		for _, c := range debian.DockerCommands(sk) {
+			d += "RUN " + c + "\n"
+		}
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return

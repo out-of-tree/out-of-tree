@@ -2,6 +2,7 @@ package debian
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -199,6 +200,57 @@ func MatchImagePkg(km config.KernelMask) (pkgs []string, err error) {
 			pkgs = append(pkgs, p)
 		}
 	}
+
+	return
+}
+
+func DockerEnvs(km config.KernelMask) (envs []string) {
+	envs = append(envs, "DEBIAN_FRONTEND=noninteractive")
+	return
+}
+
+func DockerCommands(km config.KernelMask) (commands []string) {
+	release := releaseFromString(km.DistroRelease)
+
+	var snapshot string
+
+	switch release {
+	case Wheezy:
+		snapshot = "20160605T173546Z"
+	case Jessie:
+		snapshot = "20190212T020859Z"
+	case Stretch:
+		snapshot = "20200719T110630Z"
+	case Buster:
+		snapshot = "20220911T180237Z"
+	case Bullseye:
+		snapshot = "20221218T103830Z"
+	default:
+		log.Fatal().Msgf("%s not supported", release)
+		return
+	}
+
+	params := "[check-valid-until=no trusted=yes]"
+	mirror := "http://snapshot.debian.org"
+	repourl := fmt.Sprintf("%s/archive/debian/%s/", mirror, snapshot)
+
+	cmdf := func(f string, s ...interface{}) {
+		commands = append(commands, fmt.Sprintf(f, s...))
+	}
+
+	repo := fmt.Sprintf("deb %s %s %s main contrib",
+		params, repourl, release)
+
+	cmdf("echo '%s' > /etc/apt/sources.list", repo)
+
+	repo = fmt.Sprintf("deb %s %s %s-updates main contrib",
+		params, repourl, release)
+
+	cmdf("echo '%s' >> /etc/apt/sources.list", repo)
+
+	cmdf("apt-get update")
+	cmdf("apt-get install -y wget")
+	cmdf("mkdir -p /lib/modules")
 
 	return
 }
