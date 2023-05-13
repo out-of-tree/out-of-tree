@@ -24,6 +24,7 @@ import (
 	"gopkg.in/logrusorgru/aurora.v2"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
@@ -268,8 +269,8 @@ func build(flog zerolog.Logger, tmp string, ka config.Artifact,
 	}
 
 	if ki.ContainerName != "" {
-		var c container
-		c, err = NewContainer(ki.ContainerName, dockerTimeout)
+		var c container.Container
+		c, err = container.New(ki.ContainerName, dockerTimeout)
 		c.Log = flog
 		if err != nil {
 			log.Fatal().Err(err).Msg("container creation failure")

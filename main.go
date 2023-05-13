@@ -23,6 +23,7 @@ import (
 	"github.com/alecthomas/kong"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -189,7 +190,7 @@ func main() {
 				cli.ContainerRuntime)
 		}
 	}
-	containerRuntime = cli.ContainerRuntime
+	container.Runtime = cli.ContainerRuntime
 
 	err = ctx.Run(&cli.Globals)
 	ctx.FatalIfErrorf(err)

@@ -16,6 +16,7 @@ import (
 	"github.com/zcalusic/sysinfo"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -44,7 +45,7 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 	}
 
 	// only for compatibility, docker is not really used
-	dii := containerImageInfo{
+	dii := container.Image{
 		Name: config.KernelMask{
 			DistroType:    distroType,
 			DistroRelease: si.OS.Version,

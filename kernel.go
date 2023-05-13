@@ -23,6 +23,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -79,7 +80,7 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 		ReleaseMask:   ".*",
 	}
 
-	_, err = genRootfsImage(containerImageInfo{Name: km.DockerName()}, false)
+	_, err = genRootfsImage(container.Image{Name: km.DockerName()}, false)
 	if err != nil {
 		return
 	}
@@ -225,12 +226,12 @@ func (cmd *KernelConfigRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err erro
 	return updateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
 }
 
-func matchDebImagePkg(container, mask string) (pkgs []string, err error) {
+func matchDebImagePkg(containerName, mask string) (pkgs []string, err error) {
 
 	cmd := "apt-cache search --names-only '^linux-image-[0-9\\.\\-]*-generic' | awk '{ print $1 }'"
 
 	// FIXME timeout should be in global out-of-tree config
-	c, err := NewContainer(container, time.Hour)
+	c, err := container.New(containerName, time.Hour)
 	if err != nil {
 		return
 	}
@@ -254,7 +255,7 @@ func matchDebImagePkg(container, mask string) (pkgs []string, err error) {
 	return
 }
 
-func matchOracleLinuxPkg(container, mask string) (
+func matchOracleLinuxPkg(containerName, mask string) (
 	pkgs []string, err error) {
 
 	cmd := "yum search kernel --showduplicates " +
@@ -263,7 +264,7 @@ func matchOracleLinuxPkg(container, mask string) (
 		"| cut -d ' ' -f 1"
 
 	// FIXME timeout should be in global out-of-tree config
-	c, err := NewContainer(container, time.Hour)
+	c, err := container.New(containerName, time.Hour)
 	if err != nil {
 		return
 	}
@@ -345,7 +346,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 	d := "# BASE\n"
 
 	// TODO move as function to container.go
-	cmd := exec.Command(containerRuntime, "images", "-q", sk.DockerName())
+	cmd := exec.Command(container.Runtime, "images", "-q", sk.DockerName())
 	log.Debug().Msgf("run %v", cmd)
 
 	rawOutput, err := cmd.CombinedOutput()
@@ -495,7 +496,7 @@ func generateBaseDockerImage(registry string, commands []config.DockerCommand,
 		return
 	}
 
-	c, err := NewContainer(sk.DockerName(), time.Hour)
+	c, err := container.New(sk.DockerName(), time.Hour)
 	if err != nil {
 		return
 	}
@@ -521,7 +522,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		Str("pkg", pkgname).
 		Logger()
 
-	c, err := NewContainer(sk.DockerName(), time.Hour) // TODO conf
+	c, err := container.New(sk.DockerName(), time.Hour) // TODO conf
 	if err != nil {
 		return
 	}
@@ -640,7 +641,7 @@ func findInitrdFile(files []os.FileInfo, kname string) (name string, err error) 
 	return
 }
 
-func genRootfsImage(d containerImageInfo, download bool) (rootfs string, err error) {
+func genRootfsImage(d container.Image, download bool) (rootfs string, err error) {
 	usr, err := user.Current()
 	if err != nil {
 		return
@@ -672,7 +673,7 @@ func updateKernelsCfg(host, download bool) (err error) {
 	}
 
 	// Get docker kernels
-	dockerImages, err := listContainerImages()
+	dockerImages, err := container.Images()
 	if err != nil {
 		return
 	}
@@ -715,7 +716,7 @@ func updateKernelsCfg(host, download bool) (err error) {
 	return
 }
 
-func listContainersKernels(dii containerImageInfo, newkcfg *config.KernelConfig,
+func listContainersKernels(dii container.Image, newkcfg *config.KernelConfig,
 	download bool) (err error) {
 
 	rootfs, err := genRootfsImage(dii, download)
@@ -723,7 +724,7 @@ func listContainersKernels(dii containerImageInfo, newkcfg *config.KernelConfig,
 		return
 	}
 
-	c, err := NewContainer(dii.Name, time.Hour)
+	c, err := container.New(dii.Name, time.Hour)
 	if err != nil {
 		return
 	}
@@ -827,7 +828,7 @@ func generateKernels(km config.KernelMask, registry string,
 
 	log.Info().Msgf("Generating for kernel mask %v", km)
 
-	_, err = genRootfsImage(containerImageInfo{Name: km.DockerName()},
+	_, err = genRootfsImage(container.Image{Name: km.DockerName()},
 		download)
 	if err != nil || *shutdown {
 		return
