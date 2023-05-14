@@ -329,7 +329,16 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		return
 	}
 
-	moddirs, err := ioutil.ReadDir(c.Volumes.LibModules)
+	searchdir := c.Volumes.LibModules
+
+	if sk.DistroType == config.Debian {
+		// Debian has different kernels (package version) by the
+		// same name (ABI), so we need to separate /boot
+		c.Volumes = debian.ContainerVolumes(sk.DockerName(), pkgname)
+		searchdir = config.Dir("volumes", sk.DockerName())
+	}
+
+	moddirs, err := ioutil.ReadDir(searchdir)
 	if err != nil {
 		return
 	}
@@ -400,16 +409,6 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		if err != nil {
 			return
 		}
-
-		// Debian has different kernels (package version) by the
-		// same name (ABI), so we need to separate /boot
-
-		volumes.LibModules = config.Dir("volumes", sk.DockerName(),
-			pkgname, "/lib/modules")
-		volumes.UsrSrc = config.Dir("volumes", sk.DockerName(),
-			pkgname, "/usr/src")
-		volumes.Boot = config.Dir("volumes", sk.DockerName(),
-			pkgname, "/boot")
 
 		pkgs := []snapshot.Package{dk.Image}
 		if headers {
