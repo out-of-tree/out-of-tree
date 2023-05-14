@@ -26,7 +26,7 @@ var Runtime = "docker"
 type Image struct {
 	Name          string
 	DistroType    config.DistroType
-	DistroRelease string // 18.04/7.4.1708/9.1
+	DistroRelease string // 18.04/7/9
 }
 
 func Images() (diis []Image, err error) {
