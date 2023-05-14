@@ -417,7 +417,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		for _, pkg := range pkgs {
 			cmd += fmt.Sprintf(" && wget --no-check-certificate %s",
 				pkg.Deb.URL)
-			cmd += fmt.Sprintf(" && dpkg --force-all -i %s",
+			cmd += fmt.Sprintf(" && dpkg -i %s",
 				pkg.Deb.Name)
 			cmd += fmt.Sprintf(" && rm %s",
 				pkg.Deb.Name)
