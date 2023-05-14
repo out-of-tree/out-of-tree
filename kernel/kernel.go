@@ -414,16 +414,15 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		pkgs := []snapshot.Package{dk.Image}
 		if headers {
 			pkgs = append(pkgs, dk.Headers...)
+			pkgs = append(pkgs, dk.Dependencies...)
 		}
 
 		for _, pkg := range pkgs {
 			cmd += fmt.Sprintf(" && wget --no-check-certificate %s",
-				pkg.Deb.URL)
-			cmd += fmt.Sprintf(" && dpkg -i %s",
-				pkg.Deb.Name)
-			cmd += fmt.Sprintf(" && rm %s",
-				pkg.Deb.Name)
+				strings.Replace(pkg.Deb.URL, "https", "http", -1))
 		}
+
+		cmd += fmt.Sprintf(" && dpkg -i ./*deb && apt-get -fy install")
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
