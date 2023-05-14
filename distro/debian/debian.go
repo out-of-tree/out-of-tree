@@ -3,6 +3,8 @@ package debian
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -10,6 +12,7 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 type Release int
@@ -218,6 +221,62 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 }
 
 func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) {
-	err = errors.New("TODO not implemented")
+	path := config.Dir("volumes", d.Name)
+	rootfs := config.File("images", d.Name+".img")
+
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return
+	}
+
+	for _, file := range files {
+		if !strings.Contains(file.Name(), "linux-image") {
+			continue
+		}
+
+		pkgname := file.Name()
+
+		kpkgdir := filepath.Join(path, pkgname)
+
+		bootdir := filepath.Join(kpkgdir, "boot")
+
+		vmlinuz, err := fs.FindBySubstring(bootdir, "vmlinuz")
+		if err != nil {
+			log.Warn().Msgf("cannot find vmlinuz for %s", pkgname)
+			continue
+		}
+
+		initrd, err := fs.FindBySubstring(bootdir, "initrd")
+		if err != nil {
+			log.Warn().Msgf("cannot find initrd for %s", pkgname)
+			continue
+		}
+
+		modulesdir := filepath.Join(kpkgdir, "lib/modules")
+
+		modules, err := fs.FindBySubstring(modulesdir, "")
+		if err != nil {
+			log.Warn().Msgf("cannot find modules for %s", pkgname)
+			continue
+		}
+
+		log.Debug().Msgf("%s %s %s", vmlinuz, initrd, modules)
+
+		ki := config.KernelInfo{
+			DistroType:    d.DistroType,
+			DistroRelease: d.DistroRelease,
+			KernelRelease: pkgname,
+			ContainerName: d.Name,
+
+			KernelPath:  vmlinuz,
+			InitrdPath:  initrd,
+			ModulesPath: modules,
+
+			RootFS: rootfs,
+		}
+
+		kcfg.Kernels = append(kcfg.Kernels, ki)
+	}
+
 	return
 }
