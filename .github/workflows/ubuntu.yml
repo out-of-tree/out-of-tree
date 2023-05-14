@@ -100,8 +100,13 @@ jobs:
           { distro: CentOS, release: 8 },
           { distro: OracleLinux, release: 6 },
           { distro: OracleLinux, release: 7 },
-          { distro: OracleLinux, release: 8 }
+          { distro: OracleLinux, release: 8 },
           # { distro: OracleLinux, release: 9 }
+          { distro: Debian, release: 7 },
+          { distro: Debian, release: 8 },
+          { distro: Debian, release: 9 },
+          { distro: Debian, release: 10 },
+          { distro: Debian, release: 11 }
           ]
 
     steps:
