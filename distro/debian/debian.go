@@ -11,6 +11,7 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -252,5 +253,10 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 	cmdf("apt-get install -y wget")
 	cmdf("mkdir -p /lib/modules")
 
+	return
+}
+
+func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) {
+	err = errors.New("TODO not implemented")
 	return
 }

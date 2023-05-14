@@ -522,6 +522,17 @@ func UpdateKernelsCfg(host, download bool) (err error) {
 	}
 
 	for _, d := range dockerImages {
+		//  TODO Requires changing the idea of how we list
+		//  kernels from containers to distro/-related
+		//  functions.
+		if strings.Contains(d.Name, "debian") {
+			err = debian.ContainerKernels(d, &newkcfg)
+			if err != nil {
+				log.Print("gen kernels", d.Name, ":", err)
+			}
+			continue
+		}
+
 		err = listContainersKernels(d, &newkcfg, download)
 		if err != nil {
 			log.Print("gen kernels", d.Name, ":", err)
