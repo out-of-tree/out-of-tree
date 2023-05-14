@@ -68,13 +68,14 @@ type Package struct {
 	}
 }
 
-func NewPackage(name, srcname, version, arch string) (p Package, err error) {
+func NewPackage(name, srcname, version string, archs []string) (
+	p Package, err error) {
+
 	p.Name = name
 	p.Source = srcname
 	p.Version = version
-	p.Arch = arch
 
-	p.Deb.Hash, err = p.getHash()
+	p.Arch, p.Deb.Hash, err = p.getHash(archs)
 	if err != nil {
 		return
 	}
@@ -110,16 +111,19 @@ func NewPackage(name, srcname, version, arch string) (p Package, err error) {
 	return
 }
 
-func (p Package) getHash() (hash string, err error) {
+func (p Package) getHash(archs []string) (arch, hash string, err error) {
 	binfiles, err := mr.GetBinfiles(p.Name, p.Version)
 	if err != nil {
 		return
 	}
 
 	for _, res := range binfiles.Result {
-		if res.Architecture == p.Arch {
-			hash = res.Hash
-			return
+		for _, allowedArch := range archs {
+			if res.Architecture == allowedArch {
+				arch = res.Architecture
+				hash = res.Hash
+				return
+			}
 		}
 	}
 
@@ -292,8 +296,8 @@ func filtered(s string, filter []string) bool {
 	return false
 }
 
-func Packages(srcname, version, arch, regex string,
-	filter []string) (pkgs []Package, err error) {
+func Packages(srcname, version, regex string, archs, filter []string) (
+	pkgs []Package, err error) {
 
 	binpkgs, err := mr.GetBinpackages(srcname, version)
 	if err == mr.ErrNotFound {
@@ -314,7 +318,7 @@ func Packages(srcname, version, arch, regex string,
 		log.Trace().Msgf("matched %v", res.Name)
 
 		var pkg Package
-		pkg, err = NewPackage(res.Name, srcname, version, arch)
+		pkg, err = NewPackage(res.Name, srcname, version, archs)
 		if err != nil {
 			return
 		}

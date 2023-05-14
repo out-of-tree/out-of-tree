@@ -19,9 +19,9 @@ func TestSourcePackageVersions(t *testing.T) {
 }
 
 func TestPackages(t *testing.T) {
-	packages, err := Packages("linux", "3.16.5-1", "amd64",
-		`^linux-(image|headers)-[0-9\.\-]*-(common|amd64|amd64-unsigned)$`,
-		[]string{})
+	rx := `^linux-(image|headers)-[0-9\.\-]*-(common|amd64|amd64-unsigned)$`
+	packages, err := Packages("linux", "3.16.5-1", rx,
+		[]string{"amd64", "all"}, []string{})
 	if err != nil {
 		t.Fatal(err)
 	}
