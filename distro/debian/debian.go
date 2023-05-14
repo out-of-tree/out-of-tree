@@ -208,7 +208,10 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 			cmdf("echo '%s' >> /etc/apt/sources.list", repo)
 		}
 	} else {
-		cmdf("sed -e '/snapshot/!d' -e 's/# deb/deb [check-valid-until=no trusted=yes]/' /etc/apt/sources.list")
+		cmdf("sed -i " +
+			"-e '/snapshot/!d' " +
+			"-e 's/# deb/deb [check-valid-until=no trusted=yes]/' " +
+			"/etc/apt/sources.list")
 	}
 
 	cmdf("apt-get update")
