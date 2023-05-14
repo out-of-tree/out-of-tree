@@ -52,6 +52,7 @@ func GetDebianKernel(version string) (dk DebianKernel, err error) {
 		"rt-amd64",
 		"cloud-amd64",
 		"all-amd64",
+		"dbg",
 	}
 
 	packages, err := snapshot.Packages("linux", version, regex,
