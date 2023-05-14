@@ -204,12 +204,12 @@ func MatchImagePkg(km config.KernelMask) (pkgs []string, err error) {
 	return
 }
 
-func DockerEnvs(km config.KernelMask) (envs []string) {
+func ContainerEnvs(km config.KernelMask) (envs []string) {
 	envs = append(envs, "DEBIAN_FRONTEND=noninteractive")
 	return
 }
 
-func DockerCommands(km config.KernelMask) (commands []string) {
+func ContainerCommands(km config.KernelMask) (commands []string) {
 	release := releaseFromString(km.DistroRelease)
 
 	var snapshot string

@@ -290,10 +290,10 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 		}
 		d += fmt.Sprintf("RUN yum -y install %s\n", packages)
 	case config.Debian:
-		for _, e := range debian.DockerEnvs(sk) {
+		for _, e := range debian.ContainerEnvs(sk) {
 			d += "ENV " + e + "\n"
 		}
-		for _, c := range debian.DockerCommands(sk) {
+		for _, c := range debian.ContainerCommands(sk) {
 			d += "RUN " + c + "\n"
 		}
 	default:
