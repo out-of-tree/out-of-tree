@@ -291,3 +291,13 @@ func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) 
 
 	return
 }
+
+func ContainerVolumes(pkgname, contname string) (volumes container.Volumes) {
+	pkgdir := filepath.Join("volumes", contname, pkgname)
+
+	volumes.LibModules = config.Dir(pkgdir, "/lib/modules")
+	volumes.UsrSrc = config.Dir(pkgdir, "/usr/src")
+	volumes.Boot = config.Dir(pkgdir, "/boot")
+
+	return
+}
