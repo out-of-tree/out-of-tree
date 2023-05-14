@@ -1,8 +1,10 @@
 package fs
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
@@ -50,4 +52,21 @@ func PathExists(path string) bool {
 // TempDir that exist relative to config directory
 func TempDir() (string, error) {
 	return os.MkdirTemp(config.Dir("tmp"), "")
+}
+
+func FindBySubstring(dir, substring string) (k string, err error) {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+
+	for _, file := range files {
+		if strings.Contains(file.Name(), substring) {
+			k = filepath.Join(dir, file.Name())
+			return
+		}
+	}
+
+	err = errors.New("not found")
+	return
 }
