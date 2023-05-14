@@ -421,7 +421,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 				strings.Replace(pkg.Deb.URL, "https", "http", -1))
 		}
 
-		cmd += fmt.Sprintf(" && dpkg -i ./*deb && apt-get -fy install")
+		cmd += fmt.Sprintf(" && dpkg -i ./*deb ; apt-get -fy install")
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
