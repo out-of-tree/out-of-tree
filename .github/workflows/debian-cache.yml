@@ -7,6 +7,7 @@ on:
   push:
     paths:
       - '.github/workflows/debian-cache.yml'
+      - 'distro/debian/**'
 
 jobs:
   debian-cache:

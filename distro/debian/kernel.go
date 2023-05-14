@@ -23,9 +23,10 @@ type DebianKernelVersion struct {
 }
 
 type DebianKernel struct {
-	Version DebianKernelVersion
-	Image   snapshot.Package
-	Headers snapshot.Package
+	Version      DebianKernelVersion
+	Image        snapshot.Package
+	Headers      snapshot.Package
+	Dependencies []snapshot.Package
 
 	// FIXME There is a better way
 	Internal struct {
