@@ -16,16 +16,12 @@ type DebianCacheCmd struct {
 }
 
 func (cmd *DebianCacheCmd) Run() (err error) {
-	c, err := debian.NewCache(cmd.Path)
-	if err != nil {
-		log.Error().Err(err).Msg("cache")
-		return
-	}
-	defer c.Close()
+	debian.CachePath = cmd.Path
+	debian.RefetchDays = cmd.Refetch
 
 	log.Info().Msg("Fetching kernels...")
 
-	_, err = debian.GetKernels(c, cmd.Refetch)
+	_, err = debian.GetKernels()
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return

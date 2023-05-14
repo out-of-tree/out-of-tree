@@ -7,7 +7,10 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"code.dumpstack.io/tools/out-of-tree/cache"
+	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 type DebianKernelVersion struct {
@@ -128,7 +131,35 @@ func GetCachedKernel(deb string) (dk DebianKernel, err error) {
 	return
 }
 
-func GetKernels(c *Cache, refetchDays int) (kernels []DebianKernel, err error) {
+var (
+	CachePath   string
+	RefetchDays int = 7
+)
+
+func GetKernels() (kernels []DebianKernel, err error) {
+	if CachePath == "" {
+		CachePath = config.File("debian.cache")
+		log.Debug().Msgf("Use default kernels cache path: %s", CachePath)
+
+		if !fs.PathExists(CachePath) {
+			log.Debug().Msgf("No cache, download")
+			err = cache.DownloadDebianCache(CachePath)
+			if err != nil {
+				log.Debug().Err(err).Msg(
+					"No remote cache, will take some time")
+			}
+		}
+	} else {
+		log.Debug().Msgf("Debian kernels cache path: %s", CachePath)
+	}
+
+	c, err := NewCache(CachePath)
+	if err != nil {
+		log.Error().Err(err).Msg("cache")
+		return
+	}
+	defer c.Close()
+
 	versions, err := snapshot.SourcePackageVersions("linux")
 	if err != nil {
 		log.Error().Err(err).Msg("get source package versions")
@@ -155,9 +186,9 @@ func GetKernels(c *Cache, refetchDays int) (kernels []DebianKernel, err error) {
 		}
 
 		if dk.Internal.Invalid {
-			refetch := dk.Internal.LastFetch.AddDate(0, 0, refetchDays)
+			refetch := dk.Internal.LastFetch.AddDate(0, 0, RefetchDays)
 			if refetch.After(time.Now()) {
-				slog.Debug().Msgf("refetch at %v", refetchDays)
+				slog.Debug().Msgf("refetch at %v", RefetchDays)
 				continue
 			}
 		}
