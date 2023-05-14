@@ -46,7 +46,7 @@ var (
 func GetDebianKernel(version string) (dk DebianKernel, err error) {
 	dk.Version.Package = version
 
-	regex := `^linux-(image|headers)-[a-z+~0-9\.\-]*-(common|amd64|amd64-unsigned)$`
+	regex := `^(linux-(image|headers)-[a-z+~0-9\.\-]*-(common|amd64|amd64-unsigned)|linux-kbuild-.*)$`
 
 	filter := []string{
 		"rt-amd64",
