@@ -87,6 +87,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         os: [
           { distro: Ubuntu, release: 12.04 },
