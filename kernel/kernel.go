@@ -25,6 +25,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian"
+	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -362,6 +363,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 
 	slog.Debug().Msgf("Installing kernel")
 
+	// TODO use list of commands instead of appending to string
 	cmd := "true"
 
 	switch sk.DistroType {
@@ -399,6 +401,36 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		} else {
 			cmd += fmt.Sprintf(" && dracut -v --add-drivers 'ata_piix libata' --force-drivers 'e1000 ext4 sd_mod' -f "+
 				"/boot/initramfs-%s.img %s", version, version)
+		}
+	case config.Debian:
+		var dk debian.DebianKernel
+		dk, err = debian.GetCachedKernel(pkgname + ".deb")
+		if err != nil {
+			return
+		}
+
+		// Debian has different kernels (package version) by the
+		// same name (ABI), so we need to separate /boot
+
+		volumes.LibModules = config.Dir("volumes", sk.DockerName(),
+			pkgname, "/lib/modules")
+		volumes.UsrSrc = config.Dir("volumes", sk.DockerName(),
+			pkgname, "/usr/src")
+		volumes.Boot = config.Dir("volumes", sk.DockerName(),
+			pkgname, "/boot")
+
+		pkgs := []snapshot.Package{dk.Image}
+		if headers {
+			pkgs = append(pkgs, dk.Headers)
+		}
+
+		for _, pkg := range pkgs {
+			cmd += fmt.Sprintf(" && wget --no-check-certificate %s",
+				pkg.Deb.URL)
+			cmd += fmt.Sprintf(" && dpkg --force-all -i %s",
+				pkg.Deb.Name)
+			cmd += fmt.Sprintf(" && rm %s",
+				pkg.Deb.Name)
 		}
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
