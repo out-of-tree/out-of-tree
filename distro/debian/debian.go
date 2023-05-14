@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -228,10 +229,10 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 }
 
 func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) {
-	path := config.Dir("volumes", d.Name)
+	cpath := config.Dir("volumes", d.Name)
 	rootfs := config.File("images", d.Name+".img")
 
-	files, err := os.ReadDir(path)
+	files, err := os.ReadDir(cpath)
 	if err != nil {
 		return
 	}
@@ -243,7 +244,7 @@ func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) 
 
 		pkgname := file.Name()
 
-		kpkgdir := filepath.Join(path, pkgname)
+		kpkgdir := filepath.Join(cpath, pkgname)
 
 		bootdir := filepath.Join(kpkgdir, "boot")
 
@@ -269,10 +270,13 @@ func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) 
 
 		log.Debug().Msgf("%s %s %s", vmlinuz, initrd, modules)
 
+		release := strings.Replace(pkgname, "linux-image-", "", -1)
+
 		ki := config.KernelInfo{
 			DistroType:    d.DistroType,
 			DistroRelease: d.DistroRelease,
-			KernelRelease: pkgname,
+			KernelVersion: path.Base(modules),
+			KernelRelease: release,
 			ContainerName: d.Name,
 
 			KernelPath:  vmlinuz,

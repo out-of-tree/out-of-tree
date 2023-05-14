@@ -258,7 +258,11 @@ func build(flog zerolog.Logger, tmp string, ka config.Artifact,
 		outpath += ".ko"
 	}
 
-	kernel := "/lib/modules/" + ki.KernelRelease + "/build"
+	if ki.KernelVersion == "" {
+		ki.KernelVersion = ki.KernelRelease
+	}
+
+	kernel := "/lib/modules/" + ki.KernelVersion + "/build"
 	if ki.KernelSource != "" {
 		kernel = ki.KernelSource
 	}

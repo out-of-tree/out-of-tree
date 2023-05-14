@@ -603,6 +603,7 @@ func listContainersKernels(dii container.Image, newkcfg *config.KernelConfig,
 		ki := config.KernelInfo{
 			DistroType:    dii.DistroType,
 			DistroRelease: dii.DistroRelease,
+			KernelVersion: krel.Name(),
 			KernelRelease: krel.Name(),
 			ContainerName: dii.Name,
 

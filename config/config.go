@@ -276,6 +276,8 @@ type KernelInfo struct {
 	DistroRelease string // 18.04/7.4.1708/9.1
 
 	// Must be *exactly* same as in `uname -r`
+	KernelVersion string
+
 	KernelRelease string
 
 	// Build-time information
