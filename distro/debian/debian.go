@@ -156,7 +156,7 @@ func ContainerImage(km config.KernelMask) (image string) {
 	case Stretch:
 		image += "stretch-20220622"
 	default:
-		image += km.DistroType.String()
+		image += km.DistroRelease
 	}
 
 	return
