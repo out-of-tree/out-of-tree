@@ -215,7 +215,7 @@ func findKbuild(versions []string, kpkgver string) (
 
 var (
 	CachePath   string
-	RefetchDays int = 7
+	RefetchDays int = 14
 )
 
 func GetKernels() (kernels []DebianKernel, err error) {
