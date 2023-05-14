@@ -119,7 +119,10 @@ func kernelRelease(deb string) (r Release, err error) {
 
 	switch major {
 	case 3:
-		if minor < 16 {
+		//if minor < 16 {
+		// >=3.8 breaks initramfs-tools << 0.110~
+		// Wheezy initramfs-tools version is 0.109.1
+		if minor < 8 {
 			r = Wheezy
 		} else {
 			r = Jessie
