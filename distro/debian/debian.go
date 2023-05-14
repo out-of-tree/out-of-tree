@@ -278,6 +278,8 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 
 	cmdf("apt-get update")
 	cmdf("apt-get install -y wget build-essential libelf-dev git")
+	cmdf("apt-get install -y kmod module-init-tools linux-base")
+	cmdf("apt-get install -y initramfs-tools")
 	cmdf("mkdir -p /lib/modules")
 
 	return
