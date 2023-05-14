@@ -270,7 +270,7 @@ func build(flog zerolog.Logger, tmp string, ka config.Artifact,
 
 	if ki.ContainerName != "" {
 		var c container.Container
-		c, err = container.New(ki.ContainerName, dockerTimeout)
+		c, err = container.NewFromKernelInfo(ki, dockerTimeout)
 		c.Log = flog
 		if err != nil {
 			log.Fatal().Err(err).Msg("container creation failure")

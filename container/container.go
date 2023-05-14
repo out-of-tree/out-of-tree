@@ -11,6 +11,8 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -113,6 +115,23 @@ func New(name string, timeout time.Duration) (c Container, err error) {
 	c.Volumes.Boot = fmt.Sprintf(
 		"%s/.out-of-tree/volumes/%s/boot", usr.HomeDir, name)
 	os.MkdirAll(c.Volumes.Boot, 0777)
+
+	return
+}
+
+func NewFromKernelInfo(ki config.KernelInfo, timeout time.Duration) (
+	c Container, err error) {
+
+	c.name = ki.ContainerName
+	c.timeout = timeout
+
+	c.Log = log.With().
+		Str("container", c.name).
+		Logger()
+
+	c.Volumes.LibModules = path.Dir(ki.ModulesPath)
+	c.Volumes.Boot = path.Dir(ki.KernelPath)
+	c.Volumes.UsrSrc = filepath.Join(path.Dir(ki.KernelPath), "../usr/src")
 
 	return
 }
