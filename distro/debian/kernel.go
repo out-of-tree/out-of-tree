@@ -2,9 +2,11 @@ package debian
 
 import (
 	"errors"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
@@ -35,6 +37,22 @@ type DebianKernel struct {
 		Invalid   bool
 		LastFetch time.Time
 	}
+}
+
+func (dk DebianKernel) HasDependency(pkgname string) bool {
+	for _, deppkg := range dk.Dependencies {
+		if strings.Contains(deppkg.Name, pkgname) {
+			return true
+		}
+	}
+	return false
+}
+
+// use only for inline comparison
+func kver(ver string) *semver.Version {
+	ver = strings.Replace(ver, "~", "-", -1)
+	ver = strings.Replace(ver, "+", "-", -1)
+	return semver.MustParse(ver)
 }
 
 var (
@@ -133,6 +151,69 @@ func GetCachedKernel(deb string) (dk DebianKernel, err error) {
 	return
 }
 
+func kbuildVersion(versions []string, kpkgver string) string {
+	sort.Slice(versions, func(i, j int) bool {
+		return kver(versions[i]).GreaterThan(kver(versions[j]))
+	})
+
+	for _, v := range versions {
+		if v == kpkgver {
+			return v
+		}
+	}
+
+	ver := kver(kpkgver)
+
+	// Not able to find the exact version, try similar
+	for _, v := range versions {
+		cver := kver(v)
+
+		// It's certainly not fit for purpose if the major and
+		// minor versions aren't the same
+
+		if ver.Major() != cver.Major() {
+			continue
+		}
+
+		if ver.Minor() != cver.Minor() {
+			continue
+		}
+
+		// Use the first version that is newer than the kernel
+
+		if ver.LessThan(cver) {
+			continue
+		}
+
+		return v
+	}
+
+	return ""
+}
+
+func findKbuild(versions []string, kpkgver string) (
+	pkg snapshot.Package, err error) {
+
+	version := kbuildVersion(versions, kpkgver)
+	if version == "" {
+		err = errors.New("cannot find kbuild version")
+		return
+	}
+
+	packages, err := snapshot.Packages("linux-tools", version,
+		`^linux-kbuild`, []string{"amd64"}, []string{"dbg"})
+	if err != nil {
+		return
+	}
+
+	if len(packages) == 0 {
+		err = errors.New("cannot find kbuild package")
+	}
+
+	pkg = packages[0]
+	return
+}
+
 var (
 	CachePath   string
 	RefetchDays int = 7
@@ -162,9 +243,15 @@ func GetKernels() (kernels []DebianKernel, err error) {
 	}
 	defer c.Close()
 
+	linuxToolsVersions, err := snapshot.SourcePackageVersions("linux-tools")
+	if err != nil {
+		log.Error().Err(err).Msg("get linux-tools source pkg versions")
+		return
+	}
+
 	versions, err := snapshot.SourcePackageVersions("linux")
 	if err != nil {
-		log.Error().Err(err).Msg("get source package versions")
+		log.Error().Err(err).Msg("get linux source package versions")
 		return
 	}
 
@@ -175,6 +262,7 @@ func GetKernels() (kernels []DebianKernel, err error) {
 	}
 
 	for i, version := range versions {
+		// TODO move this scope to function
 		slog := log.With().Str("version", version).Logger()
 		slog.Debug().Msgf("%03d/%03d", i, len(versions))
 
@@ -205,6 +293,31 @@ func GetKernels() (kernels []DebianKernel, err error) {
 
 			dk.Internal.Invalid = true
 			dk.Internal.LastFetch = time.Now()
+		}
+
+		if !dk.HasDependency("kbuild") {
+			if !kver(dk.Version.Package).LessThan(kver("4.5-rc0")) {
+				dk.Internal.Invalid = true
+				dk.Internal.LastFetch = time.Now()
+			} else {
+				// Debian kernels prior to the 4.5 package
+				// version did not have a kbuild built from
+				// the linux source itself, but used the
+				// linux-tools source package.
+				kbuildpkg, err := findKbuild(
+					linuxToolsVersions,
+					dk.Version.Package,
+				)
+				if err != nil {
+					dk.Internal.Invalid = true
+					dk.Internal.LastFetch = time.Now()
+				} else {
+					dk.Dependencies = append(
+						dk.Dependencies,
+						kbuildpkg,
+					)
+				}
+			}
 		}
 
 		err = c.Put(dk)
