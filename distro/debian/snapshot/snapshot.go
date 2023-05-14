@@ -311,6 +311,9 @@ func Packages(srcname, version, regex string, archs, filter []string) (
 	r := regexp.MustCompile(regex)
 
 	for _, res := range binpkgs.Result {
+		if res.Version != version {
+			continue
+		}
 		if !r.MatchString(res.Name) || filtered(res.Name, filter) {
 			continue
 		}
