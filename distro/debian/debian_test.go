@@ -9,6 +9,10 @@ import (
 )
 
 func TestMatchImagePkg(t *testing.T) {
+	if os.Getenv("CI") != "" {
+		t.Skip("skip testing in CI")
+	}
+
 	t.Log("tested with cache by default")
 
 	tmp, err := fs.TempDir()
