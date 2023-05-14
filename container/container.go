@@ -70,16 +70,18 @@ func ImagePath(sk config.KernelMask) string {
 	return config.Dir("containers", sk.DistroType.String(), sk.DistroRelease)
 }
 
+type Volumes struct {
+	LibModules string
+	UsrSrc     string
+	Boot       string
+}
+
 type Container struct {
 	name string
 
 	timeout time.Duration
 
-	Volumes struct {
-		LibModules string
-		UsrSrc     string
-		Boot       string
-	}
+	Volumes Volumes
 
 	// Additional arguments
 	Args []string
