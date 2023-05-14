@@ -171,10 +171,10 @@ func repositories(release Release) (repos []string) {
 	case Wheezy:
 		// doesn't include snapshot repos in /etc/apt/source.list
 		snapshot = "20190321T212815Z"
-	// case Jessie:
-	// 	snapshot = "20230322T152120Z"
-	// case Stretch:
-	// 	snapshot = "20230423T032533Z"
+	case Jessie:
+		snapshot = "20230322T152120Z"
+	case Stretch:
+		snapshot = "20230423T032533Z"
 	default:
 		return
 	}
