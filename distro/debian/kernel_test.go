@@ -2,6 +2,8 @@ package debian
 
 import (
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 func TestGetDebianKernel(t *testing.T) {
@@ -13,4 +15,6 @@ func TestGetDebianKernel(t *testing.T) {
 	if dk.Version.ABI != "4.17.0-2" {
 		t.Fatalf("wrong abi")
 	}
+
+	t.Logf("%s", spew.Sdump(dk))
 }
