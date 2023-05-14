@@ -393,6 +393,8 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 				"/boot/initramfs-%s.img %s", version, version)
 		}
 	case config.Debian:
+		// TODO move to distro/debian/
+
 		var dk debian.DebianKernel
 		dk, err = debian.GetCachedKernel(pkgname + ".deb")
 		if err != nil {
@@ -411,7 +413,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 
 		pkgs := []snapshot.Package{dk.Image}
 		if headers {
-			pkgs = append(pkgs, dk.Headers)
+			pkgs = append(pkgs, dk.Headers...)
 		}
 
 		for _, pkg := range pkgs {

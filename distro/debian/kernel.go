@@ -2,7 +2,6 @@ package debian
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -25,7 +24,7 @@ type DebianKernelVersion struct {
 type DebianKernel struct {
 	Version      DebianKernelVersion
 	Image        snapshot.Package
-	Headers      snapshot.Package
+	Headers      []snapshot.Package
 	Dependencies []snapshot.Package
 
 	// FIXME There is a better way
@@ -44,7 +43,7 @@ var (
 func GetDebianKernel(version string) (dk DebianKernel, err error) {
 	dk.Version.Package = version
 
-	regex := `^linux-(image|headers)-[a-z+~0-9\.\-]*-(amd64|amd64-unsigned)$`
+	regex := `^linux-(image|headers)-[a-z+~0-9\.\-]*-(common|amd64|amd64-unsigned)$`
 
 	filter := []string{
 		"rt-amd64",
@@ -61,20 +60,6 @@ func GetDebianKernel(version string) (dk DebianKernel, err error) {
 	if len(packages) == 0 {
 		err = ErrNoBinaryPackages
 		return
-	} else if len(packages) == 1 {
-		if strings.Contains(packages[0].Name, "image") {
-			err = ErrNoHeadersPackage
-			return
-		} else if strings.Contains(packages[0].Name, "headers") {
-			err = ErrNoImagePackage
-			return
-		} else {
-			err = fmt.Errorf("wtf? %v", packages[0].Name)
-			return
-		}
-	} else if len(packages) > 2 {
-		err = errors.New("more than two binary packages found")
-		return
 	}
 
 	var imageFound, headersFound bool
@@ -84,21 +69,23 @@ func GetDebianKernel(version string) (dk DebianKernel, err error) {
 			dk.Image = p
 		} else if strings.Contains(p.Name, "headers") {
 			headersFound = true
-			dk.Headers = p
+			dk.Headers = append(dk.Headers, p)
+		} else {
+			dk.Dependencies = append(dk.Dependencies, p)
 		}
 	}
 
 	if !imageFound {
-		err = errors.New("image not found")
+		err = ErrNoImagePackage
 		return
 	}
 
 	if !headersFound {
-		err = errors.New("headers not found")
+		err = ErrNoHeadersPackage
 		return
 	}
 
-	s := strings.Replace(dk.Headers.Name, "linux-headers-", "", -1)
+	s := strings.Replace(dk.Image.Name, "linux-image-", "", -1)
 	dk.Version.ABI = strings.Replace(s, "-amd64", "", -1)
 
 	return
@@ -126,10 +113,15 @@ func GetCachedKernel(deb string) (dk DebianKernel, err error) {
 			continue
 		}
 
-		switch deb {
-		case tmpdk.Image.Deb.Name, tmpdk.Headers.Deb.Name:
+		if deb == tmpdk.Image.Deb.Name {
 			dk = tmpdk
-			return
+		}
+
+		for _, h := range tmpdk.Headers {
+			if deb == h.Deb.Name {
+				dk = tmpdk
+				return
+			}
 		}
 	}
 

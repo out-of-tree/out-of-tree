@@ -20,7 +20,7 @@ func TestSourcePackageVersions(t *testing.T) {
 
 func TestPackages(t *testing.T) {
 	packages, err := Packages("linux", "3.16.5-1", "amd64",
-		`^linux-(image|headers)-[0-9\.\-]*-(amd64|amd64-unsigned)$`,
+		`^linux-(image|headers)-[0-9\.\-]*-(common|amd64|amd64-unsigned)$`,
 		[]string{})
 	if err != nil {
 		t.Fatal(err)
@@ -30,5 +30,7 @@ func TestPackages(t *testing.T) {
 		t.Fatal(errors.New("empty response"))
 	}
 
-	t.Log(packages)
+	for _, pkg := range packages {
+		t.Logf("%#v", pkg)
+	}
 }
