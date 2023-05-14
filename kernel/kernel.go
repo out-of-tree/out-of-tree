@@ -110,17 +110,6 @@ func MatchPackages(km config.KernelMask) (pkgs []string, err error) {
 	return
 }
 
-func dockerImagePath(sk config.KernelMask) (path string, err error) {
-	usr, err := user.Current()
-	if err != nil {
-		return
-	}
-
-	path = usr.HomeDir + "/.out-of-tree/containers/"
-	path += sk.DistroType.String() + "/" + sk.DistroRelease
-	return
-}
-
 func vsyscallAvailable() (available bool, err error) {
 	if runtime.GOOS != "linux" {
 		// Docker for non-Linux systems is not using the host
@@ -142,10 +131,7 @@ func vsyscallAvailable() (available bool, err error) {
 func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 	sk config.KernelMask, forceUpdate bool) (err error) {
 
-	imagePath, err := dockerImagePath(sk)
-	if err != nil {
-		return
-	}
+	imagePath := container.ImagePath(sk)
 	dockerPath := imagePath + "/Dockerfile"
 
 	d := "# BASE\n"

@@ -66,6 +66,10 @@ func Images() (diis []Image, err error) {
 	return
 }
 
+func ImagePath(sk config.KernelMask) string {
+	return config.Dir("containers", sk.DistroType.String(), sk.DistroRelease)
+}
+
 type Container struct {
 	name string
 
