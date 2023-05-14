@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -69,78 +68,38 @@ func releaseFromString(s string) (r Release) {
 	return
 }
 
-func parseKernelMajorMinor(deb string) (major, minor int, err error) {
+func kernelRelease(deb string) (r Release, err error) {
 	// linux-image-4.17.0-2-amd64 -> 4.17
 	re := regexp.MustCompile(`([0-9]*\.[0-9]*)`)
-
-	s := re.FindString(deb)
-	if s == "" {
+	sver := re.FindString(deb)
+	if sver == "" {
 		err = errors.New("empty result")
 		return
 	}
+	version := kver(sver)
 
-	split := strings.Split(s, ".")
-	if len(split) != 2 {
-		err = errors.New("unexpected input")
-		return
-	}
-
-	major, err = strconv.Atoi(split[0])
-	if err != nil {
-		return
-	}
-
-	minor, err = strconv.Atoi(split[1])
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func kernelRelease(deb string) (r Release, err error) {
-	major, minor, err := parseKernelMajorMinor(deb)
-	if err != nil {
-		return
-	}
-
-	// Wheezy 3.2
-	// Jessie 3.16
-	// Stretch 4.9
-	// Buster 4.19
-	// Bullseye 5.10
-
-	if major < 3 {
+	if version.LessThan(kver("3.0-rc0")) {
 		err = errors.New("not supported")
 		return
 	}
 
-	switch major {
-	case 3:
-		//if minor < 16 {
+	if version.LessThan(kver("3.8-rc0")) {
+		// Wheezy 3.2
 		// >=3.8 breaks initramfs-tools << 0.110~
 		// Wheezy initramfs-tools version is 0.109.1
-		if minor < 8 {
-			r = Wheezy
-		} else {
-			r = Jessie
-		}
-	case 4:
-		if minor < 9 {
-			r = Jessie
-		} else if minor < 19 {
-			r = Stretch
-		} else {
-			r = Buster
-		}
-	case 5:
-		if minor < 10 {
-			r = Buster
-		} else {
-			r = Bullseye
-		}
-	default:
-		r = Bullseye // latest release
+		r = Wheezy
+	} else if version.LessThan(kver("4.9-rc0")) {
+		// Jessie 3.16
+		r = Jessie
+	} else if version.LessThan(kver("4.19-rc0")) {
+		// Stretch 4.9
+		r = Stretch
+	} else if version.LessThan(kver("5.10-rc0")) {
+		// Buster 4.19
+		r = Buster
+	} else {
+		// Bullseye 5.10
+		r = Bullseye
 	}
 
 	return
