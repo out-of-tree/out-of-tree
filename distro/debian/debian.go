@@ -210,47 +210,74 @@ func ContainerEnvs(km config.KernelMask) (envs []string) {
 	return
 }
 
-func ContainerCommands(km config.KernelMask) (commands []string) {
-	release := releaseFromString(km.DistroRelease)
+func ContainerImage(km config.KernelMask) (image string) {
+	image += "debian:"
 
+	switch releaseFromString(km.DistroRelease) {
+	case Wheezy:
+		image += "wheezy-20190228"
+	case Jessie:
+		image += "jessie-20210326"
+	case Stretch:
+		image += "stretch-20220622"
+	default:
+		image += km.DistroType.String()
+	}
+
+	return
+}
+
+func repositories(release Release) (repos []string) {
 	var snapshot string
 
 	switch release {
+	// Latest snapshots that include release
 	case Wheezy:
-		snapshot = "20160605T173546Z"
-	case Jessie:
-		snapshot = "20190212T020859Z"
-	case Stretch:
-		snapshot = "20200719T110630Z"
-	case Buster:
-		snapshot = "20220911T180237Z"
-	case Bullseye:
-		snapshot = "20221218T103830Z"
+		// doesn't include snapshot repos in /etc/apt/source.list
+		snapshot = "20190321T212815Z"
+	// case Jessie:
+	// 	snapshot = "20230322T152120Z"
+	// case Stretch:
+	// 	snapshot = "20230423T032533Z"
 	default:
-		log.Fatal().Msgf("%s not supported", release)
 		return
 	}
 
-	params := "[check-valid-until=no trusted=yes]"
-	mirror := "http://snapshot.debian.org"
-	repourl := fmt.Sprintf("%s/archive/debian/%s/", mirror, snapshot)
+	repo := func(archive, s string) {
+		format := "deb [check-valid-until=no trusted=yes] " +
+			"http://snapshot.debian.org/archive/%s/%s " +
+			"%s%s main"
+		r := fmt.Sprintf(format, archive, snapshot, release, s)
+		repos = append(repos, r)
+	}
+
+	repo("debian", "")
+	repo("debian", "-updates")
+	repo("debian-security", "/updates")
+
+	return
+}
+
+func ContainerCommands(km config.KernelMask) (commands []string) {
+	release := releaseFromString(km.DistroRelease)
 
 	cmdf := func(f string, s ...interface{}) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}
 
-	repo := fmt.Sprintf("deb %s %s %s main contrib",
-		params, repourl, release)
+	repos := repositories(release)
 
-	cmdf("echo '%s' > /etc/apt/sources.list", repo)
-
-	repo = fmt.Sprintf("deb %s %s %s-updates main contrib",
-		params, repourl, release)
-
-	cmdf("echo '%s' >> /etc/apt/sources.list", repo)
+	if len(repos) != 0 {
+		cmdf("rm /etc/apt/sources.list")
+		for _, repo := range repos {
+			cmdf("echo '%s' >> /etc/apt/sources.list", repo)
+		}
+	} else {
+		cmdf("sed -e '/snapshot/!d' -e 's/# deb/deb [check-valid-until=no trusted=yes]/' /etc/apt/sources.list")
+	}
 
 	cmdf("apt-get update")
-	cmdf("apt-get install -y wget")
+	cmdf("apt-get install -y wget build-essential libelf-dev git")
 	cmdf("mkdir -p /lib/modules")
 
 	return

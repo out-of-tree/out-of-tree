@@ -164,10 +164,14 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 		d += registry + "/"
 	}
 
-	d += fmt.Sprintf("%s:%s\n",
-		strings.ToLower(sk.DistroType.String()),
-		sk.DistroRelease,
-	)
+	switch sk.DistroType {
+	case config.Debian:
+		d += debian.ContainerImage(sk) + "\n"
+	default:
+		d += fmt.Sprintf("%s:%s\n",
+			strings.ToLower(sk.DistroType.String()),
+			sk.DistroRelease)
+	}
 
 	for _, c := range commands {
 		d += "RUN " + c.Command + "\n"
