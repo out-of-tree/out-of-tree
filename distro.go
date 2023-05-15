@@ -127,7 +127,7 @@ func (cmd DebianGetDebCmd) Run() (err error) {
 	}
 
 	if !hasresults {
-		log.Fatal("no packages found to download")
+		log.Fatal().Msg("no packages found to download")
 	}
 	return
 }
