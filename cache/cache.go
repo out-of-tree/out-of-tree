@@ -6,6 +6,7 @@ package cache
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -14,6 +15,7 @@ import (
 	"github.com/cavaliergopher/grab/v3"
 	"github.com/rs/zerolog/log"
 
+	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -87,4 +89,28 @@ func DownloadDebianCache(cachePath string) (err error) {
 	}
 
 	return os.Rename(resp.Filename, cachePath)
+}
+
+func PackageURL(dt config.DistroType, orig string) (found bool, fileurl string) {
+	if dt != config.Debian {
+		return
+	}
+
+	filename := filepath.Base(orig)
+
+	fileurl, err := url.JoinPath(URL, "packages/debian", filename)
+	if err != nil {
+		return
+	}
+
+	resp, err := http.Head(fileurl)
+	if err != nil {
+		return
+	}
+	if resp.StatusCode != http.StatusOK {
+		return
+	}
+
+	found = true
+	return
 }

@@ -421,6 +421,15 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		}
 
 		for _, pkg := range pkgs {
+			found, newurl := cache.PackageURL(
+				sk.DistroType,
+				pkg.Deb.URL,
+			)
+			if found {
+				log.Debug().Msgf("cached deb found %s", newurl)
+				pkg.Deb.URL = newurl
+			}
+
 			cmd += fmt.Sprintf(" && wget --no-check-certificate %s",
 				strings.Replace(pkg.Deb.URL, "https", "http", -1))
 		}
