@@ -10,6 +10,7 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/distro/debian"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 type DistroCmd struct {
@@ -68,14 +69,20 @@ func (cmd DebianGetDebCmd) Run() (err error) {
 		}
 	}
 
-	tmp := filepath.Join(cmd.Path, "tmp")
-	err = os.MkdirAll(tmp, os.ModePerm)
+	tmp, err := os.MkdirTemp(cmd.Path, "tmp-")
 	if err != nil {
 		return
 	}
 	defer os.RemoveAll(tmp)
 
 	for _, pkg := range packages {
+		target := filepath.Join(cmd.Path, filepath.Base(pkg.Deb.URL))
+
+		if fs.PathExists(target) {
+			log.Info().Msgf("%s already exists", pkg.Deb.URL)
+			continue
+		}
+
 		log.Info().Msgf("downloading %s", pkg.Deb.URL)
 
 		resp, err := grab.Get(tmp, pkg.Deb.URL)
@@ -84,7 +91,7 @@ func (cmd DebianGetDebCmd) Run() (err error) {
 			continue
 		}
 
-		err = os.Rename(resp.Filename, filepath.Base(resp.Filename))
+		err = os.Rename(resp.Filename, target)
 		if err != nil {
 			log.Fatal().Err(err).Msg("mv")
 		}
