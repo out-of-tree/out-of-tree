@@ -52,9 +52,6 @@ jobs:
     - name: Build
       run: go build
 
-    - name: Get deb packages
-      run:
-
     - name: Install s3cmd
       run: sudo apt install s3cmd
 
