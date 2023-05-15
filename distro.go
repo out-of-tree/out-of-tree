@@ -83,6 +83,8 @@ func (cmd DebianGetDebCmd) Run() (err error) {
 	}
 	defer os.RemoveAll(tmp)
 
+	hasresults := false
+
 	for _, pkg := range packages {
 		if cmd.IgnoreCached {
 			log.Debug().Msgf("check cache for %s", pkg.Deb.Name)
@@ -112,7 +114,12 @@ func (cmd DebianGetDebCmd) Run() (err error) {
 		if err != nil {
 			log.Fatal().Err(err).Msg("mv")
 		}
+
+		hasresults = true
 	}
 
+	if !hasresults {
+		log.Fatal("no packages found to download")
+	}
 	return
 }
