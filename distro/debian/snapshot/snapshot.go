@@ -1,23 +1,14 @@
 package snapshot
 
 import (
-	"bytes"
-	"compress/bzip2"
-	"compress/gzip"
-	"context"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog/log"
-	"github.com/ulikunitz/xz"
 	"golang.org/x/time/rate"
 
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot/mr"
@@ -59,8 +50,7 @@ type Package struct {
 	}
 
 	Repo struct {
-		Snapshot      string
-		SnapshotDists []string
+		Snapshot string
 
 		Archive string
 
@@ -103,11 +93,6 @@ func NewPackage(name, srcname, version string, archs []string) (
 	}
 	p.Repo.Component = split[2]
 
-	p.Repo.SnapshotDists, err = p.dists()
-	if err != nil {
-		return
-	}
-
 	return
 }
 
@@ -128,153 +113,6 @@ func (p Package) getHash(archs []string) (arch, hash string, err error) {
 	}
 
 	err = errors.New("hash not found")
-	return
-}
-
-// Because the snapshot date is when the package was first introduced,
-// it will probably always be sid or experimental.
-func (p Package) GetCodename() (dist string, err error) {
-	for _, dist = range p.Repo.SnapshotDists {
-		var distHasPackage bool
-		distHasPackage, err = p.isDistHasPackage(dist)
-		if err != nil {
-			return
-		}
-		if distHasPackage {
-			return
-		}
-	}
-
-	err = errors.New("codename not found")
-	return
-}
-
-func (p Package) dists() (dists []string, err error) {
-	query, err := url.JoinPath(URL, "archive", p.Repo.Archive,
-		p.Repo.Snapshot, "dists/")
-	if err != nil {
-		return
-	}
-
-	resp, err := httpGetWithRetry(query)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		err = fmt.Errorf("%d (%s)", resp.StatusCode, query)
-		return
-	}
-
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		return
-	}
-
-	doc.Find("table tr").Each(func(i int, s *goquery.Selection) {
-		html, err := s.Html()
-		if err != nil {
-			return
-		}
-		if !strings.Contains(html, "<td>d</td") {
-			return
-		}
-
-		s.Find("a").Each(func(i int, s *goquery.Selection) {
-			if strings.Contains(s.Text(), "..") {
-				return
-			}
-
-			dist := strings.Replace(s.Text(), "/", "", -1)
-			dists = append(dists, dist)
-		})
-	})
-
-	return
-}
-
-func (p Package) isDistHasPackage(dist string) (yes bool, err error) {
-	var buf []byte
-	for _, ext := range []string{"xz", "gz", "bz2"} {
-		buf, err = p.distPackage(dist, ext)
-		if err == nil {
-			break
-		}
-	}
-	if err != nil {
-		return
-	}
-
-	yes = bytes.Contains(buf, []byte(p.Deb.Name))
-	return
-}
-
-func (p Package) distPackage(dist string, ext string) (buf []byte, err error) {
-	query, err := url.JoinPath(URL, "archive", p.Repo.Archive,
-		p.Repo.Snapshot, "dists", dist,
-		fmt.Sprintf("main/binary-%s/Packages.%s", p.Arch, ext),
-	)
-	if err != nil {
-		return
-	}
-
-	resp, err := httpGetWithRetry(query)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	var reader io.Reader
-	switch ext {
-	case "xz":
-		reader, err = xz.NewReader(resp.Body)
-	case "gz":
-		reader, err = gzip.NewReader(resp.Body)
-	case "bz2":
-		reader = bzip2.NewReader(resp.Body)
-	default:
-		err = fmt.Errorf("%s not supported", ext)
-	}
-	if err != nil {
-		return
-	}
-
-	buf, err = io.ReadAll(reader)
-	return
-}
-
-func httpGetWithRetry(query string) (resp *http.Response, err error) {
-	flog := log.With().Str("url", query).Logger()
-	for i := Retries; i > 0; i-- {
-		flog.Trace().Msg("wait")
-		Limiter.Wait(context.Background())
-
-		client := http.Client{Timeout: HttpTimeout}
-
-		flog.Trace().Msg("start")
-		resp, err = client.Get(query)
-		if err != nil {
-			if os.IsTimeout(err) {
-				flog.Debug().Msgf("timeout; retry (%d left)", i)
-				continue
-			}
-			flog.Error().Err(err).Msg("")
-			return
-		}
-		flog.Debug().Msgf("%s", resp.Status)
-
-		if resp.StatusCode < 500 {
-			break
-		}
-
-		resp.Body.Close()
-		flog.Debug().Msgf("retry (%d left)", i)
-	}
-
-	if resp.StatusCode >= 400 {
-		err = fmt.Errorf("%d (%s)", resp.StatusCode, query)
-	}
 	return
 }
 
