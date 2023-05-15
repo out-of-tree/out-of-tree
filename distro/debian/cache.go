@@ -1,6 +1,7 @@
 package debian
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/rapidloop/skv"
@@ -21,12 +22,18 @@ func NewCache(path string) (c *Cache, err error) {
 	return
 }
 
-func (c Cache) Put(p DebianKernel) error {
-	return c.store.Put(p.Version.Package, p)
+func (c Cache) Put(p []DebianKernel) error {
+	if len(p) == 0 {
+		return errors.New("empty slice")
+	}
+	return c.store.Put(p[0].Version.Package, p)
 }
 
-func (c Cache) Get(version string) (p DebianKernel, err error) {
+func (c Cache) Get(version string) (p []DebianKernel, err error) {
 	err = c.store.Get(version, &p)
+	if len(p) == 0 {
+		err = skv.ErrNotFound
+	}
 	return
 }
 

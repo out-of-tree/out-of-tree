@@ -137,11 +137,12 @@ func GetCachedKernel(deb string) (dk DebianKernel, err error) {
 	}
 
 	for _, version := range versions {
-		var tmpdk DebianKernel
-		tmpdk, err = c.Get(version)
+		var tmpdks []DebianKernel
+		tmpdks, err = c.Get(version)
 		if err != nil {
 			continue
 		}
+		tmpdk := tmpdks[0]
 
 		if deb == tmpdk.Image.Deb.Name {
 			dk = tmpdk
@@ -225,11 +226,15 @@ func findKbuild(versions []string, kpkgver string) (
 func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
 	version string) (kernels []DebianKernel) {
 
-	dk, err := c.Get(version)
-	if err == nil && !dk.Internal.Invalid {
-		slog.Trace().Msgf("found in cache")
-		kernels = append(kernels, dk)
-		return
+	var dk DebianKernel
+	dks, err := c.Get(version)
+	if err == nil {
+		dk = dks[0]
+		if !dk.Internal.Invalid {
+			slog.Trace().Msgf("found in cache")
+			kernels = append(kernels, dk)
+			return
+		}
 	}
 
 	if dk.Internal.Invalid {
@@ -280,7 +285,7 @@ func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
 		kernels = append(kernels, dk)
 	}
 
-	err = c.Put(dk)
+	err = c.Put([]DebianKernel{dk})
 	if err != nil {
 		slog.Error().Err(err).Msg("put to cache")
 		return

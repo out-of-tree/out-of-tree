@@ -34,15 +34,16 @@ func TestCache(t *testing.T) {
 		Image:   image,
 	}
 
-	err = c.Put(dk)
+	err = c.Put([]DebianKernel{dk})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	dk2, err := c.Get(version)
+	dk2s, err := c.Get(version)
 	if err != nil {
 		t.Fatal(err)
 	}
+	dk2 := dk2s[0]
 
 	if dk.Image.Deb.Hash != dk2.Image.Deb.Hash {
 		t.Fatalf("mismatch")
@@ -56,10 +57,11 @@ func TestCache(t *testing.T) {
 	}
 	defer c.Close()
 
-	dk3, err := c.Get(version)
+	dk3s, err := c.Get(version)
 	if err != nil {
 		t.Fatal(err)
 	}
+	dk3 := dk3s[0]
 
 	if dk.Image.Deb.Hash != dk3.Image.Deb.Hash {
 		t.Fatalf("mismatch")
