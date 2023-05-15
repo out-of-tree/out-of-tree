@@ -145,6 +145,7 @@ func GetCachedKernel(deb string) (dk DebianKernel, err error) {
 
 		if deb == tmpdk.Image.Deb.Name {
 			dk = tmpdk
+			return
 		}
 
 		for _, h := range tmpdk.Headers {
