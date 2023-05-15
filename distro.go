@@ -52,6 +52,8 @@ type DebianGetDebCmd struct {
 	Regexp string `help:"match deb pkg names by regexp" default:".*"`
 
 	IgnoreCached bool `help:"ignore packages found on remote mirror"`
+
+	Max int `help:"do not download more than X" default:"100500"`
 }
 
 func (cmd DebianGetDebCmd) Run() (err error) {
@@ -86,6 +88,10 @@ func (cmd DebianGetDebCmd) Run() (err error) {
 	hasresults := false
 
 	for _, pkg := range packages {
+		if cmd.Max <= 0 {
+			break
+		}
+
 		if cmd.IgnoreCached {
 			log.Debug().Msgf("check cache for %s", pkg.Deb.Name)
 			found, _ := cache.PackageURL(config.Debian, pkg.Deb.URL)
@@ -116,6 +122,7 @@ func (cmd DebianGetDebCmd) Run() (err error) {
 		}
 
 		hasresults = true
+		cmd.Max--
 	}
 
 	if !hasresults {
