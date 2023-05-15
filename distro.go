@@ -112,6 +112,7 @@ func (cmd DebianGetDebCmd) Run() (err error) {
 
 		resp, err := grab.Get(tmp, pkg.Deb.URL)
 		if err != nil {
+			err = nil
 			log.Warn().Err(err).Msg("download")
 			continue
 		}
