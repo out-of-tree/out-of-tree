@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetDebianKernel(t *testing.T) {
-	dk, err := GetDebianKernel("4.17.14-1")
+	dk, err := getDebianKernel("4.17.14-1")
 	if err != nil {
 		t.Fatal(err)
 	}

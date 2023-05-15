@@ -68,7 +68,7 @@ var (
 	ErrNoImagePackage   = errors.New("no image package found")
 )
 
-func GetDebianKernel(version string) (dk DebianKernel, err error) {
+func getDebianKernel(version string) (dk DebianKernel, err error) {
 	dk.Version.Package = version
 
 	regex := `^(linux-(image|headers)-[a-z+~0-9\.\-]*-(common|amd64|amd64-unsigned)|linux-kbuild-.*)$`
@@ -289,7 +289,7 @@ func GetKernels() (kernels []DebianKernel, err error) {
 			}
 		}
 
-		dk, err = GetDebianKernel(version)
+		dk, err = getDebianKernel(version)
 		if err != nil {
 			if err == ErrNoBinaryPackages {
 				slog.Warn().Err(err).Msg("")
