@@ -8,6 +8,8 @@ import (
 	"github.com/cavaliergopher/grab/v3"
 	"github.com/rs/zerolog/log"
 
+	"code.dumpstack.io/tools/out-of-tree/cache"
+	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 	"code.dumpstack.io/tools/out-of-tree/fs"
@@ -48,6 +50,8 @@ func (cmd *DebianCacheCmd) Run() (err error) {
 type DebianGetDebCmd struct {
 	Path   string `help:"path to download directory" type:"existingdir" default:"./"`
 	Regexp string `help:"match deb pkg names by regexp" default:".*"`
+
+	IgnoreCached bool `help:"ignore packages found on remote mirror"`
 }
 
 func (cmd DebianGetDebCmd) Run() (err error) {
@@ -68,6 +72,7 @@ func (cmd DebianGetDebCmd) Run() (err error) {
 			if !re.MatchString(pkg.Deb.Name) {
 				continue
 			}
+
 			packages = append(packages, pkg)
 		}
 	}
@@ -79,6 +84,15 @@ func (cmd DebianGetDebCmd) Run() (err error) {
 	defer os.RemoveAll(tmp)
 
 	for _, pkg := range packages {
+		if cmd.IgnoreCached {
+			log.Debug().Msgf("check cache for %s", pkg.Deb.Name)
+			found, _ := cache.PackageURL(config.Debian, pkg.Deb.URL)
+			if found {
+				log.Debug().Msgf("%s already cached", pkg.Deb.Name)
+				continue
+			}
+		}
+
 		target := filepath.Join(cmd.Path, filepath.Base(pkg.Deb.URL))
 
 		if fs.PathExists(target) {
