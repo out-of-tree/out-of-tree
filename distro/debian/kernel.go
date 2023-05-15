@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
@@ -220,6 +221,74 @@ func findKbuild(versions []string, kpkgver string) (
 	return
 }
 
+func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
+	version string) (kernels []DebianKernel) {
+
+	dk, err := c.Get(version)
+	if err == nil && !dk.Internal.Invalid {
+		slog.Trace().Msgf("found in cache")
+		kernels = append(kernels, dk)
+		return
+	}
+
+	if dk.Internal.Invalid {
+		refetch := dk.Internal.LastFetch.AddDate(0, 0, RefetchDays)
+		if refetch.After(time.Now()) {
+			slog.Trace().Msgf("refetch at %v", refetch)
+			return
+		}
+	}
+
+	dk, err = getDebianKernel(version)
+	if err != nil {
+		if err == ErrNoBinaryPackages {
+			slog.Warn().Err(err).Msg("")
+		} else {
+			slog.Error().Err(err).Msg("get debian kernel")
+		}
+
+		dk.Internal.Invalid = true
+	}
+
+	if !dk.HasDependency("kbuild") {
+		if !kver(dk.Version.Package).LessThan(kver("4.5-rc0")) {
+			dk.Internal.Invalid = true
+		} else {
+			// Debian kernels prior to the 4.5 package
+			// version did not have a kbuild built from
+			// the linux source itself, but used the
+			// linux-tools source package.
+			kbuildpkg, err := findKbuild(
+				toolsVersions,
+				dk.Version.Package,
+			)
+			if err != nil {
+				dk.Internal.Invalid = true
+			} else {
+				dk.Dependencies = append(
+					dk.Dependencies,
+					kbuildpkg,
+				)
+			}
+		}
+	}
+
+	dk.Internal.LastFetch = time.Now()
+
+	if !dk.Internal.Invalid {
+		kernels = append(kernels, dk)
+	}
+
+	err = c.Put(dk)
+	if err != nil {
+		slog.Error().Err(err).Msg("put to cache")
+		return
+	}
+
+	slog.Debug().Msgf("%s cached", version)
+	return
+}
+
 var (
 	CachePath   string
 	RefetchDays int = 14
@@ -249,7 +318,7 @@ func GetKernels() (kernels []DebianKernel, err error) {
 	}
 	defer c.Close()
 
-	linuxToolsVersions, err := snapshot.SourcePackageVersions("linux-tools")
+	toolsVersions, err := snapshot.SourcePackageVersions("linux-tools")
 	if err != nil {
 		log.Error().Err(err).Msg("get linux-tools source pkg versions")
 		return
@@ -268,70 +337,11 @@ func GetKernels() (kernels []DebianKernel, err error) {
 	}
 
 	for i, version := range versions {
-		// TODO move this scope to function
 		slog := log.With().Str("version", version).Logger()
 		slog.Trace().Msgf("%03d/%03d", i, len(versions))
+		vkernels := getKernelsByVersion(slog, c, toolsVersions, version)
+		kernels = append(kernels, vkernels...)
 
-		var dk DebianKernel
-
-		dk, err = c.Get(version)
-		if err == nil && !dk.Internal.Invalid {
-			slog.Trace().Msgf("found in cache")
-			kernels = append(kernels, dk)
-			continue
-		}
-
-		if dk.Internal.Invalid {
-			refetch := dk.Internal.LastFetch.AddDate(0, 0, RefetchDays)
-			if refetch.After(time.Now()) {
-				slog.Trace().Msgf("refetch at %v", refetch)
-				continue
-			}
-		}
-
-		dk, err = getDebianKernel(version)
-		if err != nil {
-			if err == ErrNoBinaryPackages {
-				slog.Warn().Err(err).Msg("")
-			} else {
-				slog.Error().Err(err).Msg("get debian kernel")
-			}
-
-			dk.Internal.Invalid = true
-		}
-
-		if !dk.HasDependency("kbuild") {
-			if !kver(dk.Version.Package).LessThan(kver("4.5-rc0")) {
-				dk.Internal.Invalid = true
-			} else {
-				// Debian kernels prior to the 4.5 package
-				// version did not have a kbuild built from
-				// the linux source itself, but used the
-				// linux-tools source package.
-				kbuildpkg, err := findKbuild(
-					linuxToolsVersions,
-					dk.Version.Package,
-				)
-				if err != nil {
-					dk.Internal.Invalid = true
-				} else {
-					dk.Dependencies = append(
-						dk.Dependencies,
-						kbuildpkg,
-					)
-				}
-			}
-		}
-
-		dk.Internal.LastFetch = time.Now()
-
-		err = c.Put(dk)
-		if err != nil {
-			slog.Error().Err(err).Msg("put to cache")
-			return
-		}
-
-		slog.Debug().Msgf("%s cached", version)
 	}
 
 	return
