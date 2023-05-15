@@ -55,13 +55,6 @@ jobs:
     - name: Install s3cmd
       run: sudo apt install s3cmd
 
-    - name: Archive logs
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: debian-cache-logs
-        path: ~/.out-of-tree/logs
-
     - name: Mirror deb packages
       shell: python
       run: |
@@ -109,3 +102,10 @@ jobs:
                 ok = upload(f)
                 if ok:
                     uploaded += [f]
+
+    - name: Archive logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: debian-cache-logs
+        path: ~/.out-of-tree/logs
