@@ -48,7 +48,7 @@ type CLI struct {
 	Gen       GenCmd       `cmd:"" help:"generate .out-of-tree.toml skeleton"`
 	Image     ImageCmd     `cmd:"" help:"manage images"`
 	Container ContainerCmd `cmd:"" help:"manage containers"`
-	Debian    DebianCmd    `cmd:"" help:"" hidden:""`
+	Distro    DistroCmd    `cmd:"" help:"distro-related helpers" hidden:""`
 
 	Version VersionFlag `name:"version" help:"print version information and quit"`
 
