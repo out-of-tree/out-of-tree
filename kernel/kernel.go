@@ -332,9 +332,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 	searchdir := c.Volumes.LibModules
 
 	if sk.DistroType == config.Debian {
-		// Debian has different kernels (package version) by the
-		// same name (ABI), so we need to separate /boot
-		c.Volumes = debian.ContainerVolumes(sk, pkgname)
+		// TODO We need some kind of API for that
 		searchdir = config.Dir("volumes", sk.DockerName())
 	}
 
@@ -352,6 +350,12 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 				return
 			}
 		}
+	}
+
+	if sk.DistroType == config.Debian {
+		// Debian has different kernels (package version) by the
+		// same name (ABI), so we need to separate /boot
+		c.Volumes = debian.ContainerVolumes(sk, pkgname)
 	}
 
 	volumes := c.Volumes
