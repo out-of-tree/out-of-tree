@@ -12,8 +12,8 @@ on:
       - 'distro/debian/kernel.go'
 
 jobs:
-  debian-cache:
-    name: Build Cache
+  debian-kernel-metadata-cache:
+    name: Build Debian kernels metadata cache
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -42,3 +42,73 @@ jobs:
 
     - name: Upload cache
       run: s3cmd put --acl-public ~/.out-of-tree/debian.cache s3://out-of-tree/1.0.0/ --host=fra1.digitaloceanspaces.com --host-bucket='%(bucket)s.fra1.digitaloceanspaces.com' --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
+
+  debian-kernel-packages-mirror:
+    name: Mirror Debian kernel packages
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: go build
+
+    - name: Get deb packages
+      run:
+
+    - name: Install s3cmd
+      run: sudo apt install s3cmd
+
+    - name: Archive logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: debian-cache-logs
+        path: ~/.out-of-tree/logs
+
+    - name: Mirror deb packages
+      shell: python
+      run: |
+        import os
+        import logging
+
+        from subprocess import getstatusoutput
+
+        def get_kernels() -> bool:
+            status, output = getstatusoutput(
+                "./out-of-tree --log-level=warn "
+                "distro debian get-deb "
+                "--ignore-cached --max=32"
+            )
+            logging.info(output)
+            return status == 0
+
+        def upload(f: str) -> bool:
+            status, output = getstatusoutput(
+                "s3cmd "
+                "--host=fra1.digitaloceanspaces.com "
+                "--host-bucket='%(bucket)s.fra1.digitaloceanspaces.com' "
+                "--access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} "
+                "--secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }} "
+                f"put --acl-public {f} "
+                "s3://out-of-tree/1.0.0/packages/debian/"
+            )
+            logging.info(output)
+            return status == 0
+
+        logging.basicConfig(level=logging.NOTSET)
+
+        uploaded = []
+
+        while get_kernels():
+            for f in os.listdir():
+                if not f.endswith('.deb'):
+                    continue
+
+                if f in uploaded:
+                    continue
+
+                logging.info(f)
+
+                ok = upload(f)
+                if ok:
+                    uploaded += [f]
