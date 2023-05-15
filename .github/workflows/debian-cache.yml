@@ -3,7 +3,7 @@ name: Debian kernels cache
 on:
   workflow_dispatch:
   schedule:
-    - cron: '45 0 * * 5'
+    - cron: '0 4 * * *'
   push:
     paths:
       - '.github/workflows/debian-cache.yml'
@@ -22,7 +22,7 @@ jobs:
       run: go build
 
     - name: Cache
-      run: ./out-of-tree --log-level=trace distro debian cache --path=/home/runner/debian.cache
+      run: ./out-of-tree --log-level=trace distro debian cache
 
     - name: Install s3cmd
       run: sudo apt install s3cmd
@@ -31,14 +31,14 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: debian-cache
-        path: /home/runner/debian.cache
-
-    - name: Upload cache
-      run: s3cmd put --acl-public /home/runner/debian.cache s3://out-of-tree/1.0.0/ --host=fra1.digitaloceanspaces.com --host-bucket='%(bucket)s.fra1.digitaloceanspaces.com' --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
+        path: ~/.out-of-tree/debian.cache
 
     - name: Archive logs
       if: always()
       uses: actions/upload-artifact@v3
       with:
         name: debian-cache-logs
-        path: /home/runner/.out-of-tree/logs
+        path: ~/.out-of-tree/logs
+
+    - name: Upload cache
+      run: s3cmd put --acl-public ~/.out-of-tree/debian.cache s3://out-of-tree/1.0.0/ --host=fra1.digitaloceanspaces.com --host-bucket='%(bucket)s.fra1.digitaloceanspaces.com' --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
