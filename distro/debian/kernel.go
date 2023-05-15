@@ -284,7 +284,7 @@ func GetKernels() (kernels []DebianKernel, err error) {
 		if dk.Internal.Invalid {
 			refetch := dk.Internal.LastFetch.AddDate(0, 0, RefetchDays)
 			if refetch.After(time.Now()) {
-				slog.Debug().Msgf("refetch at %v", RefetchDays)
+				slog.Debug().Msgf("refetch at %v", refetch)
 				continue
 			}
 		}
