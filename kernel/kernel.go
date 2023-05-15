@@ -334,7 +334,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 	if sk.DistroType == config.Debian {
 		// Debian has different kernels (package version) by the
 		// same name (ABI), so we need to separate /boot
-		c.Volumes = debian.ContainerVolumes(sk.DockerName(), pkgname)
+		c.Volumes = debian.ContainerVolumes(sk, pkgname)
 		searchdir = config.Dir("volumes", sk.DockerName())
 	}
 

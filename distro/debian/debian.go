@@ -292,8 +292,8 @@ func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) 
 	return
 }
 
-func ContainerVolumes(pkgname, contname string) (volumes container.Volumes) {
-	pkgdir := filepath.Join("volumes", contname, pkgname)
+func ContainerVolumes(km config.KernelMask, pkgname string) (volumes container.Volumes) {
+	pkgdir := filepath.Join("volumes", km.DockerName(), pkgname)
 
 	volumes.LibModules = config.Dir(pkgdir, "/lib/modules")
 	volumes.UsrSrc = config.Dir(pkgdir, "/usr/src")
