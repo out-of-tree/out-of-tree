@@ -298,13 +298,11 @@ func GetKernels() (kernels []DebianKernel, err error) {
 			}
 
 			dk.Internal.Invalid = true
-			dk.Internal.LastFetch = time.Now()
 		}
 
 		if !dk.HasDependency("kbuild") {
 			if !kver(dk.Version.Package).LessThan(kver("4.5-rc0")) {
 				dk.Internal.Invalid = true
-				dk.Internal.LastFetch = time.Now()
 			} else {
 				// Debian kernels prior to the 4.5 package
 				// version did not have a kbuild built from
@@ -316,7 +314,6 @@ func GetKernels() (kernels []DebianKernel, err error) {
 				)
 				if err != nil {
 					dk.Internal.Invalid = true
-					dk.Internal.LastFetch = time.Now()
 				} else {
 					dk.Dependencies = append(
 						dk.Dependencies,
@@ -325,6 +322,8 @@ func GetKernels() (kernels []DebianKernel, err error) {
 				}
 			}
 		}
+
+		dk.Internal.LastFetch = time.Now()
 
 		err = c.Put(dk)
 		if err != nil {
