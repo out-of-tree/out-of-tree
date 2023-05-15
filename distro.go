@@ -51,13 +51,16 @@ type DebianGetDebCmd struct {
 }
 
 func (cmd DebianGetDebCmd) Run() (err error) {
+	re, err := regexp.Compile(cmd.Regexp)
+	if err != nil {
+		log.Fatal().Err(err).Msg("regexp")
+	}
+
 	kernels, err := debian.GetKernels()
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return
 	}
-
-	re := regexp.MustCompile(cmd.Regexp)
 
 	var packages []snapshot.Package
 	for _, kernel := range kernels {
