@@ -270,13 +270,13 @@ func GetKernels() (kernels []DebianKernel, err error) {
 	for i, version := range versions {
 		// TODO move this scope to function
 		slog := log.With().Str("version", version).Logger()
-		slog.Debug().Msgf("%03d/%03d", i, len(versions))
+		slog.Trace().Msgf("%03d/%03d", i, len(versions))
 
 		var dk DebianKernel
 
 		dk, err = c.Get(version)
 		if err == nil && !dk.Internal.Invalid {
-			slog.Debug().Msgf("found in cache")
+			slog.Trace().Msgf("found in cache")
 			kernels = append(kernels, dk)
 			continue
 		}
@@ -284,7 +284,7 @@ func GetKernels() (kernels []DebianKernel, err error) {
 		if dk.Internal.Invalid {
 			refetch := dk.Internal.LastFetch.AddDate(0, 0, RefetchDays)
 			if refetch.After(time.Now()) {
-				slog.Debug().Msgf("refetch at %v", refetch)
+				slog.Trace().Msgf("refetch at %v", refetch)
 				continue
 			}
 		}
