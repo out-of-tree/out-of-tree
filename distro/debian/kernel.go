@@ -48,6 +48,13 @@ func (dk DebianKernel) HasDependency(pkgname string) bool {
 	return false
 }
 
+func (dk DebianKernel) Packages() (pkgs []snapshot.Package) {
+	pkgs = append(pkgs, dk.Image)
+	pkgs = append(pkgs, dk.Headers...)
+	pkgs = append(pkgs, dk.Dependencies...)
+	return
+}
+
 // use only for inline comparison
 func kver(ver string) *semver.Version {
 	ver = strings.Replace(ver, "~", "-", -1)
