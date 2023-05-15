@@ -13,17 +13,10 @@ import (
 	"golang.org/x/time/rate"
 )
 
-const apiURL = "http://metasnap.debian.net/cgi-bin/api?"
+// Note: Metasnap does not have all the packages, and its API is
+// rather buggy.
 
-var archives = []string{
-	"debian",
-	"debian-security",
-	"debian-backports",
-	// "debian-archive",
-	// "debian-debug",
-	// "debian-ports",
-	// "debian-volatile",
-}
+const apiURL = "http://metasnap.debian.net/cgi-bin/api?"
 
 var (
 	limiterTimeout time.Duration = time.Second
@@ -100,22 +93,16 @@ type Snapshot struct {
 	Last  string
 }
 
-type PackageInfo struct {
+type Repo struct {
+	Archive   string
 	Suite     string
 	Component string
 	Snapshot  Snapshot
 }
 
-func GetPackageInfo(pkg, arch, version string) (infos []PackageInfo, err error) {
-	var result string
-
-	for _, archive := range archives {
-		result, err = queryAPIf("archive=%s&pkg=%s&arch=%s&ver=%s",
-			archive, pkg, arch, version)
-		if err == nil {
-			break
-		}
-	}
+func GetRepo(archive, pkg, arch, ver string) (repos []Repo, err error) {
+	result, err := queryAPIf("archive=%s&pkg=%s&arch=%s&ver=%s",
+		archive, pkg, arch, ver)
 
 	if err != nil {
 		return
@@ -137,7 +124,8 @@ func GetPackageInfo(pkg, arch, version string) (infos []PackageInfo, err error) 
 			return
 		}
 
-		info := PackageInfo{
+		repo := Repo{
+			Archive:   archive,
 			Suite:     fields[0],
 			Component: fields[1],
 			Snapshot: Snapshot{
@@ -146,10 +134,10 @@ func GetPackageInfo(pkg, arch, version string) (infos []PackageInfo, err error) 
 			},
 		}
 
-		infos = append(infos, info)
+		repos = append(repos, repo)
 	}
 
-	if len(infos) == 0 {
+	if len(repos) == 0 {
 		err = ErrNotFound
 		return
 	}
