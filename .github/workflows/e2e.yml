@@ -60,6 +60,7 @@ jobs:
         --image ubuntu-22-04-x64
         --ssh-keys='b4:4c:66:7d:be:19:25:43:1c:e0:02:61:9f:49:12:94'
         --wait
+        --region fra1
         ga-out-of-tree-e2e-${{ matrix.os.distro }}-${{ matrix.os.release }}-$GITHUB_SHA
 
     - name: End-to-End Testing [${{ matrix.os.distro }} ${{ matrix.os.release }}]
