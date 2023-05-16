@@ -38,6 +38,14 @@ jobs:
           { distro: Debian, release: 11 }
           ]
 
+    - uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+    - uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
     steps:
     - name: Create droplet
       run: >-
