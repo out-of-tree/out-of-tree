@@ -103,7 +103,7 @@ jobs:
         echo 'Description=e2e' >> test.service
         echo '[Service]' >> test.service
         echo 'User=user' >> test.service
-        echo 'RemainAfterExit=yes >> test.service
+        echo 'RemainAfterExit=yes' >> test.service
         echo 'Type=oneshot' >> test.service
         echo 'WorkingDirectory=/home/user' >> test.service
         echo 'TimeoutStopSec=1' >> test.service
