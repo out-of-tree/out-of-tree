@@ -106,7 +106,7 @@ jobs:
         echo 'StandardError=append:/var/log/test.log' >> test.service
         echo 'StandardOutput=append:/var/log/test.log' >> test.service
         echo 'Type=oneshot' >> test.service
-        echo 'WorkingDirectory=/root >> test.service
+        echo 'WorkingDirectory=/root' >> test.service
         echo 'TimeoutStopSec=1' >> test.service
         echo 'Environment=XDG_RUNTIME_DIR=/home/user' >> test.service
         echo 'ExecStart=/usr/local/bin/out-of-tree kernel autogen --max=1' >> test.service
