@@ -1,5 +1,5 @@
 { pkgs ? import <nixpkgs> {} }:
 
 with pkgs; mkShell {
-  packages = [ go gcc qemu ];
+  packages = [ go gcc qemu podman ];
 }
