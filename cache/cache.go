@@ -64,7 +64,11 @@ func DownloadQemuImage(path, file string) (err error) {
 	}
 
 	err = unpackTar(resp.Filename, path)
-	return
+	if err != nil {
+		return
+	}
+
+	return os.Remove(resp.Filename)
 }
 
 func DownloadDebianCache(cachePath string) (err error) {
