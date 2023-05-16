@@ -45,6 +45,7 @@ jobs:
 
   debian-kernel-packages-mirror:
     name: Mirror Debian kernel packages
+    needs: debian-kernel-metadata-cache
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
