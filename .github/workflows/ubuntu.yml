@@ -1,4 +1,4 @@
-name: Build and test on Ubuntu
+name: Ubuntu
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build on Ubuntu
+    name: Build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
