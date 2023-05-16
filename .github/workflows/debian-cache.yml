@@ -92,7 +92,7 @@ jobs:
 
         uploaded = []
 
-        timeout = time.time() + datetime.timedelta(hours=4).seconds
+        timeout = time.time() + datetime.timedelta(hours=2).seconds
 
         while get_kernels() and time.time() < timeout:
             for f in os.listdir():
