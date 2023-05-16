@@ -81,7 +81,7 @@ jobs:
 
         ssh root@$IP "cloud-init status --wait"
 
-        ssh root@$IP "yum -y podman qemu-system-x86"
+        ssh root@$IP "dnf install -y podman qemu-kvm"
 
         ssh root@$IP "useradd --groups kvm --shell /bin/bash user && mkdir -p /home/user/.ssh && cp /root/.ssh/authorized_keys /home/user/.ssh/ && chown -R user:user /home/user"
 
