@@ -104,8 +104,8 @@ jobs:
         echo '[Service]' >> test.service
         echo 'User=user' >> test.service
         echo 'RemainAfterExit=yes' >> test.service
-        echo 'StandardError=append:/var/log/test.log
-        echo 'StandardOutput=append:/var/log/test.log
+        echo 'StandardError=append:/var/log/test.log' >> test.service
+        echo 'StandardOutput=append:/var/log/test.log' >> test.service
         echo 'Type=oneshot' >> test.service
         echo 'WorkingDirectory=/home/user' >> test.service
         echo 'TimeoutStopSec=1' >> test.service
