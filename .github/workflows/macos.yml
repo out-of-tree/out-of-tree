@@ -6,6 +6,8 @@ on:
     paths-ignore:
       - ".github/workflows/images-*"
       - ".github/workflows/debian-cache.yml"
+      - ".github/workflows/e2e.yml"
+
   pull_request:
 
 jobs:
