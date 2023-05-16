@@ -78,8 +78,8 @@ jobs:
           sleep 1s
         done
 
-        ssh root@$IP "apt update"
-        ssh root@$IP "apt install -y podman qemu-system-x86"
+        ssh root@$IP "apt-get -o DPkg::Lock::Timeout=360 update"
+        ssh root@$IP "apt-get -o DPkg::Lock::Timeout=360 install -y podman qemu-system-x86"
 
         ssh root@$IP "useradd --shell /bin/bash user && mkdir -p /home/user/.ssh && cp /root/.ssh/authorized_keys /home/user/.ssh/ && chown -R user:user /home/user"
 
