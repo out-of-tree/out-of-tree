@@ -88,6 +88,8 @@ jobs:
 
         scp .out-of-tree.toml script.sh user@$IP:
 
+        ssh user@$IP "mkdir -p ~/.config/containers && echo 'unqualified-search-registries = ["docker.io"]' > ~/.config/containers/registries.conf"
+
         ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}"
         ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug kernel autogen --max=1 --shuffle"
         ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug pew --qemu-timeout=10m"
