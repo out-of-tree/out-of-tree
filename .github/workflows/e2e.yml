@@ -75,7 +75,7 @@ jobs:
 
         ssh root@$IP "curl -L https://nixos.org/nix/install | sh -s -- --daemon"
         ssh root@$IP "echo 'experimental-features = nix-command flakes' >> /etc/nix/nix.conf"
-        ssh root@$IP "useradd user && cp -r /root/.ssh /home/user/ && chown -R user:user /home/user"
+        ssh root@$IP "useradd user && mkdir -p /home/user/.ssh && cp /root/.ssh/authorized_keys /home/user/.ssh/ && chown -R user:user /home/user"
 
         echo 'name = "out-of-tree script"' >> .out-of-tree.toml
         echo 'type = "script"' >> .out-of-tree.toml
