@@ -83,12 +83,6 @@ jobs:
 
         ssh root@$IP "dnf install -y podman qemu-kvm"
 
-        ssh root@$IP "useradd --groups kvm --shell /bin/bash user && mkdir -p /home/user/.ssh && cp /root/.ssh/authorized_keys /home/user/.ssh/ && chown -R user:user /home/user"
-
-        sleep 10s
-
-        ssh root@$IP "loginctl enable-linger user"
-
         scp ./out-of-tree root@$IP:/usr/local/bin/
 
         echo 'name = "out-of-tree script"' >> .out-of-tree.toml
@@ -100,17 +94,16 @@ jobs:
         echo 'release_mask = ".*"' >> .out-of-tree.toml
         echo -e '#!/bin/sh\necho ok' >> script.sh
 
-        scp .out-of-tree.toml script.sh user@$IP:
+        scp .out-of-tree.toml script.sh root@$IP:
 
         echo '[Unit]' >> test.service
         echo 'Description=e2e' >> test.service
         echo '[Service]' >> test.service
-        echo 'User=user' >> test.service
         echo 'RemainAfterExit=yes' >> test.service
         echo 'StandardError=append:/var/log/test.log' >> test.service
         echo 'StandardOutput=append:/var/log/test.log' >> test.service
         echo 'Type=oneshot' >> test.service
-        echo 'WorkingDirectory=/home/user' >> test.service
+        echo 'WorkingDirectory=/root >> test.service
         echo 'TimeoutStopSec=1' >> test.service
         echo 'Environment=XDG_RUNTIME_DIR=/home/user' >> test.service
         echo 'ExecStart=/usr/local/bin/out-of-tree kernel autogen --max=1' >> test.service
@@ -129,7 +122,7 @@ jobs:
 
         ssh root@$IP "cat /var/log/test.log"
 
-        scp -r user@$IP:/home/user/.out-of-tree/logs .
+        scp -r root@$IP:.out-of-tree/logs .
 
         ssh root@$IP systemctl is-active test
 
