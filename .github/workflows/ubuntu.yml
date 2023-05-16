@@ -41,6 +41,16 @@ jobs:
   test-end-to-end-examples:
     name: E2E Testing (Examples)
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        example: [
+          { name: "Kernel Module", dir: "kernel-module", params: "" },
+          { name: "Kernel Exploit", dir: "kernel-exploit", params: "--threshold=0" },
+          { name: "Script", dir: "script", params: "" },
+          { name: "Preload", dir: "preload", params: "" }
+          ]
+
     steps:
     - uses: actions/checkout@v1
 
@@ -52,29 +62,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install qemu-system-x86
 
-    - name: End-to-End Testing [Kernel Module]
+    - name: End-to-End Testing [${{ matrix.example.name }}]
       run: |
-        cd examples/kernel-module
+        cd ${{ matrix.example.dir }}
         ../../out-of-tree --log-level=debug kernel autogen --max=1
-        ../../out-of-tree --log-level=debug pew --qemu-timeout=10m
-
-    - name: End-to-End Testing [Kernel Exploit]
-      run: |
-        cd examples/kernel-exploit
-        ../../out-of-tree --log-level=debug kernel autogen --max=1
-        ../../out-of-tree --log-level=debug pew --threshold=0 --qemu-timeout=10m
-
-    - name: End-to-End Testing [Script]
-      run: |
-        cd examples/script
-        ../../out-of-tree --log-level=debug kernel autogen --max=1
-        ../../out-of-tree --log-level=debug pew --qemu-timeout=10m
-
-    - name: End-to-End Testing [Preload]
-      run: |
-        cd examples/preload
-        ../../out-of-tree --log-level=debug kernel autogen --max=1
-        ../../out-of-tree --log-level=debug pew --qemu-timeout=10m
+        ../../out-of-tree --log-level=debug pew --qemu-timeout=10m cd ${{ matrix.example.params }}
 
     - name: Archive logs
       if: always()
