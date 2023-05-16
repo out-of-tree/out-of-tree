@@ -111,6 +111,7 @@ jobs:
         echo 'Type=oneshot' >> test.service
         echo 'WorkingDirectory=/home/user' >> test.service
         echo 'TimeoutStopSec=1' >> test.service
+        echo 'Environment=XDG_RUNTIME_DIR=/home/user' >> test.service
         echo 'ExecStart=/usr/local/bin/out-of-tree kernel autogen --max=1' >> test.service
         echo 'ExecStart=/usr/local/bin/out-of-tree pew' >> test.service
 
