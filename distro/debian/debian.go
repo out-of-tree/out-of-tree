@@ -230,7 +230,7 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 		packages += "module-init-tools "
 	}
 
-	cmfd("{ apt-get install -y %s "+
+	cmdf("{ apt-get install -y %s "+
 		"|| apt-get install -y %s "+
 		"|| apt-get install -y %s }", packages, packages, packages)
 
