@@ -109,7 +109,7 @@ jobs:
         echo 'Type=oneshot' >> test.service
         echo 'WorkingDirectory=/home/user' >> test.service
         echo 'TimeoutStopSec=1' >> test.service
-        echo 'ExecStart=/usr/local/bin/out-of-tree kernel autogen --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}' >> test.service
+        echo 'ExecStart=/usr/local/bin/out-of-tree kernel autogen --max=1' >> test.service
         echo 'ExecStart=/usr/local/bin/out-of-tree pew' >> test.service
 
         scp test.service root@$IP:/etc/systemd/system/test.service
