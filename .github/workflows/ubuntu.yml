@@ -66,7 +66,7 @@ jobs:
       run: |
         cd examples/${{ matrix.example.dir }}
         ../../out-of-tree --log-level=debug kernel autogen --max=1
-        ../../out-of-tree --log-level=debug pew --qemu-timeout=10m cd ${{ matrix.example.params }}
+        ../../out-of-tree --log-level=debug pew --qemu-timeout=10m ${{ matrix.example.params }}
 
     - name: Archive logs
       if: always()
