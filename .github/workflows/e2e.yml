@@ -121,7 +121,7 @@ jobs:
           sleep 30s
         done
 
-        scp -r user@$IP:.out-of-tree/logs .
+        scp -r user@$IP:/home/user/.out-of-tree/logs .
 
         ssh root@$IP systemctl is-active test
 
