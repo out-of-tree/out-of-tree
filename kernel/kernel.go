@@ -141,6 +141,7 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
+		log.Error().Err(err).Msg(string(rawOutput))
 		return
 	}
 
