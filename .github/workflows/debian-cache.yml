@@ -70,7 +70,7 @@ jobs:
             status, output = getstatusoutput(
                 "./out-of-tree --log-level=warn "
                 "distro debian get-deb "
-                "--ignore-cached --max=16
+                "--ignore-cached --max=16"
             )
             logging.info(output)
             return status == 0
