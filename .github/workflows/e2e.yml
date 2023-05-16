@@ -64,6 +64,7 @@ jobs:
         ga-out-of-tree-e2e-${{ matrix.os.distro }}-${{ matrix.os.release }}-$GITHUB_SHA
 
     - name: End-to-End Testing [${{ matrix.os.distro }} ${{ matrix.os.release }}]
+      shell: bash
       run: |
         sleep 1m
 
