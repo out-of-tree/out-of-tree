@@ -81,7 +81,9 @@ jobs:
 
         ssh root@$IP "cloud-init status --wait"
 
-        ssh root@$IP "dnf install -y podman qemu-kvm"
+        ssh root@$IP "dnf install -y podman qemu-kvm-core"
+
+        ssh root@$IP "ln -s /usr/libexec/qemu-kvm /usr/bin/qemu-system-x86_64"
 
         scp ./out-of-tree root@$IP:/usr/local/bin/
 
