@@ -84,7 +84,7 @@ jobs:
         ssh root@$IP "apt-get update"
         ssh root@$IP "apt-get install -y podman qemu-system-x86"
 
-        ssh root@$IP "useradd --shell /bin/bash user && mkdir -p /home/user/.ssh && cp /root/.ssh/authorized_keys /home/user/.ssh/ && chown -R user:user /home/user"
+        ssh root@$IP "useradd --groups kvm --shell /bin/bash user && mkdir -p /home/user/.ssh && cp /root/.ssh/authorized_keys /home/user/.ssh/ && chown -R user:user /home/user"
 
         scp ./out-of-tree root@$IP:/usr/local/bin/
 
