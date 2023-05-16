@@ -216,19 +216,23 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 			"/etc/apt/sources.list")
 	}
 
-	cmdf("apt-get update")
-	cmdf("apt-get install -y wget build-essential libelf-dev git")
-	cmdf("apt-get install -y kmod linux-base")
-	cmdf("apt-get install -y initramfs-tools")
+	cmdf("{ apt-get update || apt-get update || apt-get update }")
+
+	packages := "wget build-essential libelf-dev git kmod linux-base "
+	packages += "initramfs-tools "
 
 	switch release {
 	case Wheezy:
-		cmdf("apt-get install -y gcc-4.6")
+		packages += "gcc-4.6 "
 	}
 
 	if release < 9 {
-		cmdf("apt-get install -y module-init-tools")
+		packages += "module-init-tools "
 	}
+
+	cmfd("{ apt-get install -y %s "+
+		"|| apt-get install -y %s "+
+		"|| apt-get install -y %s }", packages, packages, packages)
 
 	cmdf("mkdir -p /lib/modules")
 
