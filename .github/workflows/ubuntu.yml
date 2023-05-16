@@ -45,10 +45,10 @@ jobs:
     strategy:
       matrix:
         example: [
-          { name: "Kernel Module", dir: "kernel-module", params: "" },
-          { name: "Kernel Exploit", dir: "kernel-exploit", params: "--threshold=0" },
-          { name: "Script", dir: "script", params: "" },
-          { name: "Preload", dir: "preload", params: "" }
+          { dir: "kernel-module", params: "" },
+          { dir: "kernel-exploit", params: "--threshold=0" },
+          { dir: "script", params: "" },
+          { dir: "preload", params: "" }
           ]
 
     steps:
@@ -62,7 +62,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install qemu-system-x86
 
-    - name: End-to-End Testing [${{ matrix.example.name }}]
+    - name: End-to-End Testing [${{ matrix.example.dir }}]
       run: |
         cd examples/${{ matrix.example.dir }}
         ../../out-of-tree --log-level=debug kernel autogen --max=1
