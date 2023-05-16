@@ -74,3 +74,68 @@ jobs:
       with:
         name: test-end-to-end-examples-logs
         path: /home/runner/.out-of-tree/logs
+
+  test-end-to-end:
+    name: E2E Testing
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+          { distro: Ubuntu, release: 12.04 },
+          { distro: Ubuntu, release: 14.04 },
+          { distro: Ubuntu, release: 16.04 },
+          { distro: Ubuntu, release: 18.04 },
+          { distro: Ubuntu, release: 20.04 },
+          { distro: Ubuntu, release: 22.04 },
+          { distro: CentOS, release: 6 },
+          { distro: CentOS, release: 7 },
+          { distro: CentOS, release: 8 },
+          { distro: OracleLinux, release: 6 },
+          { distro: OracleLinux, release: 7 },
+          { distro: OracleLinux, release: 8 },
+          # { distro: OracleLinux, release: 9 }
+          { distro: Debian, release: 7 },
+          { distro: Debian, release: 8 },
+          { distro: Debian, release: 9 },
+          { distro: Debian, release: 10 },
+          { distro: Debian, release: 11 }
+          ]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: go build
+
+    - name: Install dependencies for tests
+      run: |
+        sudo apt-get update
+        sudo apt-get install qemu-system-x86
+
+    - name: End-to-End Testing [${{ matrix.os.distro }} ${{ matrix.os.release }}]
+      run: |
+        mkdir test
+        cd test
+
+        echo 'name = "out-of-tree script"' >> .out-of-tree.toml
+        echo 'type = "script"' >> .out-of-tree.toml
+        echo 'script = "script.sh"' >> .out-of-tree.toml
+        echo '[[supported_kernels]]' >> .out-of-tree.toml
+        echo 'distro_type = "${{ matrix.os.distro }}"' >> .out-of-tree.toml
+        echo 'distro_release = "${{ matrix.os.release }}"' >> .out-of-tree.toml
+        echo 'release_mask = ".*"' >> .out-of-tree.toml
+
+        echo -e '#!/bin/sh\necho ok' >> script.sh
+
+        ../out-of-tree --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}
+        ../out-of-tree --log-level=debug kernel autogen --max=1 --shuffle
+        ../out-of-tree --log-level=debug pew --qemu-timeout=10m
+
+    - name: Archive logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-end-to-end-${{ matrix.os.distro }}-${{ matrix.os.release }}-logs
+        path: /home/runner/.out-of-tree/logs
