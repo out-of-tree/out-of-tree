@@ -57,7 +57,7 @@ jobs:
         doctl compute droplet create
         --size s-1vcpu-1gb
         --tag-name=github-actions
-        --image ubuntu-22-04-x64
+        --image almalinux-9-x64
         --ssh-keys='b4:4c:66:7d:be:19:25:43:1c:e0:02:61:9f:49:12:94'
         --wait
         --region fra1
@@ -81,8 +81,7 @@ jobs:
 
         ssh root@$IP "cloud-init status --wait"
 
-        ssh root@$IP "apt-get update"
-        ssh root@$IP "apt-get install -y podman qemu-system-x86"
+        ssh root@$IP "yum -y podman qemu-system-x86"
 
         ssh root@$IP "useradd --groups kvm --shell /bin/bash user && mkdir -p /home/user/.ssh && cp /root/.ssh/authorized_keys /home/user/.ssh/ && chown -R user:user /home/user"
 
