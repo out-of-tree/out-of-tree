@@ -230,8 +230,8 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 		packages += "module-init-tools "
 	}
 
-	cmdf("apt-get install -y %s "+
-		"|| apt-get install -y %s "+
+	cmdf("timeout 5m apt-get install -y %s "+
+		"|| timeout 10m apt-get install -y %s "+
 		"|| apt-get install -y %s", packages, packages, packages)
 
 	cmdf("mkdir -p /lib/modules")
