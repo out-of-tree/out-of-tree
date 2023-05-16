@@ -75,7 +75,6 @@ jobs:
 
         ssh root@$IP "curl -L https://nixos.org/nix/install | sh -s -- --daemon"
         ssh root@$IP "echo 'experimental-features = nix-command flakes' >> /etc/nix/nix.conf"
-        ssh root@$IP "useradd user && cp -r /root/.ssh /home/user/ && chown -R user:user /home/user"
 
         echo 'name = "out-of-tree script"' >> .out-of-tree.toml
         echo 'type = "script"' >> .out-of-tree.toml
@@ -86,13 +85,13 @@ jobs:
         echo 'release_mask = ".*"' >> .out-of-tree.toml
         echo -e '#!/bin/sh\necho ok' >> script.sh
 
-        scp .out-of-tree.toml script.sh user@$IP:
+        scp .out-of-tree.toml script.sh root@$IP:
 
-        ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}"
-        ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug kernel autogen --max=1 --shuffle"
-        ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug pew --qemu-timeout=10m"
+        ssh root@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}"
+        ssh root@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug kernel autogen --max=1 --shuffle"
+        ssh root@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug pew --qemu-timeout=10m"
 
-        scp -r user@$IP:.out-of-tree/logs .
+        scp -r root@$IP:.out-of-tree/logs .
 
     - name: Archive logs
       if: always()
