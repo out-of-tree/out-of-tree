@@ -81,7 +81,7 @@ jobs:
         ssh root@$IP "cloud-init status --wait"
 
         ssh root@$IP "apt-get update"
-        ssh root@$IP "apt-get install -y podman qemu-system-x86"
+        ssh root@$IP "apt-get install --no-install-recommends -y podman qemu-system-x86"
 
         ssh root@$IP "useradd --shell /bin/bash user && mkdir -p /home/user/.ssh && cp /root/.ssh/authorized_keys /home/user/.ssh/ && chown -R user:user /home/user"
 
