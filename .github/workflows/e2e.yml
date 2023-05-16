@@ -86,7 +86,7 @@ jobs:
 
         ssh root@$IP "useradd --groups kvm --shell /bin/bash user && mkdir -p /home/user/.ssh && cp /root/.ssh/authorized_keys /home/user/.ssh/ && chown -R user:user /home/user"
 
-        timeout 10s
+        sleep 10s
 
         ssh root@$IP "loginctl enable-linger user"
 
