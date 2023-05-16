@@ -99,11 +99,31 @@ jobs:
 
         scp .out-of-tree.toml script.sh user@$IP:
 
-        ssh user@$IP "out-of-tree --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}"
-        ssh user@$IP "out-of-tree --log-level=debug kernel autogen --max=1 --shuffle"
-        ssh user@$IP "out-of-tree --log-level=debug pew --qemu-timeout=10m"
+        echo '[Unit]' >> test.service
+        echo 'Description=e2e' >> test.service
+        echo '[Service]' >> test.service
+        echo 'User=user' >> test.service
+        echo 'RemainAfterExit=yes >> test.service
+        echo 'Type=oneshot' >> test.service
+        echo 'WorkingDirectory=/home/user' >> test.service
+        echo 'TimeoutStopSec=1' >> test.service
+        echo 'ExecStart=/usr/local/bin/out-of-tree kernel autogen --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}' >> test.service
+        echo 'ExecStart=/usr/local/bin/out-of-tree pew' >> test.service
+
+        scp test.service root@$IP:/etc/systemd/system/test.service
+
+        ssh root@$IP systemctl daemon-reload
+
+        ssh root@$IP systemctl start test --no-block
+
+        while ! ssh root@$IP systemctl show test -p SubState --value | grep -E '(failed|exited)'
+        do
+          sleep 30s
+        done
 
         scp -r user@$IP:.out-of-tree/logs .
+
+        ssh root@$IP systemctl is-active test
 
     - name: Archive logs
       if: always()
