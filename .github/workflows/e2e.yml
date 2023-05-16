@@ -39,6 +39,11 @@ jobs:
           ]
 
     steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: go build
+
     - uses: digitalocean/action-doctl@v2
       with:
         token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
@@ -73,9 +78,14 @@ jobs:
           sleep 1s
         done
 
-        ssh root@$IP "curl -L https://nixos.org/nix/install | sh -s -- --daemon"
-        ssh root@$IP "echo 'experimental-features = nix-command flakes' >> /etc/nix/nix.conf"
+        ssh root@$IP "systemctl disable apt-daily.timer apt-daily-upgrade.timer"
+        ssh root@$IP "systemctl stop apt-daily.service apt-daily-upgrade.service"
+
+        ssh root@$IP "apt-get install -y podman qemu-system-x86"
+
         ssh root@$IP "useradd --shell /bin/bash user && mkdir -p /home/user/.ssh && cp /root/.ssh/authorized_keys /home/user/.ssh/ && chown -R user:user /home/user"
+
+        scp ./out-of-tree root@$IP:/usr/local/bin/
 
         echo 'name = "out-of-tree script"' >> .out-of-tree.toml
         echo 'type = "script"' >> .out-of-tree.toml
@@ -88,11 +98,9 @@ jobs:
 
         scp .out-of-tree.toml script.sh user@$IP:
 
-        ssh user@$IP "mkdir -p ~/.config/containers && echo 'unqualified-search-registries = ["docker.io"]' > ~/.config/containers/registries.conf"
-
-        ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}"
-        ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug kernel autogen --max=1 --shuffle"
-        ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug pew --qemu-timeout=10m"
+        ssh user@$IP "out-of-tree --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}"
+        ssh user@$IP "out-of-tree --log-level=debug kernel autogen --max=1 --shuffle"
+        ssh user@$IP "out-of-tree --log-level=debug pew --qemu-timeout=10m"
 
         scp -r user@$IP:.out-of-tree/logs .
 
