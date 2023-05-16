@@ -1,0 +1,98 @@
+name: E2E Testing
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - ".github/workflows/images-*"
+      - ".github/workflows/ubuntu.yml"
+      - ".github/workflows/macos.yml"
+      - ".github/workflows/debian-cache.yml"
+
+jobs:
+  test-end-to-end:
+    name: E2E Testing
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+          { distro: Ubuntu, release: 12.04 },
+          { distro: Ubuntu, release: 14.04 },
+          { distro: Ubuntu, release: 16.04 },
+          { distro: Ubuntu, release: 18.04 },
+          { distro: Ubuntu, release: 20.04 },
+          { distro: Ubuntu, release: 22.04 },
+          { distro: CentOS, release: 6 },
+          { distro: CentOS, release: 7 },
+          { distro: CentOS, release: 8 },
+          { distro: OracleLinux, release: 6 },
+          { distro: OracleLinux, release: 7 },
+          { distro: OracleLinux, release: 8 },
+          { distro: OracleLinux, release: 9 }
+          { distro: Debian, release: 7 },
+          { distro: Debian, release: 8 },
+          { distro: Debian, release: 9 },
+          { distro: Debian, release: 10 },
+          { distro: Debian, release: 11 }
+          ]
+
+    steps:
+    - name: Create droplet
+      run: >-
+        doctl compute droplet create
+          --size s-1vcpu-1gb
+          --tag-name=github-actions
+          --image ubuntu-22-04-x64
+          --ssh-keys='b4:4c:66:7d:be:19:25:43:1c:e0:02:61:9f:49:12:94'
+          --wait
+          ga-out-of-tree-e2e-${{ matrix.os.distro }}-${{ matrix.os.release }}-$GITHUB_SHA
+
+    - name: End-to-End Testing [${{ matrix.os.distro }} ${{ matrix.os.release }}]
+      run: |
+        sleep 1m
+
+        IP=$(doctl compute droplet list \
+          --tag-name=github-actions \
+          --format "Name,Public IPv4" \
+          | grep -v ID \
+          | grep ga-out-of-tree-e2e-${{ matrix.os.distro }}-${{ matrix.os.release }}-$GITHUB_SHA \
+          | awk '{print $2}')
+
+        while ! ssh -o StrictHostKeyChecking=accept-new root@$IP echo
+        do
+          sleep 1s
+        done
+
+        ssh root@$IP "curl -L https://nixos.org/nix/install | sh -s -- --daemon"
+        ssh root@$IP "echo 'experimental-features = nix-command flakes' >> /etc/nix/nix.conf"
+        ssh root@$IP "useradd user && cp -r /root/.ssh /home/user/ && chown -R user:user /home/user"
+
+        echo 'name = "out-of-tree script"' >> .out-of-tree.toml
+        echo 'type = "script"' >> .out-of-tree.toml
+        echo 'script = "script.sh"' >> .out-of-tree.toml
+        echo '[[supported_kernels]]' >> .out-of-tree.toml
+        echo 'distro_type = "${{ matrix.os.distro }}"' >> .out-of-tree.toml
+        echo 'distro_release = "${{ matrix.os.release }}"' >> .out-of-tree.toml
+        echo 'release_mask = ".*"' >> .out-of-tree.toml
+        echo -e '#!/bin/sh\necho ok' >> script.sh
+
+        scp .out-of-tree.toml script.sh user@$IP:
+
+        ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}"
+        ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug kernel autogen --max=1 --shuffle"
+        ssh user@$IP "source /etc/profile.d/nix.sh; nix run github:out-of-tree/out-of-tree/$GITHUB_SHA -- --log-level=debug pew --qemu-timeout=10m"
+
+        scp -r user@$IP:.out-of-tree/logs .
+
+    - name: Archive logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-end-to-end-${{ matrix.os.distro }}-${{ matrix.os.release }}-logs
+        path: logs
+
+    - name: Delete droplet
+      if: always()
+      run: doctl compute droplet delete -f ga-out-of-tree-e2e-${{ matrix.os.distro }}-${{ matrix.os.release }}-$GITHUB_SHA
