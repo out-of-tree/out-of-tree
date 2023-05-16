@@ -2,12 +2,6 @@ module code.dumpstack.io/tools/out-of-tree
 
 go 1.19
 
-replace code.dumpstack.io/tools/out-of-tree/qemu => ./qemu
-
-replace code.dumpstack.io/tools/out-of-tree/config => ./config
-
-replace code.dumpstack.io/tools/out-of-tree/distro => ./distro
-
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/alecthomas/kong v0.7.1
