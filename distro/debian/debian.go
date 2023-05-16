@@ -11,6 +11,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/fs"
@@ -306,4 +307,42 @@ func ContainerVolumes(km config.KernelMask, pkgname string) (volumes container.V
 	volumes.Boot = config.Dir(pkgdir, "/boot")
 
 	return
+}
+
+func InstallCommands(km config.KernelMask, pkgname string) (cmds []string, err error) {
+	dk, err := getCachedKernel(pkgname + ".deb")
+	if err != nil {
+		return
+	}
+
+	for _, pkg := range dk.Packages() {
+		found, newurl := cache.PackageURL(
+			km.DistroType,
+			pkg.Deb.URL,
+		)
+		if found {
+			log.Debug().Msgf("cached deb found %s", newurl)
+			pkg.Deb.URL = newurl
+		}
+
+		// TODO use faketime on old releases?
+		pkg.Deb.URL = strings.Replace(pkg.Deb.URL, "https", "http", -1)
+
+		cmds = append(cmds, "wget --no-check-certificate "+pkg.Deb.URL)
+	}
+
+	cmds = append(cmds, "dpkg -i ./*.deb")
+
+	return
+}
+
+func CleanupFailed(km config.KernelMask, pkgname string) {
+	pkgdir := config.Dir(filepath.Join("volumes", km.DockerName(), pkgname))
+
+	log.Debug().Msgf("cleanup %s", pkgdir)
+
+	err := os.RemoveAll(pkgdir)
+	if err != nil {
+		log.Warn().Err(err).Msg("cleanup")
+	}
 }

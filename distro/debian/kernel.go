@@ -122,7 +122,7 @@ func getDebianKernel(version string) (dk DebianKernel, err error) {
 }
 
 // GetCachedKernel by deb package name
-func GetCachedKernel(deb string) (dk DebianKernel, err error) {
+func getCachedKernel(deb string) (dk DebianKernel, err error) {
 	c, err := NewCache(CachePath)
 	if err != nil {
 		log.Error().Err(err).Msg("cache")

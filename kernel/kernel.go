@@ -25,7 +25,6 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian"
-	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -406,35 +405,20 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 				"/boot/initramfs-%s.img %s", version, version)
 		}
 	case config.Debian:
-		// TODO move to distro/debian/
-
-		var dk debian.DebianKernel
-		dk, err = debian.GetCachedKernel(pkgname + ".deb")
+		var commands []string
+		commands, err = debian.InstallCommands(sk, pkgname)
 		if err != nil {
 			return
 		}
-
-		pkgs := []snapshot.Package{dk.Image}
-		if headers {
-			pkgs = append(pkgs, dk.Headers...)
-			pkgs = append(pkgs, dk.Dependencies...)
-		}
-
-		for _, pkg := range pkgs {
-			found, newurl := cache.PackageURL(
-				sk.DistroType,
-				pkg.Deb.URL,
-			)
-			if found {
-				log.Debug().Msgf("cached deb found %s", newurl)
-				pkg.Deb.URL = newurl
+		defer func() {
+			if err != nil {
+				debian.CleanupFailed(sk, pkgname)
 			}
+		}()
 
-			cmd += fmt.Sprintf(" && wget --no-check-certificate %s",
-				strings.Replace(pkg.Deb.URL, "https", "http", -1))
+		for _, command := range commands {
+			cmd += fmt.Sprintf(" && %s", command)
 		}
-
-		cmd += fmt.Sprintf(" && dpkg -i ./*deb ; apt-get -fy install")
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
