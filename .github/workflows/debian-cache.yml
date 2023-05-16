@@ -3,7 +3,7 @@ name: Debian kernels cache
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 4 * * *'
+    - cron: '0 0 * * *'
   push:
     paths:
       - '.github/workflows/debian-cache.yml'
@@ -70,7 +70,7 @@ jobs:
             status, output = getstatusoutput(
                 "./out-of-tree --log-level=warn "
                 "distro debian get-deb "
-                "--ignore-cached --max=64"
+                "--ignore-cached --max=16
             )
             logging.info(output)
             return status == 0
