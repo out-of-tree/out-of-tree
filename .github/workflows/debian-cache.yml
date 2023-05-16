@@ -60,6 +60,8 @@ jobs:
       run: |
         import os
         import logging
+        import time
+        import datetime
 
         from subprocess import getstatusoutput
 
@@ -67,7 +69,7 @@ jobs:
             status, output = getstatusoutput(
                 "./out-of-tree --log-level=warn "
                 "distro debian get-deb "
-                "--ignore-cached --max=32"
+                "--ignore-cached --max=16"
             )
             logging.info(output)
             return status == 0
@@ -89,7 +91,9 @@ jobs:
 
         uploaded = []
 
-        while get_kernels():
+        timeout = time.time() + datetime.timedelta(hours=4).seconds
+
+        while get_kernels() and time.time() < timeout:
             for f in os.listdir():
                 if not f.endswith('.deb'):
                     continue
