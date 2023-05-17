@@ -239,7 +239,8 @@ func build(flog zerolog.Logger, tmp string, ka config.Artifact,
 	ki config.KernelInfo, dockerTimeout time.Duration) (
 	outdir, outpath, output string, err error) {
 
-	target := fmt.Sprintf("%d_%s", rand.Int(), ki.KernelRelease)
+	target := fmt.Sprintf("%s-%s-%s",
+		ki.DistroType, ki.DistroRelease, ki.KernelVersion)
 
 	outdir = tmp + "/source"
 
