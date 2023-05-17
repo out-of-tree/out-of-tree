@@ -104,7 +104,8 @@ func getJson(query string, target interface{}) (err error) {
 		flog.Trace().Msg("start")
 		resp, err = http.Get(query)
 		if err != nil {
-			if strings.Contains(err.Error(), "reset by peer") {
+			if strings.Contains(err.Error(), "reset by peer") ||
+				strings.Contains(err.Error(), "connection refused") {
 				flog.Debug().Err(err).Msg("")
 				lowerLimit()
 				continue
