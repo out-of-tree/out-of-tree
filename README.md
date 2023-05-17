@@ -14,12 +14,17 @@
 
 ### GNU/Linux (with [Nix](https://nixos.org/nix/))
 
-    apt install podman || dnf install podman
+    sudo apt install podman || sudo dnf install podman
+
     curl -L https://nixos.org/nix/install | sh
+    mkdir -p ~/.config/nix
+    echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+
     # stable
-    nix-env -iA nixpkgs.out-of-tree
+    nix profile install nixpkgs#out-of-tree
+
     # latest
-    nix build --extra-experimental-features 'nix-command flakes' git+https://code.dumpstack.io/tools/out-of-tree
+    nix profile install git+https://code.dumpstack.io/tools/out-of-tree
 
 ### macOS
 
