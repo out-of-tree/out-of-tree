@@ -218,16 +218,23 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 
 	cmdf("apt-get update || apt-get update || apt-get update")
 
-	packages := "wget build-essential libelf-dev git kmod linux-base "
-	packages += "initramfs-tools libssl-dev"
+	pkglist := []string{
+		"wget", "build-essential", "libelf-dev", "git",
+		"kmod", "linux-base", "initramfs-tools", "libssl-dev",
+	}
 
 	switch release {
 	case Wheezy:
-		packages += "gcc-4.6 "
+		pkglist = append(pkglist, "gcc-4.6")
 	}
 
 	if release < 9 {
-		packages += "module-init-tools "
+		pkglist = append(pkglist, "module-init-tools")
+	}
+
+	var packages string
+	for _, pkg := range pkglist {
+		packages += fmt.Sprintf("%s ", pkg)
 	}
 
 	cmdf("timeout 5m apt-get install -y %s "+
