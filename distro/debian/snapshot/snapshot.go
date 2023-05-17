@@ -6,10 +6,8 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/rs/zerolog/log"
-	"golang.org/x/time/rate"
 
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot/mr"
 )
@@ -17,13 +15,6 @@ import (
 const timeLayout = "20060102T150405Z"
 
 const URL = "https://snapshot.debian.org"
-
-var Limiter = rate.NewLimiter(rate.Every(time.Second), 1)
-
-// Retries in case of 5xx errors
-var Retries = 10
-
-var HttpTimeout = time.Second * 5
 
 func SourcePackageVersions(name string) (versions []string, err error) {
 	pkg, err := mr.GetPackage(name)
