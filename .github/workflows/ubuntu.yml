@@ -122,7 +122,7 @@ jobs:
         mkdir test
         cd test
 
-        echo 'name = "test >> .out-of-tree.toml
+        echo 'name = "test"' >> .out-of-tree.toml
         echo 'type = "${{ matrix.type }}"' >> .out-of-tree.toml
         echo 'script = "script.sh"' >> .out-of-tree.toml
         echo '[[supported_kernels]]' >> .out-of-tree.toml
