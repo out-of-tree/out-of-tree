@@ -78,6 +78,7 @@ jobs:
   test-end-to-end:
     name: E2E Testing
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     strategy:
       fail-fast: false
