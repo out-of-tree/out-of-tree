@@ -16,8 +16,9 @@ import (
 const apiURL = "https://snapshot.debian.org/mr"
 
 var (
-	limiterTimeout time.Duration = time.Second / 20
-	limiterBurst   int           = 3
+	limiterTimeout     time.Duration = time.Second / 20
+	limiterBurst       int           = 3
+	limiterUpdateDelay time.Duration = time.Second * 10
 
 	Limiter = rate.NewLimiter(rate.Every(limiterTimeout), limiterBurst)
 )
@@ -25,7 +26,10 @@ var (
 func lowerLimit() {
 	limiterTimeout = limiterTimeout * 2
 	log.Info().Msgf("limiter timeout set to %v", limiterTimeout)
-	Limiter.SetLimit(rate.Every(limiterTimeout))
+	Limiter.SetLimitAt(
+		time.Now().Add(limiterUpdateDelay),
+		rate.Every(limiterTimeout),
+	)
 }
 
 // Retries in case of 5xx errors
