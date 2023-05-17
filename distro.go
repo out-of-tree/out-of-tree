@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"time"
 
 	"github.com/cavaliergopher/grab/v3"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog/log"
 
@@ -25,14 +27,17 @@ type DistroCmd struct {
 type DebianCmd struct {
 	Cache DebianCacheCmd `cmd:"" help:"populate cache"`
 	Fetch DebianFetchCmd `cmd:"" help:"download deb packages"`
+
+	Regex string `help:"match deb pkg names by regex" default:".*"`
 }
 
 type DebianCacheCmd struct {
 	Path    string `help:"path to cache"`
 	Refetch int    `help:"days before refetch versions without deb package" default:"7"`
+	Dump    bool   `help:"dump cache"`
 }
 
-func (cmd *DebianCacheCmd) Run() (err error) {
+func (cmd *DebianCacheCmd) Run(dcmd *DebianCmd) (err error) {
 	if cmd.Path != "" {
 		debian.CachePath = cmd.Path
 	}
@@ -40,10 +45,24 @@ func (cmd *DebianCacheCmd) Run() (err error) {
 
 	log.Info().Msg("Fetching kernels...")
 
-	_, err = debian.GetKernels()
+	kernels, err := debian.GetKernels()
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return
+	}
+
+	if cmd.Dump {
+		re, err := regexp.Compile(dcmd.Regex)
+		if err != nil {
+			log.Fatal().Err(err).Msg("regex")
+		}
+
+		for _, kernel := range kernels {
+			if !re.MatchString(kernel.Image.Deb.Name) {
+				continue
+			}
+			fmt.Println(spew.Sdump(kernel))
+		}
 	}
 
 	log.Info().Msg("Success")
@@ -51,10 +70,8 @@ func (cmd *DebianCacheCmd) Run() (err error) {
 }
 
 type DebianFetchCmd struct {
-	Path   string `help:"path to download directory" type:"existingdir" default:"./"`
-	Regexp string `help:"match deb pkg names by regexp" default:".*"`
-
-	IgnoreMirror bool `help:"ignore check if packages on the mirror"`
+	Path         string `help:"path to download directory" type:"existingdir" default:"./"`
+	IgnoreMirror bool   `help:"ignore check if packages on the mirror"`
 
 	Max int `help:"do not download more than X" default:"100500"`
 
@@ -124,11 +141,14 @@ func (cmd *DebianFetchCmd) fetch(pkg snapshot.Package) {
 	cmd.Max--
 }
 
-func (cmd *DebianFetchCmd) Run() (err error) {
-	re, err := regexp.Compile(cmd.Regexp)
+func (cmd *DebianFetchCmd) Run(dcmd *DebianCmd) (err error) {
+	re, err := regexp.Compile(dcmd.Regex)
 	if err != nil {
-		log.Fatal().Err(err).Msg("regexp")
+		log.Fatal().Err(err).Msg("regex")
 	}
+
+	log.Info().Msg("will not download packages that exist on the mirror")
+	log.Info().Msg("use --ignore-mirror if you really need it")
 
 	kernels, err := debian.GetKernels()
 	if err != nil {
