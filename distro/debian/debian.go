@@ -332,7 +332,9 @@ func InstallCommands(km config.KernelMask, pkgname string) (cmds []string, err e
 		// TODO use faketime on old releases?
 		pkg.Deb.URL = strings.Replace(pkg.Deb.URL, "https", "http", -1)
 
-		cmds = append(cmds, "wget --no-check-certificate "+pkg.Deb.URL)
+		cmds = append(cmds, "wget "+
+			"--timeout=10 --waitretry=1 --tries=10 "+
+			"--no-check-certificate "+pkg.Deb.URL)
 	}
 
 	cmds = append(cmds, "dpkg -i ./*.deb")
