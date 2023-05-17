@@ -407,7 +407,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		}
 	case config.Debian:
 		var commands []string
-		commands, err = debian.InstallCommands(sk, pkgname)
+		commands, err = debian.InstallCommands(sk, pkgname, headers)
 		if err != nil {
 			return
 		}

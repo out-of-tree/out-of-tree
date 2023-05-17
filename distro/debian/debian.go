@@ -14,6 +14,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -316,13 +317,20 @@ func ContainerVolumes(km config.KernelMask, pkgname string) (volumes container.V
 	return
 }
 
-func InstallCommands(km config.KernelMask, pkgname string) (cmds []string, err error) {
+func InstallCommands(km config.KernelMask, pkgname string, headers bool) (cmds []string, err error) {
 	dk, err := getCachedKernel(pkgname + ".deb")
 	if err != nil {
 		return
 	}
 
-	for _, pkg := range dk.Packages() {
+	var pkgs []snapshot.Package
+	if headers {
+		pkgs = dk.Packages()
+	} else {
+		pkgs = []snapshot.Package{dk.Image}
+	}
+
+	for _, pkg := range pkgs {
 		found, newurl := cache.PackageURL(
 			km.DistroType,
 			pkg.Deb.URL,
