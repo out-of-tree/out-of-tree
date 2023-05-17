@@ -74,8 +74,8 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: test-end-to-end-examples-logs
-        path: /home/runner/.out-of-tree/logs
+        name: test-end-to-end-examples-${{ matrix.example.dir }}-logs
+        path: ~/.out-of-tree/logs
 
   test-end-to-end:
     name: E2E
@@ -144,5 +144,5 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v3
       with:
-        name: test-end-to-end-${{ matrix.os.distro }}-${{ matrix.os.release }}-logs
-        path: /home/runner/.out-of-tree/logs
+        name: test-end-to-end-${{ matrix.type }}-${{ matrix.os.distro }}-${{ matrix.os.release }}-logs
+        path: ~/.out-of-tree/logs
