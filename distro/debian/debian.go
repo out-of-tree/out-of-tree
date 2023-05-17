@@ -225,7 +225,7 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 
 	switch release {
 	case Wheezy:
-		pkglist = append(pkglist, "gcc-4.6")
+		pkglist = append(pkglist, "'^(gcc-[0-9].[0-9]|gcc-[0-9])$'")
 	}
 
 	if release < 9 {
