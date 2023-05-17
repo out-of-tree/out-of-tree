@@ -431,7 +431,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 
 	cmd += " && cp -r /boot /target/"
 	cmd += " && cp -r /lib/modules /target/lib/"
-	cmd += " && cp -r /usr/src /target/usr/"
+	cmd += " && cp -rL /usr/src /target/usr/"
 
 	_, err = c.Run("", cmd)
 	if err != nil {
