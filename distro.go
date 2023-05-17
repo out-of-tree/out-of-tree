@@ -77,7 +77,7 @@ func (cmd *DebianFetchCmd) fetch(pkg snapshot.Package) {
 		flog.Debug().Msg("check mirror")
 		found, _ := cache.PackageURL(config.Debian, pkg.Deb.URL)
 		if found {
-			flog.Info().Msg("found on the mirror")
+			flog.Debug().Msg("found on the mirror")
 			return
 		}
 	}
