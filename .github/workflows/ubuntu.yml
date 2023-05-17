@@ -39,7 +39,7 @@ jobs:
         go test -parallel 1 -v ./...
 
   test-end-to-end-examples:
-    name: E2E T. Examples
+    name: Examples
     runs-on: ubuntu-latest
 
     strategy:
@@ -76,7 +76,7 @@ jobs:
         path: /home/runner/.out-of-tree/logs
 
   test-end-to-end:
-    name: E2E T.
+    name: E2E
     runs-on: ubuntu-latest
     timeout-minutes: 60
 

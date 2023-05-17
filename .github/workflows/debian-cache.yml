@@ -1,4 +1,4 @@
-name: Debian
+name: Debian Cache
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ on:
 
 jobs:
   debian-kernel-metadata-cache:
-    name: Cache metadata
+    name: Metadata
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -44,7 +44,7 @@ jobs:
       run: s3cmd put --acl-public ~/.out-of-tree/debian.cache s3://out-of-tree/1.0.0/ --host=fra1.digitaloceanspaces.com --host-bucket='%(bucket)s.fra1.digitaloceanspaces.com' --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
 
   debian-kernel-packages-mirror:
-    name: Mirror packages
+    name: Packages
     needs: debian-kernel-metadata-cache
     runs-on: ubuntu-latest
     steps:
