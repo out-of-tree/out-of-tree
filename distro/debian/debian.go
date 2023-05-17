@@ -219,7 +219,7 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 	cmdf("apt-get update || apt-get update || apt-get update")
 
 	packages := "wget build-essential libelf-dev git kmod linux-base "
-	packages += "initramfs-tools "
+	packages += "initramfs-tools libssl-dev"
 
 	switch release {
 	case Wheezy:
