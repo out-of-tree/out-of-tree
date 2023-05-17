@@ -1,4 +1,4 @@
-name: Oracle Linux images
+name: Oracle Linux
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   images-oraclelinux:
-    name: Generate Oracle Linux images
+    name: Qemu Images
     runs-on: ubuntu-latest
     steps:
     - uses: digitalocean/action-doctl@v2

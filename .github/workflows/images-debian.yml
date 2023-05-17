@@ -1,4 +1,4 @@
-name: Debian images
+name: Debian
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   images:
-    name: Generate Debian images
+    name: Qemu Images
     runs-on: ubuntu-latest
     steps:
     - uses: digitalocean/action-doctl@v2

@@ -1,4 +1,4 @@
-name: Build on macOS
+name: macOS
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    name: Build on macOS
+    name: Build
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v1

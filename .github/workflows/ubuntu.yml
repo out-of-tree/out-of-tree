@@ -39,7 +39,7 @@ jobs:
         go test -parallel 1 -v ./...
 
   test-end-to-end-examples:
-    name: E2E Testing (Examples)
+    name: E2E T. Examples
     runs-on: ubuntu-latest
 
     strategy:
@@ -76,13 +76,14 @@ jobs:
         path: /home/runner/.out-of-tree/logs
 
   test-end-to-end:
-    name: E2E Testing
+    name: E2E T.
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
     strategy:
       fail-fast: false
       matrix:
+        type: [ Script, Module ]
         os: [
           { distro: Ubuntu, release: 12.04 },
           { distro: Ubuntu, release: 14.04 },
@@ -115,13 +116,14 @@ jobs:
         sudo apt-get update
         sudo apt-get install qemu-system-x86
 
-    - name: End-to-End Testing [${{ matrix.os.distro }} ${{ matrix.os.release }}]
+    - name: End-to-End Testing ${{ matrix.type }} [${{ matrix.os.distro }} ${{ matrix.os.release }}]
+      shell: bash
       run: |
         mkdir test
         cd test
 
-        echo 'name = "out-of-tree script"' >> .out-of-tree.toml
-        echo 'type = "script"' >> .out-of-tree.toml
+        echo 'name = "test >> .out-of-tree.toml
+        echo 'type = "${{ matrix.type }}"' >> .out-of-tree.toml
         echo 'script = "script.sh"' >> .out-of-tree.toml
         echo '[[supported_kernels]]' >> .out-of-tree.toml
         echo 'distro_type = "${{ matrix.os.distro }}"' >> .out-of-tree.toml
@@ -129,6 +131,8 @@ jobs:
         echo 'release_mask = ".*"' >> .out-of-tree.toml
 
         echo -e '#!/bin/sh\necho ok' >> script.sh
+
+        cp ../examples/kernel-module/{module.c,Makefile,test.sh} .
 
         ../out-of-tree --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}
         ../out-of-tree --log-level=debug kernel autogen --max=1 --shuffle
