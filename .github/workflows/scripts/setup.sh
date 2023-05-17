@@ -2,6 +2,10 @@
 
 set -eu
 
+ls -la /dev/kvm
+
+id
+
 df -h
 
 sudo systemd-run --wait rm -rf \
