@@ -221,11 +221,7 @@ func ContainerCommands(km config.KernelMask) (commands []string) {
 	pkglist := []string{
 		"wget", "build-essential", "libelf-dev", "git",
 		"kmod", "linux-base", "initramfs-tools", "libssl-dev",
-	}
-
-	switch release {
-	case Wheezy:
-		pkglist = append(pkglist, "'^(gcc-[0-9].[0-9]|gcc-[0-9])$'")
+		"'^(gcc-[0-9].[0-9]|gcc-[0-9])$'",
 	}
 
 	if release < 9 {
