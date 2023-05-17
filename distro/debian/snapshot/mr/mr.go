@@ -16,7 +16,7 @@ import (
 const apiURL = "https://snapshot.debian.org/mr"
 
 var (
-	limiterTimeout time.Duration = time.Second / 10
+	limiterTimeout time.Duration = time.Second / 20
 	limiterBurst   int           = 3
 
 	Limiter = rate.NewLimiter(rate.Every(limiterTimeout), limiterBurst)
