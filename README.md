@@ -4,9 +4,9 @@
 
 # [out-of-tree](https://out-of-tree.io)
 
-out-of-tree kernel {module, exploit} development tool
+*out-of-tree* is the kernel {module, exploit} development tool.
 
-out-of-tree is for automating some routine actions for creating development environments for debugging kernel modules and exploits, generating reliability statistics for exploits, and also provides the ability to easily integrate into CI (Continuous Integration).
+*out-of-tree* was created to reduce the complexity of the environment for developing, testing and debugging Linux kernel exploits and out-of-tree kernel modules (hence the name "out-of-tree").
 
 ![Screenshot](https://cloudflare-ipfs.com/ipfs/Qmb88fgdDjbWkxz91sWsgmoZZNfVThnCtj37u3mF2s3T3T)
 
@@ -14,12 +14,12 @@ out-of-tree is for automating some routine actions for creating development envi
 
 ### GNU/Linux (with [Nix](https://nixos.org/nix/))
 
-    $ curl -fsSL https://get.docker.com | sh
-	$ sudo usermod -aG docker user && newgrp docker
-    $ curl -L https://nixos.org/nix/install | sh
-    $ nix-env -iA nixpkgs.out-of-tree # Note: may not be up to date immediately, in this case consider installing from source
-
-Note that adding a user to group *docker* has serious security implications. Check Docker documentation for more information.
+    apt install podman || dnf install podman
+    curl -L https://nixos.org/nix/install | sh
+    # stable
+    nix-env -iA nixpkgs.out-of-tree
+    # latest
+    nix build --extra-experimental-features 'nix-command flakes' git+https://code.dumpstack.io/tools/out-of-tree
 
 ### macOS
 
@@ -43,7 +43,7 @@ Generate all Ubuntu 22.04 kernels:
 
 Run tests based on .out-of-tree.toml definitions:
 
-	$ out-of-tree pew
+    $ out-of-tree pew
 
 Test with a specific kernel:
 
