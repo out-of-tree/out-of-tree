@@ -2,8 +2,6 @@
 
 set -eu
 
-ls -la /dev/kvm
-
 id
 
 df -h
