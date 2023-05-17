@@ -247,8 +247,11 @@ func (q *System) Args() (qemuArgs []string) {
 		qemuArgs = append(qemuArgs, "-initrd", q.kernel.InitrdPath)
 	}
 
-	if (q.arch == X86x64 || q.arch == X86x32) && kvmExists() {
-		qemuArgs = append(qemuArgs, "-enable-kvm", "-cpu", "host")
+	if q.arch == X86x64 || q.arch == X86x32 {
+		if kvmExists() {
+			qemuArgs = append(qemuArgs, "-enable-kvm")
+		}
+		qemuArgs = append(qemuArgs, "-cpu", "max")
 	}
 
 	if q.arch == X86x64 && runtime.GOOS == "darwin" {
