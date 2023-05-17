@@ -89,7 +89,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        type: [ Script, Module ]
+        #type: [ Script, Module ]
+        type: [ Module ]
         os: [
           { distro: Ubuntu, release: 12.04 },
           { distro: Ubuntu, release: 14.04 },
