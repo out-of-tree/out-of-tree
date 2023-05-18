@@ -101,11 +101,11 @@ func buildPreload(workPath, tmp string, ki config.KernelInfo,
 
 	ka.SourcePath = workPath
 
-	km := config.KernelMask{
+	km := config.Target{
 		Distro:      ki.Distro,
 		ReleaseMask: ki.KernelRelease,
 	}
-	ka.Targets = []config.KernelMask{km}
+	ka.Targets = []config.Target{km}
 
 	if ka.Docker.Timeout.Duration != 0 {
 		dockerTimeout = ka.Docker.Timeout.Duration

@@ -64,7 +64,7 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 		return
 	}
 
-	km := config.KernelMask{
+	km := config.Target{
 		Distro:      distro.Distro{ID: distroType, Release: cmd.Ver},
 		ReleaseMask: ".*",
 	}
@@ -149,7 +149,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	shutdown := false
 	kernel.SetSigintHandler(&shutdown)
 
-	km := config.KernelMask{
+	km := config.Target{
 		Distro:      distro.Distro{ID: distroType, Release: cmd.Ver},
 		ReleaseMask: ".*",
 	}
@@ -186,7 +186,7 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	shutdown := false
 	kernel.SetSigintHandler(&shutdown)
 
-	km := config.KernelMask{
+	km := config.Target{
 		Distro:      distro.Distro{ID: distroType, Release: cmd.Ver},
 		ReleaseMask: cmd.Kernel,
 	}

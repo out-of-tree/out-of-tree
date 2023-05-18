@@ -95,13 +95,13 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 	}
 
 	if cmd.Kernel != "" {
-		var km config.KernelMask
+		var km config.Target
 		km, err = kernelMask(cmd.Kernel)
 		if err != nil {
 			return
 		}
 
-		ka.Targets = []config.KernelMask{km}
+		ka.Targets = []config.Target{km}
 	}
 
 	if cmd.Guess {
@@ -831,7 +831,7 @@ func (cmd PewCmd) performCI(ka config.Artifact) (err error) {
 	return
 }
 
-func kernelMask(kernel string) (km config.KernelMask, err error) {
+func kernelMask(kernel string) (km config.Target, err error) {
 	parts := strings.Split(kernel, ":")
 	if len(parts) != 2 {
 		err = errors.New("Kernel is not 'distroType:regex'")
@@ -843,13 +843,13 @@ func kernelMask(kernel string) (km config.KernelMask, err error) {
 		return
 	}
 
-	km = config.KernelMask{Distro: distro.Distro{ID: dt}, ReleaseMask: parts[1]}
+	km = config.Target{Distro: distro.Distro{ID: dt}, ReleaseMask: parts[1]}
 	return
 }
 
-func genAllKernels() (sk []config.KernelMask, err error) {
+func genAllKernels() (sk []config.Target, err error) {
 	for _, id := range distro.IDs {
-		sk = append(sk, config.KernelMask{
+		sk = append(sk, config.Target{
 			Distro:      distro.Distro{ID: id},
 			ReleaseMask: ".*",
 		})

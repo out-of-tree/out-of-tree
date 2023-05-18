@@ -12,11 +12,11 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/container"
 )
 
-func Envs(km config.KernelMask) (envs []string) {
+func Envs(km config.Target) (envs []string) {
 	return
 }
 
-func Runs(km config.KernelMask) (commands []string) {
+func Runs(km config.Target) (commands []string) {
 	cmdf := func(f string, s ...interface{}) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}
@@ -40,7 +40,7 @@ func Runs(km config.KernelMask) (commands []string) {
 	return
 }
 
-func Match(km config.KernelMask) (pkgs []string, err error) {
+func Match(km config.Target) (pkgs []string, err error) {
 	// FIXME timeout should be in global out-of-tree config
 	c, err := container.New(km.DockerName(), time.Hour)
 	if err != nil {
@@ -76,7 +76,7 @@ func Match(km config.KernelMask) (pkgs []string, err error) {
 	return
 }
 
-func Install(km config.KernelMask, pkgname string, headers bool) (commands []string, err error) {
+func Install(km config.Target, pkgname string, headers bool) (commands []string, err error) {
 	var headerspkg string
 	if headers {
 		if strings.Contains(pkgname, "uek") {
@@ -113,6 +113,6 @@ func Install(km config.KernelMask, pkgname string, headers bool) (commands []str
 	return
 }
 
-func Cleanup(km config.KernelMask, pkgname string) {
+func Cleanup(km config.Target, pkgname string) {
 	return
 }

@@ -26,8 +26,8 @@ type kernel struct {
 	Patch   []int
 }
 
-// KernelMask defines the kernel
-type KernelMask struct {
+// Target defines the kernel
+type Target struct {
 	Distro distro.Distro
 
 	ReleaseMask string
@@ -37,7 +37,7 @@ type KernelMask struct {
 }
 
 // DockerName is returns stable name for docker container
-func (km KernelMask) DockerName() string {
+func (km Target) DockerName() string {
 	distro := strings.ToLower(km.Distro.ID.String())
 	release := strings.Replace(km.Distro.Release, ".", "__", -1)
 	return fmt.Sprintf("out_of_tree_%s_%s", distro, release)
@@ -135,7 +135,7 @@ type Artifact struct {
 	Type             ArtifactType
 	TestFiles        []FileTransfer
 	SourcePath       string
-	Targets []KernelMask
+	Targets []Target
 
 	Script string
 
@@ -167,7 +167,7 @@ type Artifact struct {
 	Preload []PreloadModule
 }
 
-func (ka Artifact) checkSupport(ki KernelInfo, km KernelMask) (
+func (ka Artifact) checkSupport(ki KernelInfo, km Target) (
 	supported bool, err error) {
 
 	if ki.Distro.ID != km.Distro.ID {

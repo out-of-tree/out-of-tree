@@ -229,7 +229,7 @@ func firstSupported(kcfg config.KernelConfig, ka config.Artifact,
 		return
 	}
 
-	ka.Targets = []config.KernelMask{km}
+	ka.Targets = []config.Target{km}
 
 	for _, ki = range kcfg.Kernels {
 		var supported bool

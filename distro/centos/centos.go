@@ -8,11 +8,11 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
-func Envs(km config.KernelMask) (envs []string) {
+func Envs(km config.Target) (envs []string) {
 	return
 }
 
-func Runs(km config.KernelMask) (commands []string) {
+func Runs(km config.Target) (commands []string) {
 	cmdf := func(f string, s ...interface{}) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}

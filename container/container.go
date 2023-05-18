@@ -68,7 +68,7 @@ func Images() (diis []Image, err error) {
 	return
 }
 
-func ImagePath(sk config.KernelMask) string {
+func ImagePath(sk config.Target) string {
 	return config.Dir("containers", sk.Distro.ID.String(), sk.Distro.Release)
 }
 

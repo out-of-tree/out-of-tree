@@ -24,7 +24,7 @@ func TestMatch(t *testing.T) {
 
 	config.Directory = tmp
 
-	km := config.KernelMask{
+	km := config.Target{
 		ReleaseMask: "3.2.0-4",
 		Distro:      distro.Distro{Release: "7"},
 	}

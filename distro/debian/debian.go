@@ -111,7 +111,7 @@ func kernelRelease(deb string) (r Release, err error) {
 	return
 }
 
-func Match(km config.KernelMask) (pkgs []string, err error) {
+func Match(km config.Target) (pkgs []string, err error) {
 	kernels, err := GetKernels()
 	if err != nil {
 		log.Error().Err(err).Msg("get kernels")
@@ -143,12 +143,12 @@ func Match(km config.KernelMask) (pkgs []string, err error) {
 	return
 }
 
-func Envs(km config.KernelMask) (envs []string) {
+func Envs(km config.Target) (envs []string) {
 	envs = append(envs, "DEBIAN_FRONTEND=noninteractive")
 	return
 }
 
-func ContainerImage(km config.KernelMask) (image string) {
+func ContainerImage(km config.Target) (image string) {
 	image += "debian:"
 
 	switch releaseFromString(km.Distro.Release) {
@@ -196,7 +196,7 @@ func repositories(release Release) (repos []string) {
 	return
 }
 
-func Runs(km config.KernelMask) (commands []string) {
+func Runs(km config.Target) (commands []string) {
 	release := releaseFromString(km.Distro.Release)
 
 	cmdf := func(f string, s ...interface{}) {
@@ -306,7 +306,7 @@ func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) 
 	return
 }
 
-func Volumes(km config.KernelMask, pkgname string) (volumes container.Volumes) {
+func Volumes(km config.Target, pkgname string) (volumes container.Volumes) {
 	pkgdir := filepath.Join("volumes", km.DockerName(), pkgname)
 
 	volumes.LibModules = config.Dir(pkgdir, "/lib/modules")
@@ -316,7 +316,7 @@ func Volumes(km config.KernelMask, pkgname string) (volumes container.Volumes) {
 	return
 }
 
-func Install(km config.KernelMask, pkgname string, headers bool) (cmds []string, err error) {
+func Install(km config.Target, pkgname string, headers bool) (cmds []string, err error) {
 	dk, err := getCachedKernel(pkgname + ".deb")
 	if err != nil {
 		return
@@ -352,7 +352,7 @@ func Install(km config.KernelMask, pkgname string, headers bool) (cmds []string,
 	return
 }
 
-func Cleanup(km config.KernelMask, pkgname string) {
+func Cleanup(km config.Target, pkgname string) {
 	pkgdir := config.Dir(filepath.Join("volumes", km.DockerName(), pkgname))
 
 	log.Debug().Msgf("cleanup %s", pkgdir)

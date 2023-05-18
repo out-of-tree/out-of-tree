@@ -18,7 +18,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		Type: KernelModule,
 	}
 	artifactCfg.Targets = append(artifactCfg.Targets,
-		KernelMask{distro.Distro{
+		Target{distro.Distro{
 			ID:      distro.Ubuntu,
 			Release: "18.04",
 		}, ".*", kernel{}})

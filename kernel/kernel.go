@@ -31,7 +31,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
-func MatchPackages(km config.KernelMask) (pkgs []string, err error) {
+func MatchPackages(km config.Target) (pkgs []string, err error) {
 	// TODO interface for kernels match
 	switch km.Distro.ID {
 	case distro.Ubuntu:
@@ -65,7 +65,7 @@ func vsyscallAvailable() (available bool, err error) {
 }
 
 func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
-	sk config.KernelMask, forceUpdate bool) (err error) {
+	sk config.Target, forceUpdate bool) (err error) {
 
 	imagePath := container.ImagePath(sk)
 	dockerPath := imagePath + "/Dockerfile"
@@ -175,7 +175,7 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 	return
 }
 
-func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (err error) {
+func installKernel(sk config.Target, pkgname string, force, headers bool) (err error) {
 	slog := log.With().
 		Str("distro_type", sk.Distro.ID.String()).
 		Str("distro_release", sk.Distro.Release).
@@ -510,7 +510,7 @@ func SetSigintHandler(variable *bool) {
 }
 
 // FIXME too many parameters
-func GenerateKernels(km config.KernelMask, registry string,
+func GenerateKernels(km config.Target, registry string,
 	commands []config.DockerCommand, max, retries int64,
 	download, force, headers, shuffle, update bool,
 	shutdown *bool) (err error) {
