@@ -82,3 +82,23 @@ func Match(km config.KernelMask) (pkgs []string, err error) {
 
 	return
 }
+
+func Install(km config.KernelMask, pkgname string, headers bool) (commands []string, err error) {
+
+	var headerspkg string
+	if headers {
+		headerspkg = strings.Replace(pkgname, "image", "headers", -1)
+	}
+
+	cmdf := func(f string, s ...interface{}) {
+		commands = append(commands, fmt.Sprintf(f, s...))
+	}
+
+	cmdf("apt-get install -y %s %s", pkgname, headerspkg)
+
+	return
+}
+
+func Cleanup(km config.KernelMask, pkgname string) {
+	return
+}

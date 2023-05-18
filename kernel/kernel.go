@@ -229,12 +229,20 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 	// TODO install/cleanup kernel interface
 	switch sk.DistroType {
 	case config.Ubuntu:
-		var headerspkg string
-		if headers {
-			headerspkg = strings.Replace(pkgname, "image", "headers", -1)
+		var commands []string
+		commands, err = oraclelinux.Install(sk, pkgname, headers)
+		if err != nil {
+			return
 		}
+		defer func() {
+			if err != nil {
+				oraclelinux.Cleanup(sk, pkgname)
+			}
+		}()
 
-		cmd += fmt.Sprintf(" && apt-get install -y %s %s", pkgname, headerspkg)
+		for _, command := range commands {
+			cmd += fmt.Sprintf(" && %s", command)
+		}
 	case config.OracleLinux, config.CentOS:
 		var commands []string
 		commands, err = oraclelinux.Install(sk, pkgname, headers)
