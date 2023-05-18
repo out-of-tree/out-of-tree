@@ -96,7 +96,7 @@ func buildPreload(workPath, tmp string, ki config.KernelInfo,
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
 	if err != nil {
-		return
+		log.Warn().Err(err).Msg("preload")
 	}
 
 	ka.SourcePath = workPath
