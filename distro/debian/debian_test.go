@@ -8,7 +8,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
-func TestMatchImagePkg(t *testing.T) {
+func TestMatch(t *testing.T) {
 	if os.Getenv("CI") != "" {
 		t.Skip("skip testing in CI")
 	}
@@ -28,7 +28,7 @@ func TestMatchImagePkg(t *testing.T) {
 		DistroRelease: "7",
 	}
 
-	pkgs, err := MatchImagePkg(km)
+	pkgs, err := Match(km)
 	if err != nil {
 		t.Fatal(err)
 	}
