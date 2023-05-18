@@ -24,6 +24,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro/centos"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian"
 	"code.dumpstack.io/tools/out-of-tree/distro/ubuntu"
 	"code.dumpstack.io/tools/out-of-tree/fs"
@@ -187,76 +188,12 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 			d += "RUN " + c + "\n"
 		}
 	case config.CentOS:
-		var repos []string
-
-		switch sk.DistroRelease {
-		case "6":
-			repofmt := "[6.%d-%s]\\nbaseurl=https://vault.centos.org/6.%d/%s/$basearch/\\ngpgcheck=0"
-			for i := 0; i <= 10; i++ {
-				repos = append(repos, fmt.Sprintf(repofmt, i, "os", i, "os"))
-				repos = append(repos, fmt.Sprintf(repofmt, i, "updates", i, "updates"))
-			}
-			d += "RUN rm /etc/yum.repos.d/*\n"
-		case "7":
-			repofmt := "[%s-%s]\\nbaseurl=https://vault.centos.org/%s/%s/$basearch/\\ngpgcheck=0"
-			for _, ver := range []string{
-				"7.0.1406", "7.1.1503", "7.2.1511",
-				"7.3.1611", "7.4.1708", "7.5.1804",
-				"7.6.1810", "7.7.1908", "7.8.2003",
-			} {
-				repos = append(repos, fmt.Sprintf(repofmt, ver, "os", ver, "os"))
-				repos = append(repos, fmt.Sprintf(repofmt, ver, "updates", ver, "updates"))
-			}
-
-			// FIXME http/gpgcheck=0
-			repofmt = "[%s-%s]\\nbaseurl=http://mirror.centos.org/centos-7/%s/%s/$basearch/\\ngpgcheck=0"
-			repos = append(repos, fmt.Sprintf(repofmt, "7.9.2009", "os", "7.9.2009", "os"))
-			repos = append(repos, fmt.Sprintf(repofmt, "7.9.2009", "updates", "7.9.2009", "updates"))
-		case "8":
-			repofmt := "[%s]\\nbaseurl=https://vault.centos.org/%s/BaseOS/$basearch/os/\\ngpgcheck=0"
-
-			for _, ver := range []string{
-				"8.0.1905", "8.1.1911", "8.2.2004",
-				"8.3.2011", "8.4.2105", "8.5.2111",
-			} {
-				repos = append(repos, fmt.Sprintf(repofmt, ver, ver))
-			}
-		default:
-			err = fmt.Errorf("no support for %s %s", sk.DistroType, sk.DistroRelease)
-			return
+		for _, e := range centos.Envs(sk) {
+			d += "ENV " + e + "\n"
 		}
-
-		d += "RUN sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/* || true\n"
-
-		for _, repo := range repos {
-			d += fmt.Sprintf("RUN echo -e '%s' >> /etc/yum.repos.d/oot.repo\n", repo)
+		for _, c := range centos.Runs(sk) {
+			d += "RUN " + c + "\n"
 		}
-
-		// do not remove old kernels
-		d += "RUN sed -i 's;installonly_limit=;installonly_limit=100500;' /etc/yum.conf\n"
-		d += "RUN yum -y update\n"
-
-		d += "RUN yum -y groupinstall 'Development Tools'\n"
-
-		if sk.DistroRelease < "8" {
-			d += "RUN yum -y install deltarpm\n"
-		} else {
-			d += "RUN yum -y install grub2-tools-minimal " +
-				"elfutils-libelf-devel\n"
-		}
-
-		var flags string
-		if sk.DistroRelease >= "8" {
-			flags = "--noautoremove"
-		}
-
-		// Cache kernel package dependencies
-		d += "RUN export PKGNAME=$(yum search kernel-devel --showduplicates | grep '^kernel-devel' | cut -d ' ' -f 1 | head -n 1); " +
-			"yum -y install $PKGNAME $(echo $PKGNAME | sed 's/-devel//'); " +
-			fmt.Sprintf("yum -y remove $PKGNAME "+
-				"$(echo $PKGNAME | sed 's/-devel//') "+
-				"$(echo $PKGNAME | sed 's/-devel/-modules/') "+
-				"$(echo $PKGNAME | sed 's/-devel/-core/') %s\n", flags)
 	case config.OracleLinux:
 		if sk.DistroRelease < "6" {
 			err = fmt.Errorf("no support for pre-EL6")
