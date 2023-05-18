@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"os/signal"
 	"os/user"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -31,79 +30,12 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
-func matchDebImagePkg(containerName, mask string) (pkgs []string, err error) {
-
-	cmd := "apt-cache search --names-only '^linux-image-[0-9\\.\\-]*-generic' | awk '{ print $1 }'"
-
-	// FIXME timeout should be in global out-of-tree config
-	c, err := container.New(containerName, time.Hour)
-	if err != nil {
-		return
-	}
-
-	output, err := c.Run(config.Dir("tmp"), cmd)
-	if err != nil {
-		return
-	}
-
-	r, err := regexp.Compile("linux-image-" + mask)
-	if err != nil {
-		return
-	}
-
-	for _, pkg := range strings.Fields(output) {
-		if r.MatchString(pkg) || strings.Contains(pkg, mask) {
-			pkgs = append(pkgs, pkg)
-		}
-	}
-
-	return
-}
-
-func matchOracleLinuxPkg(containerName, mask string) (
-	pkgs []string, err error) {
-
-	cmd := "yum search kernel --showduplicates " +
-		"| grep '^kernel-[0-9]\\|^kernel-uek-[0-9]' " +
-		"| grep -v src " +
-		"| cut -d ' ' -f 1"
-
-	// FIXME timeout should be in global out-of-tree config
-	c, err := container.New(containerName, time.Hour)
-	if err != nil {
-		return
-	}
-
-	output, err := c.Run(config.Dir("tmp"), cmd)
-	if err != nil {
-		return
-	}
-
-	r, err := regexp.Compile("kernel-" + mask)
-	if err != nil {
-		return
-	}
-
-	for _, pkg := range strings.Fields(output) {
-		if r.MatchString(pkg) || strings.Contains(pkg, mask) {
-			log.Trace().Msg(pkg)
-			pkgs = append(pkgs, pkg)
-		}
-	}
-
-	if len(pkgs) == 0 {
-		log.Warn().Msg("no packages matched")
-	}
-
-	return
-}
-
 func MatchPackages(km config.KernelMask) (pkgs []string, err error) {
 	switch km.DistroType {
 	case config.Ubuntu:
-		pkgs, err = matchDebImagePkg(km.DockerName(), km.ReleaseMask)
+		pkgs, err = ubuntu.Match(km)
 	case config.OracleLinux, config.CentOS:
-		pkgs, err = matchOracleLinuxPkg(km.DockerName(), km.ReleaseMask)
+		pkgs, err = oraclelinux.Match(km)
 	case config.Debian:
 		pkgs, err = debian.MatchImagePkg(km)
 	default:

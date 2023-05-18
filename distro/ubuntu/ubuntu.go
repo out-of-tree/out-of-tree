@@ -2,8 +2,12 @@ package ubuntu
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+	"time"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/container"
 )
 
 func Envs(km config.KernelMask) (envs []string) {
@@ -45,6 +49,36 @@ func Runs(km config.KernelMask) (commands []string) {
 	cmd += " && apt-get remove -y $HEADERS $KERNEL $MODULES"
 
 	cmdf(cmd)
+
+	return
+}
+
+func Match(km config.KernelMask) (pkgs []string, err error) {
+	// FIXME timeout should be in global out-of-tree config
+	c, err := container.New(km.DockerName(), time.Hour)
+	if err != nil {
+		return
+	}
+
+	cmd := "apt-cache search " +
+		"--names-only '^linux-image-[0-9\\.\\-]*-generic' " +
+		"| awk '{ print $1 }'"
+
+	output, err := c.Run(config.Dir("tmp"), cmd)
+	if err != nil {
+		return
+	}
+
+	r, err := regexp.Compile("linux-image-" + km.ReleaseMask)
+	if err != nil {
+		return
+	}
+
+	for _, pkg := range strings.Fields(output) {
+		if r.MatchString(pkg) || strings.Contains(pkg, km.ReleaseMask) {
+			pkgs = append(pkgs, pkg)
+		}
+	}
 
 	return
 }
