@@ -14,9 +14,72 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
+
+func init() {
+	releases := []Release{
+		Wheezy,
+		Jessie,
+		Stretch,
+		Buster,
+		Bullseye,
+	}
+
+	for _, release := range releases {
+		container := fmt.Sprintf("out_of_tree_debian_%d", release)
+
+		distro.Register(Debian{
+			release:   release,
+			container: container,
+		})
+	}
+}
+
+type Debian struct {
+	release   Release
+	container string
+}
+
+func (d Debian) ID() distro.ID {
+	return distro.Debian
+}
+
+func (d Debian) Equal(dd distro.Distro) bool {
+	if dd.ID != distro.Debian {
+		return false
+	}
+
+	return releaseFromString(dd.Release) == d.release
+}
+
+func (d Debian) Packages() (packages []string, err error) {
+	kernels, err := GetKernels()
+	if err != nil {
+		log.Error().Err(err).Msg("get kernels")
+		return
+	}
+
+	for _, dk := range kernels {
+		p := strings.Replace(dk.Image.Deb.Name, ".deb", "", -1)
+
+		var kr Release
+		kr, err = kernelRelease(p)
+		if err != nil {
+			log.Warn().Err(err).Msg("")
+			continue
+		}
+		if kr != d.release {
+			continue
+		}
+
+		packages = append(packages, p)
+	}
+
+	return
+}
 
 type Release int
 
@@ -106,38 +169,6 @@ func kernelRelease(deb string) (r Release, err error) {
 	} else {
 		// Bullseye 5.10
 		r = Bullseye
-	}
-
-	return
-}
-
-func Match(km config.Target) (pkgs []string, err error) {
-	kernels, err := GetKernels()
-	if err != nil {
-		log.Error().Err(err).Msg("get kernels")
-		return
-	}
-
-	release := releaseFromString(km.Distro.Release)
-
-	r := regexp.MustCompile(km.Kernel.Regex)
-
-	for _, dk := range kernels {
-		p := strings.Replace(dk.Image.Deb.Name, ".deb", "", -1)
-
-		var kr Release
-		kr, err = kernelRelease(p)
-		if err != nil {
-			log.Warn().Err(err).Msg("")
-			continue
-		}
-		if kr != release {
-			continue
-		}
-
-		if r.MatchString(p) {
-			pkgs = append(pkgs, p)
-		}
 	}
 
 	return

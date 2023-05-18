@@ -23,6 +23,11 @@ import (
 
 	"github.com/alecthomas/kong"
 
+	_ "code.dumpstack.io/tools/out-of-tree/distro/centos"
+	_ "code.dumpstack.io/tools/out-of-tree/distro/debian"
+	_ "code.dumpstack.io/tools/out-of-tree/distro/oraclelinux"
+	_ "code.dumpstack.io/tools/out-of-tree/distro/ubuntu"
+
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"

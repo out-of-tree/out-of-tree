@@ -2,13 +2,69 @@ package ubuntu
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 )
+
+func init() {
+	releases := []string{
+		"12.04",
+		"14.04",
+		"16.04",
+		"18.04",
+		"20.04",
+		"22.04",
+	}
+
+	for _, release := range releases {
+		container := "out_of_tree_ubuntu_" + release
+		container = strings.Replace(container, ".", "__", -1)
+
+		distro.Register(Ubuntu{
+			release:   release,
+			container: container,
+		})
+	}
+}
+
+type Ubuntu struct {
+	release   string
+	container string
+}
+
+func (u Ubuntu) ID() distro.ID {
+	return distro.Ubuntu
+}
+
+func (u Ubuntu) Equal(d distro.Distro) bool {
+	return u.release == d.Release && distro.Ubuntu == d.ID
+}
+
+func (u Ubuntu) Packages() (pkgs []string, err error) {
+	c, err := container.New(u.container, time.Hour)
+	if err != nil {
+		return
+	}
+
+	cmd := "apt-cache search " +
+		"--names-only '^linux-image-[0-9\\.\\-]*-generic' " +
+		"| awk '{ print $1 }'"
+
+	output, err := c.Run(config.Dir("tmp"), cmd)
+	if err != nil {
+		return
+	}
+
+	for _, pkg := range strings.Fields(output) {
+		pkgs = append(pkgs, pkg)
+	}
+
+	return
+}
 
 func Envs(km config.Target) (envs []string) {
 	envs = append(envs, "DEBIAN_FRONTEND=noninteractive")
@@ -49,36 +105,6 @@ func Runs(km config.Target) (commands []string) {
 	cmd += " && apt-get remove -y $HEADERS $KERNEL $MODULES"
 
 	cmdf(cmd)
-
-	return
-}
-
-func Match(km config.Target) (pkgs []string, err error) {
-	// FIXME timeout should be in global out-of-tree config
-	c, err := container.New(km.DockerName(), time.Hour)
-	if err != nil {
-		return
-	}
-
-	cmd := "apt-cache search " +
-		"--names-only '^linux-image-[0-9\\.\\-]*-generic' " +
-		"| awk '{ print $1 }'"
-
-	output, err := c.Run(config.Dir("tmp"), cmd)
-	if err != nil {
-		return
-	}
-
-	r, err := regexp.Compile("linux-image-" + km.Kernel.Regex)
-	if err != nil {
-		return
-	}
-
-	for _, pkg := range strings.Fields(output) {
-		if r.MatchString(pkg) || strings.Contains(pkg, km.Kernel.Regex) {
-			pkgs = append(pkgs, pkg)
-		}
-	}
 
 	return
 }

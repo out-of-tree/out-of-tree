@@ -2,7 +2,6 @@ package oraclelinux
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
@@ -10,7 +9,57 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 )
+
+func init() {
+	releases := []string{"6", "7", "8", "9"}
+
+	for _, release := range releases {
+		container := "out_of_tree_oraclelinux_" + release
+
+		distro.Register(OracleLinux{
+			release:   release,
+			container: container,
+		})
+	}
+}
+
+type OracleLinux struct {
+	release   string
+	container string
+}
+
+func (ol OracleLinux) ID() distro.ID {
+	return distro.OracleLinux
+}
+
+func (ol OracleLinux) Equal(d distro.Distro) bool {
+	return ol.release == d.Release && distro.OracleLinux == d.ID
+}
+
+func (ol OracleLinux) Packages() (pkgs []string, err error) {
+	c, err := container.New(ol.container, time.Hour)
+	if err != nil {
+		return
+	}
+
+	cmd := "yum search kernel --showduplicates " +
+		"| grep '^kernel-[0-9]\\|^kernel-uek-[0-9]' " +
+		"| grep -v src " +
+		"| cut -d ' ' -f 1"
+
+	output, err := c.Run(config.Dir("tmp"), cmd)
+	if err != nil {
+		return
+	}
+
+	for _, pkg := range strings.Fields(output) {
+		pkgs = append(pkgs, pkg)
+	}
+
+	return
+}
 
 func Envs(km config.Target) (envs []string) {
 	return
@@ -36,42 +85,6 @@ func Runs(km config.Target) (commands []string) {
 	}
 
 	cmdf("yum -y install %s", packages)
-
-	return
-}
-
-func Match(km config.Target) (pkgs []string, err error) {
-	// FIXME timeout should be in global out-of-tree config
-	c, err := container.New(km.DockerName(), time.Hour)
-	if err != nil {
-		return
-	}
-
-	cmd := "yum search kernel --showduplicates " +
-		"| grep '^kernel-[0-9]\\|^kernel-uek-[0-9]' " +
-		"| grep -v src " +
-		"| cut -d ' ' -f 1"
-
-	output, err := c.Run(config.Dir("tmp"), cmd)
-	if err != nil {
-		return
-	}
-
-	r, err := regexp.Compile("kernel-" + km.Kernel.Regex)
-	if err != nil {
-		return
-	}
-
-	for _, pkg := range strings.Fields(output) {
-		if r.MatchString(pkg) || strings.Contains(pkg, km.Kernel.Regex) {
-			log.Trace().Msg(pkg)
-			pkgs = append(pkgs, pkg)
-		}
-	}
-
-	if len(pkgs) == 0 {
-		log.Warn().Msg("no packages matched")
-	}
 
 	return
 }

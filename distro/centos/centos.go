@@ -2,11 +2,63 @@ package centos
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 )
+
+func init() {
+	releases := []string{"6", "7", "8"}
+
+	for _, release := range releases {
+		container := "out_of_tree_centos_" + release
+
+		distro.Register(CentOS{
+			release:   release,
+			container: container,
+		})
+	}
+}
+
+type CentOS struct {
+	release   string
+	container string
+}
+
+func (centos CentOS) ID() distro.ID {
+	return distro.CentOS
+}
+
+func (centos CentOS) Equal(d distro.Distro) bool {
+	return centos.release == d.Release && distro.CentOS == d.ID
+}
+
+func (centos CentOS) Packages() (pkgs []string, err error) {
+	c, err := container.New(centos.container, time.Hour)
+	if err != nil {
+		return
+	}
+
+	cmd := "yum search kernel --showduplicates " +
+		"| grep '^kernel-[0-9]' " +
+		"| grep -v src " +
+		"| cut -d ' ' -f 1"
+
+	output, err := c.Run(config.Dir("tmp"), cmd)
+	if err != nil {
+		return
+	}
+
+	for _, pkg := range strings.Fields(output) {
+		pkgs = append(pkgs, pkg)
+	}
+	return
+}
 
 func Envs(km config.Target) (envs []string) {
 	return

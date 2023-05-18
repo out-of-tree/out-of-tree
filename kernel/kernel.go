@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"os/user"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -31,18 +32,23 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
-func MatchPackages(km config.Target) (pkgs []string, err error) {
-	// TODO interface for kernels match
-	switch km.Distro.ID {
-	case distro.Ubuntu:
-		pkgs, err = ubuntu.Match(km)
-	case distro.OracleLinux, distro.CentOS:
-		pkgs, err = oraclelinux.Match(km)
-	case distro.Debian:
-		pkgs, err = debian.Match(km)
-	default:
-		err = fmt.Errorf("%s not yet supported", km.Distro.ID.String())
+func MatchPackages(km config.Target) (packages []string, err error) {
+	pkgs, err := km.Distro.Packages()
+	if err != nil {
+		return
 	}
+
+	r, err := regexp.Compile(km.Kernel.Regex)
+	if err != nil {
+		return
+	}
+
+	for _, pkg := range pkgs {
+		if r.MatchString(pkg) {
+			packages = append(packages, pkg)
+		}
+	}
+
 	return
 }
 

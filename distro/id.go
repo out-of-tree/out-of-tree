@@ -9,8 +9,9 @@ import (
 type ID int
 
 const (
+	None ID = iota
 	// Ubuntu https://ubuntu.com/
-	Ubuntu ID = iota
+	Ubuntu
 	// CentOS https://www.centos.org/
 	CentOS
 	// Debian https://www.debian.org/
@@ -20,10 +21,11 @@ const (
 )
 
 var IDs = []ID{
-	Ubuntu, CentOS, Debian, OracleLinux,
+	None, Ubuntu, CentOS, Debian, OracleLinux,
 }
 
 var nameStrings = [...]string{
+	"",
 	"Ubuntu",
 	"CentOS",
 	"Debian",
@@ -50,8 +52,10 @@ func (id *ID) UnmarshalTOML(data []byte) (err error) {
 		*id = Debian
 	} else if strings.EqualFold(name, "OracleLinux") {
 		*id = OracleLinux
+	} else if name != "" {
+		err = fmt.Errorf("distro %s is not supported", name)
 	} else {
-		err = fmt.Errorf("distro %s is unsupported", name)
+		*id = None
 	}
 	return
 }
