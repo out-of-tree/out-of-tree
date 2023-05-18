@@ -140,7 +140,7 @@ jobs:
         echo 'type = "${{ matrix.type }}"' >> .out-of-tree.toml
         echo 'script = "script.sh"' >> .out-of-tree.toml
         echo '[[supported_kernels]]' >> .out-of-tree.toml
-        echo 'distro = { id = "${{ matrix.os.distro }}", release = "${{ matrix.os.release }}"' >> .out-of-tree.toml
+        echo 'distro = { id = "${{ matrix.os.distro }}", release = "${{ matrix.os.release }}" }' >> .out-of-tree.toml
         echo 'release_mask = ".*"' >> .out-of-tree.toml
 
         echo -e '#!/bin/sh\necho ok' >> script.sh
