@@ -47,6 +47,10 @@ func (d Debian) ID() distro.ID {
 	return distro.Debian
 }
 
+func (d Debian) Release() string {
+	return d.release.String()
+}
+
 func (d Debian) Equal(dd distro.Distro) bool {
 	if dd.ID != distro.Debian {
 		return false

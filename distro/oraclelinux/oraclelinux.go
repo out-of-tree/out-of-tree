@@ -34,6 +34,10 @@ func (ol OracleLinux) ID() distro.ID {
 	return distro.OracleLinux
 }
 
+func (ol OracleLinux) Release() string {
+	return ol.release
+}
+
 func (ol OracleLinux) Equal(d distro.Distro) bool {
 	return ol.release == d.Release && distro.OracleLinux == d.ID
 }

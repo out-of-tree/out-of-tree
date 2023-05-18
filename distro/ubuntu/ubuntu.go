@@ -40,6 +40,10 @@ func (u Ubuntu) ID() distro.ID {
 	return distro.Ubuntu
 }
 
+func (u Ubuntu) Release() string {
+	return u.release
+}
+
 func (u Ubuntu) Equal(d distro.Distro) bool {
 	return u.release == d.Release && distro.Ubuntu == d.ID
 }

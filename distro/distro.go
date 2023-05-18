@@ -9,6 +9,7 @@ var distros []distribution
 
 type distribution interface {
 	ID() ID
+	Release() string
 	Equal(Distro) bool
 	Packages() (packages []string, err error)
 }
@@ -18,6 +19,20 @@ func Register(d distribution) {
 	defer mu.Unlock()
 
 	distros = append(distros, d)
+}
+
+func List() (dds []Distro) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	for _, dd := range distros {
+		dds = append(dds, Distro{
+			ID:      dd.ID(),
+			Release: dd.Release(),
+		})
+	}
+
+	return
 }
 
 type Distro struct {

@@ -34,6 +34,10 @@ func (centos CentOS) ID() distro.ID {
 	return distro.CentOS
 }
 
+func (centos CentOS) Release() string {
+	return centos.release
+}
+
 func (centos CentOS) Equal(d distro.Distro) bool {
 	return centos.release == d.Release && distro.CentOS == d.ID
 }

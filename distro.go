@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/cavaliergopher/grab/v3"
@@ -21,7 +22,9 @@ import (
 )
 
 type DistroCmd struct {
-	Debian DebianCmd `cmd:""`
+	List DistroListCmd `cmd:"" help:"list available distros"`
+
+	Debian DebianCmd `cmd:"" hidden:""`
 }
 
 type DebianCmd struct {
@@ -180,6 +183,15 @@ func (cmd *DebianFetchCmd) Run(dcmd *DebianCmd) (err error) {
 
 	if !cmd.hasResults {
 		log.Fatal().Msg("no packages found to download")
+	}
+	return
+}
+
+type DistroListCmd struct{}
+
+func (cmd *DistroListCmd) Run() (err error) {
+	for _, d := range distro.List() {
+		fmt.Println(d.ID, strings.Title(d.Release))
 	}
 	return
 }
