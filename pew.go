@@ -101,11 +101,11 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 			return
 		}
 
-		ka.SupportedKernels = []config.KernelMask{km}
+		ka.Targets = []config.KernelMask{km}
 	}
 
 	if cmd.Guess {
-		ka.SupportedKernels, err = genAllKernels()
+		ka.Targets, err = genAllKernels()
 		if err != nil {
 			return
 		}

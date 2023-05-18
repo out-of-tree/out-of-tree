@@ -5,6 +5,6 @@ type = "script"
 
 script = "script.sh"
 
-[[supported_kernels]]
+[[targets]]
 distro = { id = "Ubuntu", release = "22.04" }
 release_mask = ".*"

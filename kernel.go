@@ -107,7 +107,7 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	shutdown := false
 	kernel.SetSigintHandler(&shutdown)
 
-	for _, sk := range ka.SupportedKernels {
+	for _, sk := range ka.Targets {
 		if sk.Distro.Release == "" {
 			err = errors.New("Please set distro_release")
 			return

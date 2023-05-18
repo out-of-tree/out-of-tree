@@ -32,11 +32,11 @@ func genConfig(at config.ArtifactType) (err error) {
 		Name: "Put name here",
 		Type: at,
 	}
-	a.SupportedKernels = append(a.SupportedKernels, config.KernelMask{
+	a.Targets = append(a.Targets, config.KernelMask{
 		Distro:      distro.Distro{ID: distro.Ubuntu, Release: "18.04"},
 		ReleaseMask: ".*",
 	})
-	a.SupportedKernels = append(a.SupportedKernels, config.KernelMask{
+	a.Targets = append(a.Targets, config.KernelMask{
 		Distro:      distro.Distro{ID: distro.Debian, Release: "8"},
 		ReleaseMask: ".*",
 	})

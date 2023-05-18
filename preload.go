@@ -105,7 +105,7 @@ func buildPreload(workPath, tmp string, ki config.KernelInfo,
 		Distro:      ki.Distro,
 		ReleaseMask: ki.KernelRelease,
 	}
-	ka.SupportedKernels = []config.KernelMask{km}
+	ka.Targets = []config.KernelMask{km}
 
 	if ka.Docker.Timeout.Duration != 0 {
 		dockerTimeout = ka.Docker.Timeout.Duration

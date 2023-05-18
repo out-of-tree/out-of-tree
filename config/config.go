@@ -135,7 +135,7 @@ type Artifact struct {
 	Type             ArtifactType
 	TestFiles        []FileTransfer
 	SourcePath       string
-	SupportedKernels []KernelMask
+	Targets []KernelMask
 
 	Script string
 
@@ -187,7 +187,7 @@ func (ka Artifact) checkSupport(ki KernelInfo, km KernelMask) (
 
 // Supported returns true if given kernel is supported by artifact
 func (ka Artifact) Supported(ki KernelInfo) (supported bool, err error) {
-	for _, km := range ka.SupportedKernels {
+	for _, km := range ka.Targets {
 		supported, err = ka.checkSupport(ki, km)
 		if supported {
 			break
@@ -331,8 +331,8 @@ func ReadArtifactConfig(path string) (ka Artifact, err error) {
 		return
 	}
 
-	for i, _ := range ka.SupportedKernels {
-		km := &ka.SupportedKernels[i]
+	for i, _ := range ka.Targets {
+		km := &ka.Targets[i]
 		if len(km.Kernel.Version) != 0 && km.ReleaseMask != "" {
 			s := "Only one way to define kernel version is allowed"
 			err = errors.New(s)
