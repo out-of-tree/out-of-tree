@@ -56,7 +56,7 @@ func (d Debian) Equal(dd distro.Distro) bool {
 		return false
 	}
 
-	return releaseFromString(dd.Release) == d.release
+	return ReleaseFromString(dd.Release) == d.release
 }
 
 func (d Debian) Packages() (packages []string, err error) {
@@ -123,7 +123,7 @@ func (cn Release) String() string {
 	return ReleaseStrings[cn]
 }
 
-func releaseFromString(s string) (r Release) {
+func ReleaseFromString(s string) (r Release) {
 	switch strings.ToLower(s) {
 	case "7", "wheezy":
 		r = Wheezy
@@ -186,7 +186,7 @@ func Envs(km config.Target) (envs []string) {
 func ContainerImage(km config.Target) (image string) {
 	image += "debian:"
 
-	switch releaseFromString(km.Distro.Release) {
+	switch ReleaseFromString(km.Distro.Release) {
 	case Wheezy:
 		image += "wheezy-20190228"
 	case Jessie:
@@ -232,7 +232,7 @@ func repositories(release Release) (repos []string) {
 }
 
 func Runs(km config.Target) (commands []string) {
-	release := releaseFromString(km.Distro.Release)
+	release := ReleaseFromString(km.Distro.Release)
 
 	cmdf := func(f string, s ...interface{}) {
 		commands = append(commands, fmt.Sprintf(f, s...))

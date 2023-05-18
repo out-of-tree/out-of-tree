@@ -191,7 +191,12 @@ type DistroListCmd struct{}
 
 func (cmd *DistroListCmd) Run() (err error) {
 	for _, d := range distro.List() {
-		fmt.Println(d.ID, strings.Title(d.Release))
+		if d.ID == distro.Debian {
+			d.Release = fmt.Sprintf("%d %s",
+				debian.ReleaseFromString(d.Release),
+				strings.Title(d.Release))
+		}
+		fmt.Println(d.ID, d.Release)
 	}
 	return
 }
