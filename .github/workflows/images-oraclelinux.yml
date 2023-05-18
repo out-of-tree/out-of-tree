@@ -7,6 +7,10 @@ on:
       - 'tools/qemu-oraclelinux-img/**'
       - '.github/workflows/images-oraclelinux.yml'
 
+concurrency:
+  group: ${{ github.workflow_ref }}
+  cancel-in-progress: true
+
 jobs:
   images-oraclelinux:
     name: Qemu Images

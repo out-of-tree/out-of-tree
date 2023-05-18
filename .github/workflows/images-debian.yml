@@ -7,6 +7,10 @@ on:
       - 'tools/qemu-debian-img/**'
       - '.github/workflows/images-debian.yml'
 
+concurrency:
+  group: ${{ github.workflow_ref }}
+  cancel-in-progress: true
+
 jobs:
   images:
     name: Qemu Images
