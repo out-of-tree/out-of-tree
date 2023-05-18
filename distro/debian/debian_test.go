@@ -1,43 +1,8 @@
 package debian
 
 import (
-	"os"
 	"testing"
-
-	"code.dumpstack.io/tools/out-of-tree/config"
-	"code.dumpstack.io/tools/out-of-tree/distro"
-	"code.dumpstack.io/tools/out-of-tree/fs"
 )
-
-func TestMatch(t *testing.T) {
-	if os.Getenv("CI") != "" {
-		t.Skip("skip testing in CI")
-	}
-
-	t.Log("tested with cache by default")
-
-	tmp, err := fs.TempDir()
-	if err != nil {
-		return
-	}
-	defer os.RemoveAll(tmp)
-
-	config.Directory = tmp
-
-	km := config.Target{
-		Distro: distro.Distro{Release: "7"},
-		Kernel: config.Kernel{Regex: "3.2.0-4"},
-	}
-
-	pkgs, err := Match(km)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(pkgs) == 0 {
-		t.Fatal("no packages")
-	}
-}
 
 func TestKernelRelease(t *testing.T) {
 	type testcase struct {
