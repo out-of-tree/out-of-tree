@@ -8,19 +8,19 @@ type = "module"
 distro = { id = "Ubuntu", release = "16.04" }
 # regex for `uname -r`
 # See also: regex-golang.appspot.com
-release_mask = "4[.]4[.]0-70-.*"
+kernel = { regex = "4[.]4[.]0-70-.*" }
 
 # [[targets]] may be defined unlimited number of times
 [[targets]]
 distro = { id = "Ubuntu", release = "18.04" }
 # Also you can use only one kernel
-release_mask = "4[.]15[.]0-(24|29)-generic"
+kernel = { regex = "4[.]15[.]0-(24|29)-generic" }
 
 [[targets]]
 distro = { id = "Ubuntu", release = "18.04" }
 # Also you can use only one kernel
-release_mask = "4[.]15[.]0-23-generic"
+kernel = { regex = "4[.]15[.]0-23-generic" }
 
 [[targets]]
 distro = { id = "CentOS", release = "7" }
-release_mask = "3[.]10[.]0-862.el7.x86_64"
+kernel = { regex = "3[.]10[.]0-862.el7.x86_64" }

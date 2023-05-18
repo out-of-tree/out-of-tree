@@ -33,12 +33,12 @@ func genConfig(at config.ArtifactType) (err error) {
 		Type: at,
 	}
 	a.Targets = append(a.Targets, config.Target{
-		Distro:      distro.Distro{ID: distro.Ubuntu, Release: "18.04"},
-		ReleaseMask: ".*",
+		Distro: distro.Distro{ID: distro.Ubuntu, Release: "18.04"},
+		Kernel: config.Kernel{Regex: ".*"},
 	})
 	a.Targets = append(a.Targets, config.Target{
-		Distro:      distro.Distro{ID: distro.Debian, Release: "8"},
-		ReleaseMask: ".*",
+		Distro: distro.Distro{ID: distro.Debian, Release: "8"},
+		Kernel: config.Kernel{Regex: ".*"},
 	})
 	a.Preload = append(a.Preload, config.PreloadModule{
 		Repo: "Repo name (e.g. https://github.com/openwall/lkrg)",

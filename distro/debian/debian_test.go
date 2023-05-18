@@ -25,8 +25,8 @@ func TestMatch(t *testing.T) {
 	config.Directory = tmp
 
 	km := config.Target{
-		ReleaseMask: "3.2.0-4",
-		Distro:      distro.Distro{Release: "7"},
+		Distro: distro.Distro{Release: "7"},
+		Kernel: config.Kernel{Regex: "3.2.0-4"},
 	}
 
 	pkgs, err := Match(km)

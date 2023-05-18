@@ -141,7 +141,7 @@ jobs:
         echo 'script = "script.sh"' >> .out-of-tree.toml
         echo '[[targets]]' >> .out-of-tree.toml
         echo 'distro = { id = "${{ matrix.os.distro }}", release = "${{ matrix.os.release }}" }' >> .out-of-tree.toml
-        echo 'release_mask = ".*"' >> .out-of-tree.toml
+        echo 'kernel = { regex = ".*" }' >> .out-of-tree.toml
 
         echo -e '#!/bin/sh\necho ok' >> script.sh
 

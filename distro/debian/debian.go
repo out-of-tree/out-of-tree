@@ -120,7 +120,7 @@ func Match(km config.Target) (pkgs []string, err error) {
 
 	release := releaseFromString(km.Distro.Release)
 
-	r := regexp.MustCompile(km.ReleaseMask)
+	r := regexp.MustCompile(km.Kernel.Regex)
 
 	for _, dk := range kernels {
 		p := strings.Replace(dk.Image.Deb.Name, ".deb", "", -1)

@@ -843,15 +843,18 @@ func kernelMask(kernel string) (km config.Target, err error) {
 		return
 	}
 
-	km = config.Target{Distro: distro.Distro{ID: dt}, ReleaseMask: parts[1]}
+	km = config.Target{
+		Distro: distro.Distro{ID: dt},
+		Kernel: config.Kernel{Regex: parts[1]},
+	}
 	return
 }
 
 func genAllKernels() (sk []config.Target, err error) {
 	for _, id := range distro.IDs {
 		sk = append(sk, config.Target{
-			Distro:      distro.Distro{ID: id},
-			ReleaseMask: ".*",
+			Distro: distro.Distro{ID: id},
+			Kernel: config.Kernel{Regex: ".*"},
 		})
 	}
 	return

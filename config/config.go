@@ -5,12 +5,10 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -19,21 +17,21 @@ import (
 	"github.com/naoina/toml"
 )
 
-type kernel struct {
-	Version []int
-	Major   []int
-	Minor   []int
-	Patch   []int
+type Kernel struct {
+	// TODO
+	// Version string
+	// From    string
+	// To      string
+
+	// prev. ReleaseMask
+	Regex string
 }
 
 // Target defines the kernel
 type Target struct {
 	Distro distro.Distro
 
-	ReleaseMask string
-
-	// Overrides ReleaseMask
-	Kernel kernel
+	Kernel Kernel
 }
 
 // DockerName is returns stable name for docker container
@@ -131,11 +129,11 @@ type Patch struct {
 
 // Artifact is for .out-of-tree.toml
 type Artifact struct {
-	Name             string
-	Type             ArtifactType
-	TestFiles        []FileTransfer
-	SourcePath       string
-	Targets []Target
+	Name       string
+	Type       ArtifactType
+	TestFiles  []FileTransfer
+	SourcePath string
+	Targets    []Target
 
 	Script string
 
@@ -181,7 +179,7 @@ func (ka Artifact) checkSupport(ki KernelInfo, km Target) (
 		return
 	}
 
-	supported, err = regexp.MatchString(km.ReleaseMask, ki.KernelRelease)
+	supported, err = regexp.MatchString(km.Kernel.Regex, ki.KernelRelease)
 	return
 }
 
@@ -259,66 +257,6 @@ func ReadKernelConfig(path string) (kernelCfg KernelConfig, err error) {
 	return
 }
 
-func rangeRegexp(start, end int) (s string) {
-	s += "("
-	for i := start; i <= end; i++ {
-		s += strconv.Itoa(i)
-		if i != end {
-			s += "|"
-		}
-	}
-	s += ")"
-	return
-}
-
-func versionRegexp(l []int) (s string, err error) {
-	switch len(l) {
-	case 1:
-		s += strconv.Itoa(l[0])
-	case 2:
-		s += rangeRegexp(l[0], l[1])
-	default:
-		err = errors.New("version must contain one value or range")
-		return
-	}
-	return
-}
-
-func genReleaseMask(km kernel) (mask string, err error) {
-	s, err := versionRegexp(km.Version)
-	if err != nil {
-		return
-	}
-	mask += s + "[.]"
-
-	s, err = versionRegexp(km.Major)
-	if err != nil {
-		return
-	}
-	mask += s + "[.]"
-
-	s, err = versionRegexp(km.Minor)
-	if err != nil {
-		return
-	}
-	mask += s
-
-	switch len(km.Patch) {
-	case 0:
-		// ok
-	case 1:
-		mask += "-" + strconv.Itoa(km.Patch[0]) + "-"
-	case 2:
-		mask += "-" + rangeRegexp(km.Patch[0], km.Patch[1]) + "-"
-	default:
-		err = errors.New("version must contain one value or range")
-		return
-	}
-
-	mask += ".*"
-	return
-}
-
 // ReadArtifactConfig is for read .out-of-tree.toml
 func ReadArtifactConfig(path string) (ka Artifact, err error) {
 	buf, err := readFileAll(path)
@@ -327,25 +265,5 @@ func ReadArtifactConfig(path string) (ka Artifact, err error) {
 	}
 
 	err = toml.Unmarshal(buf, &ka)
-	if err != nil {
-		return
-	}
-
-	for i, _ := range ka.Targets {
-		km := &ka.Targets[i]
-		if len(km.Kernel.Version) != 0 && km.ReleaseMask != "" {
-			s := "Only one way to define kernel version is allowed"
-			err = errors.New(s)
-			return
-		}
-
-		if km.ReleaseMask == "" {
-			km.ReleaseMask, err = genReleaseMask(km.Kernel)
-			if err != nil {
-				return
-			}
-		}
-	}
-
 	return
 }

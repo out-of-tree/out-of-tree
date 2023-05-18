@@ -3,7 +3,7 @@ type = "module"
 
 [[targets]]
 distro = { id = "Ubuntu", release = "18.04" }
-release_mask = ".*"
+kernel = { regex = ".*" }
 
 [[preload]]
 repo = "https://github.com/openwall/lkrg"

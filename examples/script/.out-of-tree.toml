@@ -7,4 +7,4 @@ script = "script.sh"
 
 [[targets]]
 distro = { id = "Ubuntu", release = "22.04" }
-release_mask = ".*"
+kernel = { regex = ".*" }

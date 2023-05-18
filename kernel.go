@@ -65,8 +65,8 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 	}
 
 	km := config.Target{
-		Distro:      distro.Distro{ID: distroType, Release: cmd.Ver},
-		ReleaseMask: ".*",
+		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
+		Kernel: config.Kernel{Regex: ".*"},
 	}
 
 	_, err = kernel.GenRootfsImage(container.Image{Name: km.DockerName()}, false)
@@ -150,8 +150,8 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	kernel.SetSigintHandler(&shutdown)
 
 	km := config.Target{
-		Distro:      distro.Distro{ID: distroType, Release: cmd.Ver},
-		ReleaseMask: ".*",
+		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
+		Kernel: config.Kernel{Regex: ".*"},
 	}
 	err = kernel.GenerateKernels(km,
 		g.Config.Docker.Registry,
@@ -187,8 +187,8 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	kernel.SetSigintHandler(&shutdown)
 
 	km := config.Target{
-		Distro:      distro.Distro{ID: distroType, Release: cmd.Ver},
-		ReleaseMask: cmd.Kernel,
+		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
+		Kernel: config.Kernel{Regex: cmd.Kernel},
 	}
 	err = kernel.GenerateKernels(km,
 		g.Config.Docker.Registry,

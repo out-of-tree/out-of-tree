@@ -69,13 +69,13 @@ func Match(km config.Target) (pkgs []string, err error) {
 		return
 	}
 
-	r, err := regexp.Compile("linux-image-" + km.ReleaseMask)
+	r, err := regexp.Compile("linux-image-" + km.Kernel.Regex)
 	if err != nil {
 		return
 	}
 
 	for _, pkg := range strings.Fields(output) {
-		if r.MatchString(pkg) || strings.Contains(pkg, km.ReleaseMask) {
+		if r.MatchString(pkg) || strings.Contains(pkg, km.Kernel.Regex) {
 			pkgs = append(pkgs, pkg)
 		}
 	}
