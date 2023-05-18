@@ -26,6 +26,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro/centos"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian"
+	"code.dumpstack.io/tools/out-of-tree/distro/oraclelinux"
 	"code.dumpstack.io/tools/out-of-tree/distro/ubuntu"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
@@ -179,6 +180,7 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 		d += "RUN " + c.Command + "\n"
 	}
 
+	// TODO container runs/envs interface
 	switch sk.DistroType {
 	case config.Ubuntu:
 		for _, e := range ubuntu.Envs(sk) {
@@ -195,19 +197,12 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 			d += "RUN " + c + "\n"
 		}
 	case config.OracleLinux:
-		if sk.DistroRelease < "6" {
-			err = fmt.Errorf("no support for pre-EL6")
-			return
+		for _, e := range oraclelinux.Envs(sk) {
+			d += "ENV " + e + "\n"
 		}
-		d += "RUN sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/*\n"
-		d += "RUN sed -i 's;installonly_limit=;installonly_limit=100500;' /etc/yum.conf /etc/dnf/dnf.conf || true\n"
-		d += "RUN yum -y update\n"
-		d += "RUN yum -y groupinstall 'Development Tools'\n"
-		packages := "linux-firmware grubby"
-		if sk.DistroRelease <= "7" {
-			packages += " libdtrace-ctf"
+		for _, c := range oraclelinux.Runs(sk) {
+			d += "RUN " + c + "\n"
 		}
-		d += fmt.Sprintf("RUN yum -y install %s\n", packages)
 	case config.Debian:
 		for _, e := range debian.ContainerEnvs(sk) {
 			d += "ENV " + e + "\n"
