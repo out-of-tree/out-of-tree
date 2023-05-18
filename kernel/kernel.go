@@ -230,13 +230,13 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 	switch sk.DistroType {
 	case config.Ubuntu:
 		var commands []string
-		commands, err = oraclelinux.Install(sk, pkgname, headers)
+		commands, err = ubuntu.Install(sk, pkgname, headers)
 		if err != nil {
 			return
 		}
 		defer func() {
 			if err != nil {
-				oraclelinux.Cleanup(sk, pkgname)
+				ubuntu.Cleanup(sk, pkgname)
 			}
 		}()
 
