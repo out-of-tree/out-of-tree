@@ -223,13 +223,11 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 
 	slog.Debug().Msgf("Installing kernel")
 
-	// TODO use list of commands instead of appending to string
-	cmd := "true"
+	var commands []string
 
 	// TODO install/cleanup kernel interface
 	switch sk.DistroType {
 	case config.Ubuntu:
-		var commands []string
 		commands, err = ubuntu.Install(sk, pkgname, headers)
 		if err != nil {
 			return
@@ -239,12 +237,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 				ubuntu.Cleanup(sk, pkgname)
 			}
 		}()
-
-		for _, command := range commands {
-			cmd += fmt.Sprintf(" && %s", command)
-		}
 	case config.OracleLinux, config.CentOS:
-		var commands []string
 		commands, err = oraclelinux.Install(sk, pkgname, headers)
 		if err != nil {
 			return
@@ -254,12 +247,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 				oraclelinux.Cleanup(sk, pkgname)
 			}
 		}()
-
-		for _, command := range commands {
-			cmd += fmt.Sprintf(" && %s", command)
-		}
 	case config.Debian:
-		var commands []string
 		commands, err = debian.Install(sk, pkgname, headers)
 		if err != nil {
 			return
@@ -269,13 +257,14 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 				debian.Cleanup(sk, pkgname)
 			}
 		}()
-
-		for _, command := range commands {
-			cmd += fmt.Sprintf(" && %s", command)
-		}
 	default:
 		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
 		return
+	}
+
+	cmd := "true"
+	for _, command := range commands {
+		cmd += fmt.Sprintf(" && %s", command)
 	}
 
 	c.Args = append(c.Args, "-v", volumes.LibModules+":/target/lib/modules")
