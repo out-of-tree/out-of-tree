@@ -377,7 +377,7 @@ func Install(km config.Target, pkgname string, headers bool) (cmds []string, err
 		// TODO use faketime on old releases?
 		pkg.Deb.URL = strings.Replace(pkg.Deb.URL, "https", "http", -1)
 
-		cmds = append(cmds, "wget "+
+		cmds = append(cmds, "wget --no-verbose "+
 			"--timeout=10 --waitretry=1 --tries=10 "+
 			"--no-check-certificate "+pkg.Deb.URL)
 	}
