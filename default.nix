@@ -10,13 +10,13 @@
     }
   )
   , lib
-  , self
+  , version
 }:
 
 pkgs.buildGoApplication rec {
   pname = "out-of-tree";
 
-  version = "unstable";
+  inherit version;
 
   nativeBuildInputs = [ pkgs.makeWrapper ];
 

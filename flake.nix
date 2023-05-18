@@ -14,9 +14,10 @@
             overlays = [ gomod2nix.overlays.default ];
           };
 
+          version = self.lastModifiedDate;
         in
         {
-          packages.default = pkgs.callPackage ./. { };
+          packages.default = pkgs.callPackage ./. { inherit version; };
           devShells.default = import ./shell.nix { inherit pkgs; };
         })
     );
