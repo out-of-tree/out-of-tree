@@ -75,3 +75,44 @@ func Match(km config.KernelMask) (pkgs []string, err error) {
 
 	return
 }
+
+func Install(km config.KernelMask, pkgname string, headers bool) (commands []string, err error) {
+	var headerspkg string
+	if headers {
+		if strings.Contains(pkgname, "uek") {
+			headerspkg = strings.Replace(pkgname,
+				"kernel-uek", "kernel-uek-devel", -1)
+		} else {
+			headerspkg = strings.Replace(pkgname,
+				"kernel", "kernel-devel", -1)
+		}
+	}
+
+	cmdf := func(f string, s ...interface{}) {
+		commands = append(commands, fmt.Sprintf(f, s...))
+	}
+
+	cmdf("yum -y install %s %s", pkgname, headerspkg)
+
+	var version string
+	if strings.Contains(pkgname, "uek") {
+		version = strings.Replace(pkgname, "kernel-uek-", "", -1)
+	} else {
+		version = strings.Replace(pkgname, "kernel-", "", -1)
+	}
+
+	if km.DistroRelease <= "7" {
+		cmdf("dracut -v --add-drivers 'e1000 ext4' -f "+
+			"/boot/initramfs-%s.img %s", version, version)
+	} else {
+		cmdf("dracut -v --add-drivers 'ata_piix libata' "+
+			"--force-drivers 'e1000 ext4 sd_mod' -f "+
+			"/boot/initramfs-%s.img %s", version, version)
+	}
+
+	return
+}
+
+func Cleanup(km config.KernelMask, pkgname string) {
+	return
+}

@@ -226,6 +226,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 	// TODO use list of commands instead of appending to string
 	cmd := "true"
 
+	// TODO install/cleanup kernel interface
 	switch sk.DistroType {
 	case config.Ubuntu:
 		var headerspkg string
@@ -235,32 +236,19 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 
 		cmd += fmt.Sprintf(" && apt-get install -y %s %s", pkgname, headerspkg)
 	case config.OracleLinux, config.CentOS:
-		var headerspkg string
-		if headers {
-			if strings.Contains(pkgname, "uek") {
-				headerspkg = strings.Replace(pkgname,
-					"kernel-uek", "kernel-uek-devel", -1)
-			} else {
-				headerspkg = strings.Replace(pkgname,
-					"kernel", "kernel-devel", -1)
+		var commands []string
+		commands, err = oraclelinux.Install(sk, pkgname, headers)
+		if err != nil {
+			return
+		}
+		defer func() {
+			if err != nil {
+				oraclelinux.Cleanup(sk, pkgname)
 			}
-		}
+		}()
 
-		cmd += fmt.Sprintf(" && yum -y install %s %s", pkgname, headerspkg)
-
-		var version string
-		if strings.Contains(pkgname, "uek") {
-			version = strings.Replace(pkgname, "kernel-uek-", "", -1)
-		} else {
-			version = strings.Replace(pkgname, "kernel-", "", -1)
-		}
-
-		if sk.DistroRelease <= "7" {
-			cmd += fmt.Sprintf(" && dracut -v --add-drivers 'e1000 ext4' -f "+
-				"/boot/initramfs-%s.img %s", version, version)
-		} else {
-			cmd += fmt.Sprintf(" && dracut -v --add-drivers 'ata_piix libata' --force-drivers 'e1000 ext4 sd_mod' -f "+
-				"/boot/initramfs-%s.img %s", version, version)
+		for _, command := range commands {
+			cmd += fmt.Sprintf(" && %s", command)
 		}
 	case config.Debian:
 		var commands []string
