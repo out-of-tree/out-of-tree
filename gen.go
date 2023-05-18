@@ -10,6 +10,7 @@ import (
 	"github.com/naoina/toml"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 )
 
 type GenCmd struct {
@@ -32,9 +33,12 @@ func genConfig(at config.ArtifactType) (err error) {
 		Type: at,
 	}
 	a.SupportedKernels = append(a.SupportedKernels, config.KernelMask{
-		DistroType:    config.Ubuntu,
-		DistroRelease: "18.04",
-		ReleaseMask:   ".*",
+		Distro:      distro.Distro{ID: distro.Ubuntu, Release: "18.04"},
+		ReleaseMask: ".*",
+	})
+	a.SupportedKernels = append(a.SupportedKernels, config.KernelMask{
+		Distro:      distro.Distro{ID: distro.Debian, Release: "8"},
+		ReleaseMask: ".*",
 	})
 	a.Preload = append(a.Preload, config.PreloadModule{
 		Repo: "Repo name (e.g. https://github.com/openwall/lkrg)",

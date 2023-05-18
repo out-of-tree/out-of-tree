@@ -20,7 +20,7 @@ func Runs(km config.KernelMask) (commands []string) {
 	var repos []string
 
 	// TODO refactor
-	switch km.DistroRelease {
+	switch km.Distro.Release {
 	case "6":
 		repofmt := "[6.%d-%s]\\nbaseurl=https://vault.centos.org/6.%d/%s/$basearch/\\ngpgcheck=0"
 		for i := 0; i <= 10; i++ {
@@ -54,7 +54,7 @@ func Runs(km config.KernelMask) (commands []string) {
 			repos = append(repos, fmt.Sprintf(repofmt, ver, "appstream", ver, "AppStream"))
 		}
 	default:
-		log.Fatal().Msgf("no support for %s %s", km.DistroType, km.DistroRelease)
+		log.Fatal().Msgf("no support for %s %s", km.Distro.ID, km.Distro.Release)
 		return
 	}
 
@@ -71,14 +71,14 @@ func Runs(km config.KernelMask) (commands []string) {
 
 	cmdf("yum -y groupinstall 'Development Tools'")
 
-	if km.DistroRelease < "8" {
+	if km.Distro.Release < "8" {
 		cmdf("yum -y install deltarpm")
 	} else {
 		cmdf("yum -y install grub2-tools-minimal elfutils-libelf-devel")
 	}
 
 	var flags string
-	if km.DistroRelease >= "8" {
+	if km.Distro.Release >= "8" {
 		flags = "--noautoremove"
 	}
 

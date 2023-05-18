@@ -20,7 +20,7 @@ func Runs(km config.KernelMask) (commands []string) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}
 
-	if km.DistroRelease < "14.04" {
+	if km.Distro.Release < "14.04" {
 		cmdf("sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/' " +
 			"/etc/apt/sources.list")
 	}
@@ -29,7 +29,7 @@ func Runs(km config.KernelMask) (commands []string) {
 	cmdf("apt-get install -y build-essential libelf-dev")
 	cmdf("apt-get install -y wget git")
 
-	if km.DistroRelease < "14.04" {
+	if km.Distro.Release < "14.04" {
 		return
 	}
 

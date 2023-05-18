@@ -13,6 +13,7 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/kernel"
 )
 
@@ -46,7 +47,7 @@ func (cmd *KernelListCmd) Run(g *Globals) (err error) {
 	}
 
 	for _, k := range kcfg.Kernels {
-		fmt.Println(k.DistroType, k.DistroRelease, k.KernelRelease)
+		fmt.Println(k.Distro.ID, k.Distro.Release, k.KernelRelease)
 	}
 
 	return
@@ -58,15 +59,14 @@ type KernelListRemoteCmd struct {
 }
 
 func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
-	distroType, err := config.NewDistroType(cmd.Distro)
+	distroType, err := distro.NewID(cmd.Distro)
 	if err != nil {
 		return
 	}
 
 	km := config.KernelMask{
-		DistroType:    distroType,
-		DistroRelease: cmd.Ver,
-		ReleaseMask:   ".*",
+		Distro:      distro.Distro{ID: distroType, Release: cmd.Ver},
+		ReleaseMask: ".*",
 	}
 
 	_, err = kernel.GenRootfsImage(container.Image{Name: km.DockerName()}, false)
@@ -108,7 +108,7 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	kernel.SetSigintHandler(&shutdown)
 
 	for _, sk := range ka.SupportedKernels {
-		if sk.DistroRelease == "" {
+		if sk.Distro.Release == "" {
 			err = errors.New("Please set distro_release")
 			return
 		}
@@ -141,7 +141,7 @@ type KernelGenallCmd struct {
 }
 
 func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
-	distroType, err := config.NewDistroType(cmd.Distro)
+	distroType, err := distro.NewID(cmd.Distro)
 	if err != nil {
 		return
 	}
@@ -150,9 +150,8 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	kernel.SetSigintHandler(&shutdown)
 
 	km := config.KernelMask{
-		DistroType:    distroType,
-		DistroRelease: cmd.Ver,
-		ReleaseMask:   ".*",
+		Distro:      distro.Distro{ID: distroType, Release: cmd.Ver},
+		ReleaseMask: ".*",
 	}
 	err = kernel.GenerateKernels(km,
 		g.Config.Docker.Registry,
@@ -179,7 +178,7 @@ type KernelInstallCmd struct {
 }
 
 func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
-	distroType, err := config.NewDistroType(cmd.Distro)
+	distroType, err := distro.NewID(cmd.Distro)
 	if err != nil {
 		return
 	}
@@ -188,9 +187,8 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	kernel.SetSigintHandler(&shutdown)
 
 	km := config.KernelMask{
-		DistroType:    distroType,
-		DistroRelease: cmd.Ver,
-		ReleaseMask:   cmd.Kernel,
+		Distro:      distro.Distro{ID: distroType, Release: cmd.Ver},
+		ReleaseMask: cmd.Kernel,
 	}
 	err = kernel.GenerateKernels(km,
 		g.Config.Docker.Registry,

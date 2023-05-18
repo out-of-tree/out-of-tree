@@ -17,6 +17,7 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -24,7 +25,7 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 	si := sysinfo.SysInfo{}
 	si.GetSysInfo()
 
-	distroType, err := config.NewDistroType(si.OS.Vendor)
+	distroType, err := distro.NewID(si.OS.Vendor)
 	if err != nil {
 		return
 	}
@@ -47,8 +48,10 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 	// only for compatibility, docker is not really used
 	dii := container.Image{
 		Name: config.KernelMask{
-			DistroType:    distroType,
-			DistroRelease: si.OS.Version,
+			Distro: distro.Distro{
+				ID:      distroType,
+				Release: si.OS.Version,
+			},
 		}.DockerName(),
 	}
 
@@ -74,8 +77,11 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 		}
 
 		ki := config.KernelInfo{
-			DistroType:    distroType,
-			DistroRelease: si.OS.Version,
+			Distro: distro.Distro{
+				ID:      distroType,
+				Release: si.OS.Version,
+			},
+
 			KernelRelease: krel,
 
 			KernelSource: "/lib/modules/" + krel + "/build",

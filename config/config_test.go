@@ -7,6 +7,8 @@ package config
 import (
 	"testing"
 
+	"code.dumpstack.io/tools/out-of-tree/distro"
+
 	"github.com/naoina/toml"
 )
 
@@ -16,7 +18,10 @@ func TestMarshalUnmarshal(t *testing.T) {
 		Type: KernelModule,
 	}
 	artifactCfg.SupportedKernels = append(artifactCfg.SupportedKernels,
-		KernelMask{Ubuntu, "18.04", ".*", kernel{}})
+		KernelMask{distro.Distro{
+			ID:      distro.Ubuntu,
+			Release: "18.04",
+		}, ".*", kernel{}})
 	buf, err := toml.Marshal(&artifactCfg)
 	if err != nil {
 		t.Fatal(err)

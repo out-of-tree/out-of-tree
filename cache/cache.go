@@ -15,7 +15,7 @@ import (
 	"github.com/cavaliergopher/grab/v3"
 	"github.com/rs/zerolog/log"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -95,8 +95,8 @@ func DownloadDebianCache(cachePath string) (err error) {
 	return os.Rename(resp.Filename, cachePath)
 }
 
-func PackageURL(dt config.DistroType, orig string) (found bool, fileurl string) {
-	if dt != config.Debian {
+func PackageURL(dt distro.ID, orig string) (found bool, fileurl string) {
+	if dt != distro.Debian {
 		return
 	}
 

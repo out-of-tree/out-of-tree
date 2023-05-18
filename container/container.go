@@ -21,14 +21,14 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 )
 
 var Runtime = "docker"
 
 type Image struct {
-	Name          string
-	DistroType    config.DistroType
-	DistroRelease string // 18.04/7/9
+	Name   string
+	Distro distro.Distro
 }
 
 func Images() (diis []Image, err error) {
@@ -51,14 +51,14 @@ func Images() (diis []Image, err error) {
 
 		s := strings.Replace(containerName, "__", ".", -1)
 		values := strings.Split(s, "_")
-		distro, ver := values[3], values[4]
+		distroName, ver := values[3], values[4]
 
 		dii := Image{
-			Name:          containerName,
-			DistroRelease: ver,
+			Name: containerName,
 		}
 
-		dii.DistroType, err = config.NewDistroType(distro)
+		dii.Distro.Release = ver
+		dii.Distro.ID, err = distro.NewID(distroName)
 		if err != nil {
 			return
 		}
@@ -69,7 +69,7 @@ func Images() (diis []Image, err error) {
 }
 
 func ImagePath(sk config.KernelMask) string {
-	return config.Dir("containers", sk.DistroType.String(), sk.DistroRelease)
+	return config.Dir("containers", sk.Distro.ID.String(), sk.Distro.Release)
 }
 
 type Volumes struct {

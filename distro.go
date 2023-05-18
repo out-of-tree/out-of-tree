@@ -14,7 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 	"code.dumpstack.io/tools/out-of-tree/fs"
@@ -92,7 +92,7 @@ func (cmd *DebianFetchCmd) fetch(pkg snapshot.Package) {
 
 	if !cmd.IgnoreMirror {
 		flog.Debug().Msg("check mirror")
-		found, _ := cache.PackageURL(config.Debian, pkg.Deb.URL)
+		found, _ := cache.PackageURL(distro.Debian, pkg.Deb.URL)
 		if found {
 			flog.Debug().Msg("found on the mirror")
 			return

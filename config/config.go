@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"code.dumpstack.io/tools/out-of-tree/distro"
+
 	"github.com/naoina/toml"
 )
 
@@ -26,9 +28,9 @@ type kernel struct {
 
 // KernelMask defines the kernel
 type KernelMask struct {
-	DistroType    DistroType
-	DistroRelease string // 18.04/7/9
-	ReleaseMask   string
+	Distro distro.Distro
+
+	ReleaseMask string
 
 	// Overrides ReleaseMask
 	Kernel kernel
@@ -36,8 +38,8 @@ type KernelMask struct {
 
 // DockerName is returns stable name for docker container
 func (km KernelMask) DockerName() string {
-	distro := strings.ToLower(km.DistroType.String())
-	release := strings.Replace(km.DistroRelease, ".", "__", -1)
+	distro := strings.ToLower(km.Distro.ID.String())
+	release := strings.Replace(km.Distro.Release, ".", "__", -1)
 	return fmt.Sprintf("out_of_tree_%s_%s", distro, release)
 }
 
@@ -168,13 +170,13 @@ type Artifact struct {
 func (ka Artifact) checkSupport(ki KernelInfo, km KernelMask) (
 	supported bool, err error) {
 
-	if ki.DistroType != km.DistroType {
+	if ki.Distro.ID != km.Distro.ID {
 		supported = false
 		return
 	}
 
 	// DistroRelease is optional
-	if km.DistroRelease != "" && ki.DistroRelease != km.DistroRelease {
+	if km.Distro.Release != "" && ki.Distro.Release != km.Distro.Release {
 		supported = false
 		return
 	}
@@ -195,74 +197,6 @@ func (ka Artifact) Supported(ki KernelInfo) (supported bool, err error) {
 	return
 }
 
-// DistroType is enum with all supported distros
-type DistroType int
-
-const (
-	// Ubuntu https://ubuntu.com/
-	Ubuntu DistroType = iota
-	// CentOS https://www.centos.org/
-	CentOS
-	// Debian https://www.debian.org/
-	Debian
-	// OracleLinux https://www.oracle.com/linux/
-	OracleLinux
-)
-
-// DistroTypeStrings is the string version of enum DistroType
-var DistroTypeStrings = [...]string{
-	"Ubuntu",
-	"CentOS",
-	"Debian",
-	"OracleLinux",
-}
-
-// NewDistroType is create new Distro object
-func NewDistroType(dType string) (dt DistroType, err error) {
-	err = dt.UnmarshalTOML([]byte(dType))
-	return
-}
-
-func (dt DistroType) String() string {
-	return DistroTypeStrings[dt]
-}
-
-// UnmarshalTOML is for support github.com/naoina/toml
-func (dt *DistroType) UnmarshalTOML(data []byte) (err error) {
-	sDistro := strings.Trim(string(data), `"`)
-	if strings.EqualFold(sDistro, "Ubuntu") {
-		*dt = Ubuntu
-	} else if strings.EqualFold(sDistro, "CentOS") {
-		*dt = CentOS
-	} else if strings.EqualFold(sDistro, "Debian") {
-		*dt = Debian
-	} else if strings.EqualFold(sDistro, "OracleLinux") {
-		*dt = OracleLinux
-	} else {
-		err = fmt.Errorf("Distro %s is unsupported", sDistro)
-	}
-	return
-}
-
-// MarshalTOML is for support github.com/naoina/toml
-func (dt DistroType) MarshalTOML() (data []byte, err error) {
-	s := ""
-	switch dt {
-	case Ubuntu:
-		s = "Ubuntu"
-	case CentOS:
-		s = "CentOS"
-	case Debian:
-		s = "Debian"
-	case OracleLinux:
-		s = "OracleLinux"
-	default:
-		err = fmt.Errorf("Cannot marshal %d", dt)
-	}
-	data = []byte(`"` + s + `"`)
-	return
-}
-
 // ByRootFS is sorting by .RootFS lexicographically
 type ByRootFS []KernelInfo
 
@@ -272,8 +206,7 @@ func (a ByRootFS) Less(i, j int) bool { return a[i].RootFS < a[j].RootFS }
 
 // KernelInfo defines kernels.toml entries
 type KernelInfo struct {
-	DistroType    DistroType
-	DistroRelease string // 18.04/7.4.1708/9.1
+	Distro distro.Distro
 
 	// Must be *exactly* same as in `uname -r`
 	KernelVersion string

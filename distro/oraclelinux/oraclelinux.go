@@ -21,7 +21,7 @@ func Runs(km config.KernelMask) (commands []string) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}
 
-	if km.DistroRelease < "6" {
+	if km.Distro.Release < "6" {
 		log.Fatal().Msgf("no support for pre-EL6")
 	}
 
@@ -31,7 +31,7 @@ func Runs(km config.KernelMask) (commands []string) {
 	cmdf("yum -y groupinstall 'Development Tools'")
 
 	packages := "linux-firmware grubby"
-	if km.DistroRelease <= "7" {
+	if km.Distro.Release <= "7" {
 		packages += " libdtrace-ctf"
 	}
 
@@ -101,7 +101,7 @@ func Install(km config.KernelMask, pkgname string, headers bool) (commands []str
 		version = strings.Replace(pkgname, "kernel-", "", -1)
 	}
 
-	if km.DistroRelease <= "7" {
+	if km.Distro.Release <= "7" {
 		cmdf("dracut -v --add-drivers 'e1000 ext4' -f "+
 			"/boot/initramfs-%s.img %s", version, version)
 	} else {

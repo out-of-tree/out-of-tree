@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -24,8 +25,8 @@ func TestMatch(t *testing.T) {
 	config.Directory = tmp
 
 	km := config.KernelMask{
-		ReleaseMask:   "3.2.0-4",
-		DistroRelease: "7",
+		ReleaseMask: "3.2.0-4",
+		Distro:      distro.Distro{Release: "7"},
 	}
 
 	pkgs, err := Match(km)

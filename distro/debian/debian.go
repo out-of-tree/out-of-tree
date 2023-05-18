@@ -118,7 +118,7 @@ func Match(km config.KernelMask) (pkgs []string, err error) {
 		return
 	}
 
-	release := releaseFromString(km.DistroRelease)
+	release := releaseFromString(km.Distro.Release)
 
 	r := regexp.MustCompile(km.ReleaseMask)
 
@@ -151,7 +151,7 @@ func Envs(km config.KernelMask) (envs []string) {
 func ContainerImage(km config.KernelMask) (image string) {
 	image += "debian:"
 
-	switch releaseFromString(km.DistroRelease) {
+	switch releaseFromString(km.Distro.Release) {
 	case Wheezy:
 		image += "wheezy-20190228"
 	case Jessie:
@@ -159,7 +159,7 @@ func ContainerImage(km config.KernelMask) (image string) {
 	case Stretch:
 		image += "stretch-20220622"
 	default:
-		image += km.DistroRelease
+		image += km.Distro.Release
 	}
 
 	return
@@ -197,7 +197,7 @@ func repositories(release Release) (repos []string) {
 }
 
 func Runs(km config.KernelMask) (commands []string) {
-	release := releaseFromString(km.DistroRelease)
+	release := releaseFromString(km.Distro.Release)
 
 	cmdf := func(f string, s ...interface{}) {
 		commands = append(commands, fmt.Sprintf(f, s...))
@@ -288,8 +288,7 @@ func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) 
 		release := strings.Replace(pkgname, "linux-image-", "", -1)
 
 		ki := config.KernelInfo{
-			DistroType:    d.DistroType,
-			DistroRelease: d.DistroRelease,
+			Distro:        d.Distro,
 			KernelVersion: path.Base(modules),
 			KernelRelease: release,
 			ContainerName: d.Name,
@@ -332,7 +331,7 @@ func Install(km config.KernelMask, pkgname string, headers bool) (cmds []string,
 
 	for _, pkg := range pkgs {
 		found, newurl := cache.PackageURL(
-			km.DistroType,
+			km.Distro.ID,
 			pkg.Deb.URL,
 		)
 		if found {

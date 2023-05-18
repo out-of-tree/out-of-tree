@@ -114,7 +114,7 @@ func (cmd *LogDumpCmd) Run(g *Globals) (err error) {
 	fmt.Println("Name:", l.Name)
 	fmt.Println()
 
-	fmt.Println("Distro:", l.DistroType.String(), l.DistroRelease)
+	fmt.Println("Distro:", l.Distro.ID.String(), l.Distro.Release)
 	fmt.Println("Kernel:", l.KernelRelease)
 	fmt.Println()
 
@@ -208,8 +208,8 @@ func (cmd *LogMarkdownCmd) Run(g *Globals) (err error) {
 }
 
 func logLogEntry(l logEntry) {
-	distroInfo := fmt.Sprintf("%s-%s {%s}", l.DistroType,
-		l.DistroRelease, l.KernelRelease)
+	distroInfo := fmt.Sprintf("%s-%s {%s}", l.Distro.ID,
+		l.Distro.Release, l.KernelRelease)
 
 	artifactInfo := fmt.Sprintf("{[%s] %s}", l.Type, l.Name)
 
@@ -263,17 +263,17 @@ func getStats(db *sql.DB, path, tag string) (
 	distros = make(map[string]map[string]map[string]runstat)
 
 	for _, l := range les {
-		_, ok := distros[l.DistroType.String()]
+		_, ok := distros[l.Distro.ID.String()]
 		if !ok {
-			distros[l.DistroType.String()] = make(map[string]map[string]runstat)
+			distros[l.Distro.ID.String()] = make(map[string]map[string]runstat)
 		}
 
-		_, ok = distros[l.DistroType.String()][l.DistroRelease]
+		_, ok = distros[l.Distro.ID.String()][l.Distro.Release]
 		if !ok {
-			distros[l.DistroType.String()][l.DistroRelease] = make(map[string]runstat)
+			distros[l.Distro.ID.String()][l.Distro.Release] = make(map[string]runstat)
 		}
 
-		rs := distros[l.DistroType.String()][l.DistroRelease][l.KernelRelease]
+		rs := distros[l.Distro.ID.String()][l.Distro.Release][l.KernelRelease]
 
 		rs.All++
 		if l.Build.Ok {
@@ -292,7 +292,7 @@ func getStats(db *sql.DB, path, tag string) (
 			rs.Timeout++
 		}
 
-		distros[l.DistroType.String()][l.DistroRelease][l.KernelRelease] = rs
+		distros[l.Distro.ID.String()][l.Distro.Release][l.KernelRelease] = rs
 	}
 
 	return

@@ -140,7 +140,7 @@ func addToLog(db *sql.DB, q *qemu.System, ka config.Artifact,
 
 	_, err = stmt.Exec(
 		ka.Name, ka.Type, tag,
-		ki.DistroType, ki.DistroRelease, ki.KernelRelease,
+		ki.Distro.ID, ki.Distro.Release, ki.KernelRelease,
 		res.Build.Output, res.Build.Ok,
 		res.Run.Output, res.Run.Ok,
 		res.Test.Output, res.Test.Ok,
@@ -175,7 +175,7 @@ func getAllLogs(db *sql.DB, tag string, num int) (les []logEntry, err error) {
 		le := logEntry{}
 		err = rows.Scan(&le.ID, &le.Timestamp,
 			&le.Name, &le.Type, &le.Tag,
-			&le.DistroType, &le.DistroRelease, &le.KernelRelease,
+			&le.Distro.ID, &le.Distro.Release, &le.KernelRelease,
 			&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 			&le.KernelPanic, &le.KilledByTimeout,
 		)
@@ -214,7 +214,7 @@ func getAllArtifactLogs(db *sql.DB, tag string, num int, ka config.Artifact) (
 		le := logEntry{}
 		err = rows.Scan(&le.ID, &le.Timestamp,
 			&le.Name, &le.Type, &le.Tag,
-			&le.DistroType, &le.DistroRelease, &le.KernelRelease,
+			&le.Distro.ID, &le.Distro.Release, &le.KernelRelease,
 			&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 			&le.KernelPanic, &le.KilledByTimeout,
 		)
@@ -245,7 +245,7 @@ func getLogByID(db *sql.DB, id int) (le logEntry, err error) {
 
 	err = stmt.QueryRow(id).Scan(&le.ID, &le.Timestamp,
 		&le.Name, &le.Type, &le.Tag,
-		&le.DistroType, &le.DistroRelease, &le.KernelRelease,
+		&le.Distro.ID, &le.Distro.Release, &le.KernelRelease,
 		&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 		&le.Build.Output, &le.Run.Output, &le.Test.Output,
 		&le.Stdout, &le.Stderr,
@@ -263,7 +263,7 @@ func getLastLog(db *sql.DB) (le logEntry, err error) {
 		"kernel_panic, timeout_kill "+
 		"FROM log").Scan(&le.ID, &le.Timestamp,
 		&le.Name, &le.Type, &le.Tag,
-		&le.DistroType, &le.DistroRelease, &le.KernelRelease,
+		&le.Distro.ID, &le.Distro.Release, &le.KernelRelease,
 		&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 		&le.Build.Output, &le.Run.Output, &le.Test.Output,
 		&le.Stdout, &le.Stderr,

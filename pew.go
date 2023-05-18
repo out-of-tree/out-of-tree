@@ -25,6 +25,7 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
@@ -429,8 +430,8 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 			log.Warn().Err(err).Msgf("os.MkdirAll (%v)", ka)
 		}
 
-		path := fmt.Sprintf("%s/%s-%s-%s", dist, ki.DistroType,
-			ki.DistroRelease, ki.KernelRelease)
+		path := fmt.Sprintf("%s/%s-%s-%s", dist, ki.Distro.ID,
+			ki.Distro.Release, ki.KernelRelease)
 		if ka.Type != config.KernelExploit {
 			path += ".ko"
 		}
@@ -571,8 +572,8 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 
 	logfile := fmt.Sprintf("logs/%s/%s-%s-%s.log",
 		cmd.Tag,
-		ki.DistroType.String(),
-		ki.DistroRelease,
+		ki.Distro.ID.String(),
+		ki.Distro.Release,
 		ki.KernelRelease,
 	)
 	f, err := os.Create(logfile)
@@ -602,8 +603,8 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	}
 
 	slog = slog.With().Timestamp().
-		Str("distro_type", ki.DistroType.String()).
-		Str("distro_release", ki.DistroRelease).
+		Str("distro_type", ki.Distro.ID.String()).
+		Str("distro_release", ki.Distro.Release).
 		Str("kernel", ki.KernelRelease).
 		Logger()
 
@@ -837,25 +838,19 @@ func kernelMask(kernel string) (km config.KernelMask, err error) {
 		return
 	}
 
-	dt, err := config.NewDistroType(parts[0])
+	dt, err := distro.NewID(parts[0])
 	if err != nil {
 		return
 	}
 
-	km = config.KernelMask{DistroType: dt, ReleaseMask: parts[1]}
+	km = config.KernelMask{Distro: distro.Distro{ID: dt}, ReleaseMask: parts[1]}
 	return
 }
 
 func genAllKernels() (sk []config.KernelMask, err error) {
-	for _, dType := range config.DistroTypeStrings {
-		var dt config.DistroType
-		dt, err = config.NewDistroType(dType)
-		if err != nil {
-			return
-		}
-
+	for _, id := range distro.IDs {
 		sk = append(sk, config.KernelMask{
-			DistroType:  dt,
+			Distro:      distro.Distro{ID: id},
 			ReleaseMask: ".*",
 		})
 	}

@@ -23,6 +23,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/distro/centos"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian"
 	"code.dumpstack.io/tools/out-of-tree/distro/oraclelinux"
@@ -32,15 +33,15 @@ import (
 
 func MatchPackages(km config.KernelMask) (pkgs []string, err error) {
 	// TODO interface for kernels match
-	switch km.DistroType {
-	case config.Ubuntu:
+	switch km.Distro.ID {
+	case distro.Ubuntu:
 		pkgs, err = ubuntu.Match(km)
-	case config.OracleLinux, config.CentOS:
+	case distro.OracleLinux, distro.CentOS:
 		pkgs, err = oraclelinux.Match(km)
-	case config.Debian:
+	case distro.Debian:
 		pkgs, err = debian.Match(km)
 	default:
-		err = fmt.Errorf("%s not yet supported", km.DistroType.String())
+		err = fmt.Errorf("%s not yet supported", km.Distro.ID.String())
 	}
 	return
 }
@@ -83,7 +84,7 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 
 	if fs.PathExists(dockerPath) && string(rawOutput) != "" {
 		log.Debug().Msgf("Base image for %s:%s found",
-			sk.DistroType.String(), sk.DistroRelease)
+			sk.Distro.ID.String(), sk.Distro.Release)
 		if !forceUpdate {
 			return
 		} else {
@@ -92,7 +93,7 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 	}
 
 	log.Debug().Msgf("Base image for %s:%s not found, start generating",
-		sk.DistroType.String(), sk.DistroRelease)
+		sk.Distro.ID.String(), sk.Distro.Release)
 	os.MkdirAll(imagePath, os.ModePerm)
 
 	d += "FROM "
@@ -100,13 +101,13 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 		d += registry + "/"
 	}
 
-	switch sk.DistroType {
-	case config.Debian:
+	switch sk.Distro.ID {
+	case distro.Debian:
 		d += debian.ContainerImage(sk) + "\n"
 	default:
 		d += fmt.Sprintf("%s:%s\n",
-			strings.ToLower(sk.DistroType.String()),
-			sk.DistroRelease)
+			strings.ToLower(sk.Distro.ID.String()),
+			sk.Distro.Release)
 	}
 
 	for _, c := range commands {
@@ -114,29 +115,29 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 	}
 
 	// TODO container runs/envs interface
-	switch sk.DistroType {
-	case config.Ubuntu:
+	switch sk.Distro.ID {
+	case distro.Ubuntu:
 		for _, e := range ubuntu.Envs(sk) {
 			d += "ENV " + e + "\n"
 		}
 		for _, c := range ubuntu.Runs(sk) {
 			d += "RUN " + c + "\n"
 		}
-	case config.CentOS:
+	case distro.CentOS:
 		for _, e := range centos.Envs(sk) {
 			d += "ENV " + e + "\n"
 		}
 		for _, c := range centos.Runs(sk) {
 			d += "RUN " + c + "\n"
 		}
-	case config.OracleLinux:
+	case distro.OracleLinux:
 		for _, e := range oraclelinux.Envs(sk) {
 			d += "ENV " + e + "\n"
 		}
 		for _, c := range oraclelinux.Runs(sk) {
 			d += "RUN " + c + "\n"
 		}
-	case config.Debian:
+	case distro.Debian:
 		for _, e := range debian.Envs(sk) {
 			d += "ENV " + e + "\n"
 		}
@@ -144,7 +145,7 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 			d += "RUN " + c + "\n"
 		}
 	default:
-		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
+		err = fmt.Errorf("%s not yet supported", sk.Distro.ID.String())
 		return
 	}
 
@@ -163,21 +164,21 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 	output, err := c.Build(imagePath)
 	if err != nil {
 		log.Error().Err(err).Msgf("Base image for %s:%s generating error",
-			sk.DistroType.String(), sk.DistroRelease)
+			sk.Distro.ID.String(), sk.Distro.Release)
 		log.Fatal().Msg(output)
 		return
 	}
 
 	log.Debug().Msgf("Base image for %s:%s generating success",
-		sk.DistroType.String(), sk.DistroRelease)
+		sk.Distro.ID.String(), sk.Distro.Release)
 
 	return
 }
 
 func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (err error) {
 	slog := log.With().
-		Str("distro_type", sk.DistroType.String()).
-		Str("distro_release", sk.DistroRelease).
+		Str("distro_type", sk.Distro.ID.String()).
+		Str("distro_release", sk.Distro.Release).
 		Str("pkg", pkgname).
 		Logger()
 
@@ -188,7 +189,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 
 	searchdir := c.Volumes.LibModules
 
-	if sk.DistroType == config.Debian {
+	if sk.Distro.ID == distro.Debian {
 		// TODO We need some kind of API for that
 		searchdir = config.Dir("volumes", sk.DockerName())
 	}
@@ -209,7 +210,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		}
 	}
 
-	if sk.DistroType == config.Debian {
+	if sk.Distro.ID == distro.Debian {
 		// Debian has different kernels (package version) by the
 		// same name (ABI), so we need to separate /boot
 		c.Volumes = debian.Volumes(sk, pkgname)
@@ -226,8 +227,8 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 	var commands []string
 
 	// TODO install/cleanup kernel interface
-	switch sk.DistroType {
-	case config.Ubuntu:
+	switch sk.Distro.ID {
+	case distro.Ubuntu:
 		commands, err = ubuntu.Install(sk, pkgname, headers)
 		if err != nil {
 			return
@@ -237,7 +238,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 				ubuntu.Cleanup(sk, pkgname)
 			}
 		}()
-	case config.OracleLinux, config.CentOS:
+	case distro.OracleLinux, distro.CentOS:
 		commands, err = oraclelinux.Install(sk, pkgname, headers)
 		if err != nil {
 			return
@@ -247,7 +248,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 				oraclelinux.Cleanup(sk, pkgname)
 			}
 		}()
-	case config.Debian:
+	case distro.Debian:
 		commands, err = debian.Install(sk, pkgname, headers)
 		if err != nil {
 			return
@@ -258,7 +259,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 			}
 		}()
 	default:
-		err = fmt.Errorf("%s not yet supported", sk.DistroType.String())
+		err = fmt.Errorf("%s not yet supported", sk.Distro.ID.String())
 		return
 	}
 
@@ -273,7 +274,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 
 	cmd += " && cp -r /boot /target/"
 	cmd += " && cp -r /lib/modules /target/lib/"
-	if sk.DistroType == config.Debian {
+	if sk.Distro.ID == distro.Debian {
 		cmd += " && cp -rL /usr/src /target/usr/"
 	} else {
 		cmd += " && cp -r /usr/src /target/usr/"
@@ -444,8 +445,7 @@ func listContainersKernels(dii container.Image, newkcfg *config.KernelConfig,
 		}
 
 		ki := config.KernelInfo{
-			DistroType:    dii.DistroType,
-			DistroRelease: dii.DistroRelease,
+			Distro:        dii.Distro,
 			KernelVersion: krel.Name(),
 			KernelRelease: krel.Name(),
 			ContainerName: dii.Name,

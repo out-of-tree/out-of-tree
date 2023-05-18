@@ -2,8 +2,7 @@ name = "out-of-tree preload"
 type = "module"
 
 [[supported_kernels]]
-distro_type = "Ubuntu"
-distro_release = "18.04"
+distro = { id = "Ubuntu", release = "18.04" }
 release_mask = ".*"
 
 [[preload]]

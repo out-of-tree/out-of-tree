@@ -9,14 +9,16 @@ import (
 	"os"
 	"time"
 
+	"code.dumpstack.io/tools/out-of-tree/distro"
+
 	"github.com/alecthomas/kong"
 	"github.com/mitchellh/go-homedir"
 	"github.com/naoina/toml"
 )
 
 type DockerCommand struct {
-	DistroType DistroType
-	Command    string
+	Distro  distro.Distro
+	Command string
 }
 
 type OutOfTree struct {

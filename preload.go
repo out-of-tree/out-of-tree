@@ -101,9 +101,9 @@ func buildPreload(workPath, tmp string, ki config.KernelInfo,
 
 	ka.SourcePath = workPath
 
-	km := config.KernelMask{DistroType: ki.DistroType,
-		DistroRelease: ki.DistroRelease,
-		ReleaseMask:   ki.KernelRelease,
+	km := config.KernelMask{
+		Distro:      ki.Distro,
+		ReleaseMask: ki.KernelRelease,
 	}
 	ka.SupportedKernels = []config.KernelMask{km}
 
