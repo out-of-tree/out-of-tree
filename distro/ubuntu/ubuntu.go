@@ -34,15 +34,17 @@ func Runs(km config.KernelMask) (commands []string) {
 	// Install and remove a single kernel and headers.
 	// This ensures that all dependencies are cached.
 
-	cmdf("export TMP_HEADERS=$(apt-cache search " +
+	cmd := "export HEADERS=$(apt-cache search " +
 		"--names-only '^linux-headers-[0-9\\.\\-]*-generic' " +
-		"| awk '{ print $1 }' | head -n 1)")
+		"| awk '{ print $1 }' | head -n 1)"
 
-	cmdf("export TMP_KERNEL=$(echo $TMP_HEADERS | sed 's/headers/image/')")
-	cmdf("export TMP_MODULES=$(echo $TMP_HEADERS | sed 's/headers/modules/')")
+	cmd += " KERNEL=$(echo $HEADERS | sed 's/headers/image/')"
+	cmd += " MODULES=$(echo $HEADERS | sed 's/headers/modules/')"
 
-	cmdf("apt-get install -y $TMP_HEADERS $TMP_KERNEL $TMP_MODULES")
-	cmdf("apt-get remove -y $TMP_HEADERS $TMP_KERNEL $TMP_MODULES")
+	cmd += " && apt-get install -y $HEADERS $KERNEL $MODULES"
+	cmd += " && apt-get remove -y $HEADERS $KERNEL $MODULES"
+
+	cmdf(cmd)
 
 	return
 }

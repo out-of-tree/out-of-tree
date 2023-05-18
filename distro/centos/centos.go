@@ -85,16 +85,17 @@ func Runs(km config.KernelMask) (commands []string) {
 	// Install and remove a single kernel and headers.
 	// This ensures that all dependencies are cached.
 
-	cmdf("export TMP_HEADERS=$(yum search kernel-devel --showduplicates " +
-		"| grep '^kernel-devel' | cut -d ' ' -f 1 | head -n 1)")
+	cmd := "export HEADERS=$(yum search kernel-devel --showduplicates " +
+		"| grep '^kernel-devel' | cut -d ' ' -f 1 | head -n 1)"
 
-	cmdf("export TMP_KERNEL=$(echo $TMP_HEADERS | sed 's/-devel//')")
-	cmdf("export TMP_MODULES=$(echo $TMP_HEADERS | sed 's/-devel/-modules/')")
-	cmdf("export TMP_CORE=$(echo $TMP_HEADERS | sed 's/-devel/-core/')")
+	cmd += " KERNEL=$(echo $HEADERS | sed 's/-devel//')"
+	cmd += " MODULES=$(echo $HEADERS | sed 's/-devel/-modules/')"
+	cmd += " CORE=$(echo $HEADERS | sed 's/-devel/-core/')"
 
-	cmdf("yum -y install $TMP_KERNEL $TMP_HEADERS")
-	cmdf("yum -y remove %s $TMP_KERNEL $TMP_HEADERS $TMP_MODULES $TMP_CORE",
-		flags)
+	cmd += " && yum -y install $KERNEL $HEADERS"
+	cmd += " && yum -y remove %s $KERNEL $HEADERS $MODULES $CORE"
+
+	cmdf(cmd, flags)
 
 	return
 }
