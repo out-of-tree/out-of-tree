@@ -111,7 +111,7 @@ func kernelRelease(deb string) (r Release, err error) {
 	return
 }
 
-func Match(km config.KernelMask) (pkgs []string, err error) {
+func MatchImagePkg(km config.KernelMask) (pkgs []string, err error) {
 	kernels, err := GetKernels()
 	if err != nil {
 		log.Error().Err(err).Msg("get kernels")
@@ -143,7 +143,7 @@ func Match(km config.KernelMask) (pkgs []string, err error) {
 	return
 }
 
-func Envs(km config.KernelMask) (envs []string) {
+func ContainerEnvs(km config.KernelMask) (envs []string) {
 	envs = append(envs, "DEBIAN_FRONTEND=noninteractive")
 	return
 }
@@ -196,7 +196,7 @@ func repositories(release Release) (repos []string) {
 	return
 }
 
-func Runs(km config.KernelMask) (commands []string) {
+func ContainerCommands(km config.KernelMask) (commands []string) {
 	release := releaseFromString(km.DistroRelease)
 
 	cmdf := func(f string, s ...interface{}) {
@@ -307,7 +307,7 @@ func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) 
 	return
 }
 
-func Volumes(km config.KernelMask, pkgname string) (volumes container.Volumes) {
+func ContainerVolumes(km config.KernelMask, pkgname string) (volumes container.Volumes) {
 	pkgdir := filepath.Join("volumes", km.DockerName(), pkgname)
 
 	volumes.LibModules = config.Dir(pkgdir, "/lib/modules")
@@ -317,7 +317,7 @@ func Volumes(km config.KernelMask, pkgname string) (volumes container.Volumes) {
 	return
 }
 
-func Install(km config.KernelMask, pkgname string, headers bool) (cmds []string, err error) {
+func InstallCommands(km config.KernelMask, pkgname string, headers bool) (cmds []string, err error) {
 	dk, err := getCachedKernel(pkgname + ".deb")
 	if err != nil {
 		return
@@ -353,7 +353,7 @@ func Install(km config.KernelMask, pkgname string, headers bool) (cmds []string,
 	return
 }
 
-func Cleanup(km config.KernelMask, pkgname string) {
+func CleanupFailed(km config.KernelMask, pkgname string) {
 	pkgdir := config.Dir(filepath.Join("volumes", km.DockerName(), pkgname))
 
 	log.Debug().Msgf("cleanup %s", pkgdir)
