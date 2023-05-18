@@ -11,6 +11,9 @@ on:
       - 'distro/debian/cache.go'
       - 'distro/debian/kernel.go'
 
+concurrency:
+  group: ${{ github.workflow_ref }}
+
 jobs:
   debian-kernel-metadata-cache:
     name: Metadata
