@@ -31,13 +31,14 @@ import (
 )
 
 func MatchPackages(km config.KernelMask) (pkgs []string, err error) {
+	// TODO interface for kernels match
 	switch km.DistroType {
 	case config.Ubuntu:
 		pkgs, err = ubuntu.Match(km)
 	case config.OracleLinux, config.CentOS:
 		pkgs, err = oraclelinux.Match(km)
 	case config.Debian:
-		pkgs, err = debian.MatchImagePkg(km)
+		pkgs, err = debian.Match(km)
 	default:
 		err = fmt.Errorf("%s not yet supported", km.DistroType.String())
 	}
@@ -136,10 +137,10 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 			d += "RUN " + c + "\n"
 		}
 	case config.Debian:
-		for _, e := range debian.ContainerEnvs(sk) {
+		for _, e := range debian.Envs(sk) {
 			d += "ENV " + e + "\n"
 		}
-		for _, c := range debian.ContainerCommands(sk) {
+		for _, c := range debian.Runs(sk) {
 			d += "RUN " + c + "\n"
 		}
 	default:
@@ -211,7 +212,7 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 	if sk.DistroType == config.Debian {
 		// Debian has different kernels (package version) by the
 		// same name (ABI), so we need to separate /boot
-		c.Volumes = debian.ContainerVolumes(sk, pkgname)
+		c.Volumes = debian.Volumes(sk, pkgname)
 	}
 
 	volumes := c.Volumes
@@ -263,13 +264,13 @@ func installKernel(sk config.KernelMask, pkgname string, force, headers bool) (e
 		}
 	case config.Debian:
 		var commands []string
-		commands, err = debian.InstallCommands(sk, pkgname, headers)
+		commands, err = debian.Install(sk, pkgname, headers)
 		if err != nil {
 			return
 		}
 		defer func() {
 			if err != nil {
-				debian.CleanupFailed(sk, pkgname)
+				debian.Cleanup(sk, pkgname)
 			}
 		}()
 
