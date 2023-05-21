@@ -90,6 +90,20 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 		return
 	}
 
+	if len(ka.Targets) == 0 {
+		log.Debug().Msg("no targets defined in .out-of-tree.toml, " +
+			"will use all available")
+
+		for _, dist := range distro.List() {
+			ka.Targets = append(ka.Targets, config.Target{
+				Distro: dist,
+				Kernel: config.Kernel{
+					Regex: ".*",
+				},
+			})
+		}
+	}
+
 	if ka.SourcePath == "" {
 		ka.SourcePath = g.WorkDir
 	}
