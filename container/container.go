@@ -99,8 +99,8 @@ func New(name string, timeout time.Duration) (c Container, err error) {
 	c.timeout = timeout
 
 	c.Volumes.LibModules = config.Dir("volumes", name, "lib", "modules")
-	c.Volumes.LibModules = config.Dir("volumes", name, "usr", "src")
-	c.Volumes.LibModules = config.Dir("volumes", name, "boot")
+	c.Volumes.UsrSrc = config.Dir("volumes", name, "usr", "src")
+	c.Volumes.Boot = config.Dir("volumes", name, "boot")
 
 	return
 }
