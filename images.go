@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/user"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -25,12 +25,7 @@ type ImageCmd struct {
 type ImageListCmd struct{}
 
 func (cmd *ImageListCmd) Run(g *Globals) (err error) {
-	usr, err := user.Current()
-	if err != nil {
-		return
-	}
-
-	entries, err := os.ReadDir(usr.HomeDir + "/.out-of-tree/images/")
+	entries, err := os.ReadDir(config.Dir("images"))
 	if err != nil {
 		return
 	}
@@ -48,12 +43,7 @@ type ImageEditCmd struct {
 }
 
 func (cmd *ImageEditCmd) Run(g *Globals) (err error) {
-	usr, err := user.Current()
-	if err != nil {
-		return
-	}
-
-	image := usr.HomeDir + "/.out-of-tree/images/" + cmd.Name
+	image := filepath.Join(config.Dir("images"), cmd.Name)
 	if !fs.PathExists(image) {
 		fmt.Println("image does not exist")
 	}

@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -99,22 +98,9 @@ func New(name string, timeout time.Duration) (c Container, err error) {
 	c.name = name
 	c.timeout = timeout
 
-	usr, err := user.Current()
-	if err != nil {
-		return
-	}
-
-	c.Volumes.LibModules = fmt.Sprintf(
-		"%s/.out-of-tree/volumes/%s/lib/modules", usr.HomeDir, name)
-	os.MkdirAll(c.Volumes.LibModules, 0777)
-
-	c.Volumes.UsrSrc = fmt.Sprintf(
-		"%s/.out-of-tree/volumes/%s/usr/src", usr.HomeDir, name)
-	os.MkdirAll(c.Volumes.UsrSrc, 0777)
-
-	c.Volumes.Boot = fmt.Sprintf(
-		"%s/.out-of-tree/volumes/%s/boot", usr.HomeDir, name)
-	os.MkdirAll(c.Volumes.Boot, 0777)
+	c.Volumes.LibModules = config.Dir("volumes", name, "lib", "modules")
+	c.Volumes.LibModules = config.Dir("volumes", name, "usr", "src")
+	c.Volumes.LibModules = config.Dir("volumes", name, "boot")
 
 	return
 }

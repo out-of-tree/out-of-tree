@@ -9,7 +9,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"os"
-	"os/user"
 	"path/filepath"
 	"time"
 
@@ -115,12 +114,10 @@ func buildPreload(workPath, tmp string, ki config.KernelInfo,
 	return
 }
 
-func cloneOrPull(repo string, ki config.KernelInfo) (workPath, cache string, err error) {
-	usr, err := user.Current()
-	if err != nil {
-		return
-	}
-	base := filepath.Join(usr.HomeDir, "/.out-of-tree/preload/")
+func cloneOrPull(repo string, ki config.KernelInfo) (workPath, cache string,
+	err error) {
+
+	base := config.Dir("preload")
 	workPath = filepath.Join(base, "/repos/", sha1sum(repo))
 
 	var r *git.Repository

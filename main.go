@@ -11,8 +11,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"os/user"
-	"path/filepath"
 	"runtime/debug"
 	"strconv"
 	"time"
@@ -138,11 +136,6 @@ func main() {
 		loglevel = zerolog.ErrorLevel
 	}
 
-	usr, err := user.Current()
-	if err != nil {
-		return
-	}
-
 	consoleWriter = LevelWriter{Writer: zerolog.NewConsoleWriter(
 		func(w *zerolog.ConsoleWriter) {
 			w.Out = os.Stderr
@@ -152,7 +145,7 @@ func main() {
 	}
 
 	fileWriter = LevelWriter{Writer: &lumberjack.Logger{
-		Filename: usr.HomeDir + "/.out-of-tree/logs/out-of-tree.log",
+		Filename: config.File("logs/out-of-tree.log"),
 	},
 		Level: zerolog.TraceLevel,
 	}
@@ -171,7 +164,7 @@ func main() {
 		log.Debug().Msgf("%v", buildInfo.Settings)
 	}
 
-	path := filepath.Join(usr.HomeDir, ".out-of-tree")
+	path := config.Dir()
 	yes, err := fs.CaseInsensitive(path)
 	if err != nil {
 		log.Fatal().Err(err).Msg(path)
