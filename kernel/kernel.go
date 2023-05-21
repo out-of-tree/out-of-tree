@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/naoina/toml"
+	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
@@ -505,7 +506,7 @@ func SetSigintHandler(variable *bool) {
 
 // FIXME too many parameters
 func GenerateKernels(km config.Target, registry string,
-	commands []config.DockerCommand, max, retries int64,
+	commands []config.DockerCommand, max, retries, threads int,
 	download, force, headers, shuffle, update bool,
 	shutdown *bool) (err error) {
 
@@ -530,6 +531,9 @@ func GenerateKernels(km config.Target, registry string,
 	if shuffle {
 		pkgs = shuffleStrings(pkgs)
 	}
+
+	swg := sizedwaitgroup.New(threads)
+
 	for i, pkg := range pkgs {
 		if max <= 0 {
 			log.Print("Max is reached")
@@ -542,30 +546,35 @@ func GenerateKernels(km config.Target, registry string,
 		}
 		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
 
-		var attempt int64
-		for {
-			attempt++
+		swg.Add()
+		go func() {
+			defer swg.Done()
+			var attempt int
+			for {
+				attempt++
 
-			if *shutdown {
-				err = nil
-				return
-			}
+				if *shutdown {
+					err = nil
+					return
+				}
 
-			err = installKernel(km, pkg, force, headers)
-			if err == nil {
-				max--
-				break
-			} else if attempt >= retries {
-				log.Error().Err(err).Msg("install kernel")
-				log.Debug().Msg("skip")
-				break
-			} else {
-				log.Warn().Err(err).Msg("install kernel")
-				time.Sleep(time.Second)
-				log.Info().Msg("retry")
+				err = installKernel(km, pkg, force, headers)
+				if err == nil {
+					max--
+					break
+				} else if attempt >= retries {
+					log.Error().Err(err).Msg("install kernel")
+					log.Debug().Msg("skip")
+					break
+				} else {
+					log.Warn().Err(err).Msg("install kernel")
+					time.Sleep(time.Second)
+					log.Info().Msg("retry")
+				}
 			}
-		}
+		}()
 	}
+	swg.Wait()
 
 	return
 }

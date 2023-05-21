@@ -20,7 +20,7 @@ type PackCmd struct {
 	NoDownload  bool  `help:"do not download qemu image while kernel generation"`
 	ExploitRuns int64 `default:"4" help:"amount of runs of each exploit"`
 	KernelRuns  int64 `default:"1" help:"amount of runs of each kernel"`
-	Max         int64 `help:"download random kernels from set defined by regex in release_mask, but no more than X for each of release_mask" default:"1"`
+	Max         int   `help:"download random kernels from set defined by regex in release_mask, but no more than X for each of release_mask" default:"1"`
 
 	Threads int `help:"threads" default:"4"`
 

@@ -18,13 +18,14 @@ import (
 )
 
 type KernelCmd struct {
-	NoDownload bool  `help:"do not download qemu image while kernel generation"`
-	UseHost    bool  `help:"also use host kernels"`
-	Force      bool  `help:"force reinstall kernel"`
-	NoHeaders  bool  `help:"do not install kernel headers"`
-	Shuffle    bool  `help:"randomize kernels installation order"`
-	Retries    int64 `help:"amount of tries for each kernel" default:"10"`
-	Update     bool  `help:"update container"`
+	NoDownload bool `help:"do not download qemu image while kernel generation"`
+	UseHost    bool `help:"also use host kernels"`
+	Force      bool `help:"force reinstall kernel"`
+	NoHeaders  bool `help:"do not install kernel headers"`
+	Shuffle    bool `help:"randomize kernels installation order"`
+	Retries    int  `help:"amount of tries for each kernel" default:"10"`
+	Threads    int  `help:"threads for parallel installation" default:"1"`
+	Update     bool `help:"update container"`
 
 	List        KernelListCmd        `cmd:"" help:"list kernels"`
 	ListRemote  KernelListRemoteCmd  `cmd:"" help:"list remote kernels"`
@@ -95,7 +96,7 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 }
 
 type KernelAutogenCmd struct {
-	Max int64 `help:"download kernels from set defined by regex in release_mask, but no more than X for each of release_mask" default:"100500"`
+	Max int `help:"download kernels from set defined by regex in release_mask, but no more than X for each of release_mask" default:"100500"`
 }
 
 func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
@@ -117,6 +118,7 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			g.Config.Docker.Registry,
 			g.Config.Docker.Commands,
 			cmd.Max, kernelCmd.Retries,
+			kernelCmd.Threads,
 			!kernelCmd.NoDownload,
 			kernelCmd.Force,
 			!kernelCmd.NoHeaders,
@@ -157,6 +159,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		g.Config.Docker.Registry,
 		g.Config.Docker.Commands,
 		math.MaxUint32, kernelCmd.Retries,
+		kernelCmd.Threads,
 		!kernelCmd.NoDownload,
 		kernelCmd.Force,
 		!kernelCmd.NoHeaders,
@@ -194,6 +197,7 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		g.Config.Docker.Registry,
 		g.Config.Docker.Commands,
 		math.MaxUint32, kernelCmd.Retries,
+		kernelCmd.Threads,
 		!kernelCmd.NoDownload,
 		kernelCmd.Force,
 		!kernelCmd.NoHeaders,
