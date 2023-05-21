@@ -255,7 +255,7 @@ func (q *System) Args() (qemuArgs []string) {
 	}
 
 	if q.arch == X86x64 && runtime.GOOS == "darwin" {
-		qemuArgs = append(qemuArgs, "-accel", "hvf", "-cpu", "host")
+		qemuArgs = append(qemuArgs, "-accel", "hvf", "-cpu", "max")
 	}
 
 	qemuArgs = append(qemuArgs, "-append", q.cmdline())
