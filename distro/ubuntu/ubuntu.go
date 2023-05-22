@@ -55,7 +55,7 @@ func (u Ubuntu) Packages() (pkgs []string, err error) {
 	}
 
 	cmd := "apt-cache search " +
-		"--names-only '^linux-image-[0-9\\.\\-]*-generic' " +
+		"--names-only '^linux-image-[0-9\\.\\-]*-generic$' " +
 		"| awk '{ print $1 }'"
 
 	output, err := c.Run(config.Dir("tmp"), cmd)
