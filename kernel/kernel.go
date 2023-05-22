@@ -535,18 +535,20 @@ func GenerateKernels(km config.Target, registry string,
 	swg := sizedwaitgroup.New(threads)
 
 	for i, pkg := range pkgs {
+		if *shutdown {
+			err = nil
+			return
+		}
+
+		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
+
+		swg.Add()
+
 		if max <= 0 {
 			log.Print("Max is reached")
 			break
 		}
 
-		if *shutdown {
-			err = nil
-			return
-		}
-		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
-
-		swg.Add()
 		go func() {
 			defer swg.Done()
 			var attempt int
