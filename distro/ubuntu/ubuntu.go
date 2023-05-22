@@ -89,6 +89,13 @@ func Runs(km config.Target) (commands []string) {
 	cmdf("apt-get install -y build-essential libelf-dev")
 	cmdf("apt-get install -y wget git")
 
+	if km.Distro.Release == "12.04" {
+		cmdf("apt-get install -y grub")
+		cmdf("cp /bin/true /usr/sbin/grub-probe")
+		cmdf("mkdir -p /boot/grub")
+		cmdf("touch /boot/grub/menu.lst")
+	}
+
 	if km.Distro.Release < "14.04" {
 		return
 	}
