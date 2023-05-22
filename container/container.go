@@ -25,6 +25,8 @@ import (
 
 var Runtime = "docker"
 
+var Timeout = time.Hour
+
 type Image struct {
 	Name   string
 	Distro distro.Distro
@@ -78,8 +80,6 @@ type Volume struct {
 type Container struct {
 	name string
 
-	timeout time.Duration
-
 	Volumes []Volume
 
 	// Additional arguments
@@ -88,13 +88,12 @@ type Container struct {
 	Log zerolog.Logger
 }
 
-func New(name string, timeout time.Duration) (c Container, err error) {
+func New(name string) (c Container, err error) {
 	c.Log = log.With().
 		Str("container", name).
 		Logger()
 
 	c.name = name
-	c.timeout = timeout
 
 	c.Volumes = append(c.Volumes, Volume{
 		Src:  config.Dir("volumes", name, "lib", "modules"),
@@ -114,11 +113,10 @@ func New(name string, timeout time.Duration) (c Container, err error) {
 	return
 }
 
-func NewFromKernelInfo(ki config.KernelInfo, timeout time.Duration) (
+func NewFromKernelInfo(ki config.KernelInfo) (
 	c Container, err error) {
 
 	c.name = ki.ContainerName
-	c.timeout = timeout
 
 	c.Log = log.With().
 		Str("container", c.name).
@@ -211,7 +209,7 @@ func (c Container) Run(workdir string, command string) (output string, err error
 	}
 	cmd.Stderr = cmd.Stdout
 
-	timer := time.AfterFunc(c.timeout, func() {
+	timer := time.AfterFunc(Timeout, func() {
 		flog.Info().Msg("killing container by timeout")
 
 		flog.Debug().Msg("SIGINT")

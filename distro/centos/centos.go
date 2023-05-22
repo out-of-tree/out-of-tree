@@ -3,7 +3,6 @@ package centos
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -43,7 +42,7 @@ func (centos CentOS) Equal(d distro.Distro) bool {
 }
 
 func (centos CentOS) Packages() (pkgs []string, err error) {
-	c, err := container.New(centos.container, time.Hour)
+	c, err := container.New(centos.container)
 	if err != nil {
 		return
 	}

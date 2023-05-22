@@ -163,7 +163,7 @@ func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
 		return
 	}
 
-	c, err := container.New(sk.DockerName(), time.Hour)
+	c, err := container.New(sk.DockerName())
 	if err != nil {
 		return
 	}
@@ -189,7 +189,7 @@ func installKernel(sk config.Target, pkgname string, force, headers bool) (err e
 		Str("pkg", pkgname).
 		Logger()
 
-	c, err := container.New(sk.DockerName(), time.Hour) // TODO conf
+	c, err := container.New(sk.DockerName()) // TODO conf
 	if err != nil {
 		return
 	}
@@ -407,7 +407,7 @@ func listContainersKernels(dii container.Image, newkcfg *config.KernelConfig,
 		return
 	}
 
-	c, err := container.New(dii.Name, time.Hour)
+	c, err := container.New(dii.Name)
 	if err != nil {
 		return
 	}

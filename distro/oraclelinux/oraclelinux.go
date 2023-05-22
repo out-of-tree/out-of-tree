@@ -3,7 +3,6 @@ package oraclelinux
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -43,7 +42,7 @@ func (ol OracleLinux) Equal(d distro.Distro) bool {
 }
 
 func (ol OracleLinux) Packages() (pkgs []string, err error) {
-	c, err := container.New(ol.container, time.Hour)
+	c, err := container.New(ol.container)
 	if err != nil {
 		return
 	}

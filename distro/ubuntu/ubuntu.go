@@ -3,7 +3,6 @@ package ubuntu
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
@@ -49,7 +48,7 @@ func (u Ubuntu) Equal(d distro.Distro) bool {
 }
 
 func (u Ubuntu) Packages() (pkgs []string, err error) {
-	c, err := container.New(u.container, time.Hour)
+	c, err := container.New(u.container)
 	if err != nil {
 		return
 	}
