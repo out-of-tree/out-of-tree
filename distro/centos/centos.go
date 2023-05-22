@@ -48,7 +48,7 @@ func (centos CentOS) Packages() (pkgs []string, err error) {
 		return
 	}
 
-	cmd := "yum search kernel --showduplicates " +
+	cmd := "yum search kernel --showduplicates 2>/dev/null " +
 		"| grep '^kernel-[0-9]' " +
 		"| grep -v src " +
 		"| cut -d ' ' -f 1"
