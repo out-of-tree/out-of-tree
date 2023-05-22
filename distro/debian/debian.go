@@ -341,12 +341,23 @@ func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) 
 	return
 }
 
-func Volumes(km config.Target, pkgname string) (volumes container.Volumes) {
+func Volumes(km config.Target, pkgname string) (volumes []container.Volume) {
 	pkgdir := filepath.Join("volumes", km.DockerName(), pkgname)
 
-	volumes.LibModules = config.Dir(pkgdir, "/lib/modules")
-	volumes.UsrSrc = config.Dir(pkgdir, "/usr/src")
-	volumes.Boot = config.Dir(pkgdir, "/boot")
+	volumes = append(volumes, container.Volume{
+		Src:  config.Dir(pkgdir, "/lib/modules"),
+		Dest: "/lib/modules",
+	})
+
+	volumes = append(volumes, container.Volume{
+		Src:  config.Dir(pkgdir, "/usr/src"),
+		Dest: "/usr/src",
+	})
+
+	volumes = append(volumes, container.Volume{
+		Src:  config.Dir(pkgdir, "/boot"),
+		Dest: "/boot",
+	})
 
 	return
 }

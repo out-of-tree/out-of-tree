@@ -71,10 +71,8 @@ func ImagePath(sk config.Target) string {
 	return config.Dir("containers", sk.Distro.ID.String(), sk.Distro.Release)
 }
 
-type Volumes struct {
-	LibModules string
-	UsrSrc     string
-	Boot       string
+type Volume struct {
+	Src, Dest string
 }
 
 type Container struct {
@@ -82,7 +80,7 @@ type Container struct {
 
 	timeout time.Duration
 
-	Volumes Volumes
+	Volumes []Volume
 
 	// Additional arguments
 	Args []string
@@ -98,9 +96,20 @@ func New(name string, timeout time.Duration) (c Container, err error) {
 	c.name = name
 	c.timeout = timeout
 
-	c.Volumes.LibModules = config.Dir("volumes", name, "lib", "modules")
-	c.Volumes.UsrSrc = config.Dir("volumes", name, "usr", "src")
-	c.Volumes.Boot = config.Dir("volumes", name, "boot")
+	c.Volumes = append(c.Volumes, Volume{
+		Src:  config.Dir("volumes", name, "lib", "modules"),
+		Dest: "/lib/modules",
+	})
+
+	c.Volumes = append(c.Volumes, Volume{
+		Src:  config.Dir("volumes", name, "usr", "src"),
+		Dest: "/usr/src",
+	})
+
+	c.Volumes = append(c.Volumes, Volume{
+		Src:  config.Dir("volumes", name, "boot"),
+		Dest: "/boot",
+	})
 
 	return
 }
@@ -115,9 +124,20 @@ func NewFromKernelInfo(ki config.KernelInfo, timeout time.Duration) (
 		Str("container", c.name).
 		Logger()
 
-	c.Volumes.LibModules = path.Dir(ki.ModulesPath)
-	c.Volumes.Boot = path.Dir(ki.KernelPath)
-	c.Volumes.UsrSrc = filepath.Join(path.Dir(ki.KernelPath), "../usr/src")
+	c.Volumes = append(c.Volumes, Volume{
+		Src:  path.Dir(ki.ModulesPath),
+		Dest: "/lib/modules",
+	})
+
+	c.Volumes = append(c.Volumes, Volume{
+		Src:  filepath.Join(path.Dir(ki.KernelPath), "../usr/src"),
+		Dest: "/usr/src",
+	})
+
+	c.Volumes = append(c.Volumes, Volume{
+		Src:  path.Dir(ki.KernelPath),
+		Dest: "/boot",
+	})
 
 	return
 }
@@ -168,15 +188,12 @@ func (c Container) Run(workdir string, command string) (output string, err error
 	if workdir != "" {
 		args = append(args, "-v", workdir+":/work")
 	}
-	if c.Volumes.LibModules != "" {
-		args = append(args, "-v", c.Volumes.LibModules+":/lib/modules")
+
+	for _, volume := range c.Volumes {
+		mount := fmt.Sprintf("%s:%s", volume.Src, volume.Dest)
+		args = append(args, "-v", mount)
 	}
-	if c.Volumes.UsrSrc != "" {
-		args = append(args, "-v", c.Volumes.UsrSrc+":/usr/src")
-	}
-	if c.Volumes.Boot != "" {
-		args = append(args, "-v", c.Volumes.Boot+":/boot")
-	}
+
 	args = append(args, c.name, "bash", "-c")
 	if workdir != "" {
 		args = append(args, "cd /work && "+command)

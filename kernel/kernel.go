@@ -194,7 +194,12 @@ func installKernel(sk config.Target, pkgname string, force, headers bool) (err e
 		return
 	}
 
-	searchdir := c.Volumes.LibModules
+	searchdir := ""
+	for _, volume := range c.Volumes {
+		if volume.Dest == "/lib/modules" {
+			searchdir = volume.Src
+		}
+	}
 
 	if sk.Distro.ID == distro.Debian {
 		// TODO We need some kind of API for that
@@ -222,12 +227,6 @@ func installKernel(sk config.Target, pkgname string, force, headers bool) (err e
 		// same name (ABI), so we need to separate /boot
 		c.Volumes = debian.Volumes(sk, pkgname)
 	}
-
-	volumes := c.Volumes
-
-	c.Volumes.LibModules = ""
-	c.Volumes.UsrSrc = ""
-	c.Volumes.Boot = ""
 
 	slog.Debug().Msgf("Installing kernel")
 
@@ -275,9 +274,9 @@ func installKernel(sk config.Target, pkgname string, force, headers bool) (err e
 		cmd += fmt.Sprintf(" && %s", command)
 	}
 
-	c.Args = append(c.Args, "-v", volumes.LibModules+":/target/lib/modules")
-	c.Args = append(c.Args, "-v", volumes.UsrSrc+":/target/usr/src")
-	c.Args = append(c.Args, "-v", volumes.Boot+":/target/boot")
+	for i := range c.Volumes {
+		c.Volumes[i].Dest = "/target" + c.Volumes[i].Dest
+	}
 
 	cmd += " && cp -r /boot /target/"
 	cmd += " && cp -r /lib/modules /target/lib/"
@@ -413,12 +412,22 @@ func listContainersKernels(dii container.Image, newkcfg *config.KernelConfig,
 		return
 	}
 
-	moddirs, err := ioutil.ReadDir(c.Volumes.LibModules)
+	var libmodules, boot string
+	for _, volume := range c.Volumes {
+		switch volume.Dest {
+		case "/lib/modules":
+			libmodules = volume.Dest
+		case "/boot":
+			boot = volume.Dest
+		}
+	}
+
+	moddirs, err := ioutil.ReadDir(libmodules)
 	if err != nil {
 		return
 	}
 
-	bootfiles, err := ioutil.ReadDir(c.Volumes.Boot)
+	bootfiles, err := ioutil.ReadDir(boot)
 	if err != nil {
 		return
 	}
@@ -445,9 +454,9 @@ func listContainersKernels(dii container.Image, newkcfg *config.KernelConfig,
 			KernelRelease: krel.Name(),
 			ContainerName: dii.Name,
 
-			KernelPath:  c.Volumes.Boot + "/" + kernelFile,
-			InitrdPath:  c.Volumes.Boot + "/" + initrdFile,
-			ModulesPath: c.Volumes.LibModules + "/" + krel.Name(),
+			KernelPath:  filepath.Join(boot, kernelFile),
+			InitrdPath:  filepath.Join(boot, initrdFile),
+			ModulesPath: filepath.Join(libmodules, krel.Name()),
 
 			RootFS: rootfs,
 		}
