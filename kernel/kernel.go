@@ -546,6 +546,7 @@ func GenerateKernels(km config.Target, registry string,
 
 		if max <= 0 {
 			log.Print("Max is reached")
+			swg.Done()
 			break
 		}
 
