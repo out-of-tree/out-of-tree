@@ -416,9 +416,9 @@ func listContainersKernels(dii container.Image, newkcfg *config.KernelConfig,
 	for _, volume := range c.Volumes {
 		switch volume.Dest {
 		case "/lib/modules":
-			libmodules = volume.Dest
+			libmodules = volume.Src
 		case "/boot":
-			boot = volume.Dest
+			boot = volume.Src
 		}
 	}
 
