@@ -434,8 +434,6 @@ func GenerateKernels(km config.Target, registry string,
 			return
 		}
 
-		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
-
 		swg.Add()
 
 		if max <= 0 {
@@ -444,7 +442,9 @@ func GenerateKernels(km config.Target, registry string,
 			break
 		}
 
-		go func() {
+		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
+
+		go func(p string) {
 			defer swg.Done()
 			var attempt int
 			for {
@@ -455,7 +455,7 @@ func GenerateKernels(km config.Target, registry string,
 					return
 				}
 
-				err = installKernel(km, pkg, force, headers)
+				err = installKernel(km, p, force, headers)
 				if err == nil {
 					max--
 					break
@@ -469,7 +469,7 @@ func GenerateKernels(km config.Target, registry string,
 					log.Info().Msg("retry")
 				}
 			}
-		}()
+		}(pkg)
 	}
 	swg.Wait()
 
