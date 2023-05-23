@@ -67,7 +67,7 @@ func (d Debian) Packages() (packages []string, err error) {
 	}
 
 	for _, dk := range kernels {
-		p := strings.Replace(dk.Image.Deb.Name, ".deb", "", -1)
+		p := dk.Image.Deb.Name[:len(dk.Image.Deb.Name)-4] // w/o .deb
 
 		var kr Release
 		kr, err = kernelRelease(p)
