@@ -168,13 +168,7 @@ type Artifact struct {
 func (ka Artifact) checkSupport(ki distro.KernelInfo, km Target) (
 	supported bool, err error) {
 
-	if ki.Distro.ID != km.Distro.ID {
-		supported = false
-		return
-	}
-
-	// DistroRelease is optional
-	if km.Distro.Release != "" && ki.Distro.Release != km.Distro.Release {
+	if !ki.Distro.Equal(km.Distro) {
 		supported = false
 		return
 	}

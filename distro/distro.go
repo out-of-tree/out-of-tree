@@ -75,3 +75,12 @@ func (d Distro) Kernels() (kernels []KernelInfo, err error) {
 	}
 	return
 }
+
+func (d Distro) Equal(to Distro) bool {
+	for _, dd := range distros {
+		if dd.Equal(d) {
+			return dd.Equal(to)
+		}
+	}
+	return false
+}
