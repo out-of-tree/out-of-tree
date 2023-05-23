@@ -13,7 +13,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 )
 
-func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
+func GenHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 	err = errors.New("generate host kernels for macOS is not supported")
 	return
 }
