@@ -43,20 +43,16 @@ type Debian struct {
 	container string
 }
 
-func (d Debian) ID() distro.ID {
-	return distro.Debian
-}
-
-func (d Debian) Release() string {
-	return d.release.String()
-}
-
 func (d Debian) Equal(dd distro.Distro) bool {
 	if dd.ID != distro.Debian {
 		return false
 	}
 
 	return ReleaseFromString(dd.Release) == d.release
+}
+
+func (d Debian) Distro() distro.Distro {
+	return distro.Distro{distro.Debian, d.release.String()}
 }
 
 func (d Debian) Packages() (packages []string, err error) {

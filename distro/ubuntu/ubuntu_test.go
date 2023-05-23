@@ -13,9 +13,6 @@ func TestUbuntu(t *testing.T) {
 
 	u := Ubuntu{release: "22.04", container: "out_of_tree_ubuntu_22__04"}
 
-	assert.Equal(u.ID(), distro.Ubuntu)
-	assert.Equal(u.Release(), "22.04")
-
 	assert.True(u.Equal(distro.Distro{Release: "22.04", ID: distro.Ubuntu}))
 
 	assert.NotEmpty(u.Packages())

@@ -29,16 +29,12 @@ type CentOS struct {
 	container string
 }
 
-func (centos CentOS) ID() distro.ID {
-	return distro.CentOS
-}
-
-func (centos CentOS) Release() string {
-	return centos.release
-}
-
 func (centos CentOS) Equal(d distro.Distro) bool {
 	return centos.release == d.Release && distro.CentOS == d.ID
+}
+
+func (centos CentOS) Distro() distro.Distro {
+	return distro.Distro{ID: distro.CentOS, Release: centos.release}
 }
 
 func (centos CentOS) Packages() (pkgs []string, err error) {

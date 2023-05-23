@@ -8,8 +8,7 @@ var mu sync.Mutex
 var distros []distribution
 
 type distribution interface {
-	ID() ID
-	Release() string
+	Distro() Distro
 	Equal(Distro) bool
 	Packages() (packages []string, err error)
 }
@@ -22,16 +21,9 @@ func Register(d distribution) {
 }
 
 func List() (dds []Distro) {
-	mu.Lock()
-	defer mu.Unlock()
-
 	for _, dd := range distros {
-		dds = append(dds, Distro{
-			ID:      dd.ID(),
-			Release: dd.Release(),
-		})
+		dds = append(dds, dd.Distro())
 	}
-
 	return
 }
 
@@ -42,7 +34,7 @@ type Distro struct {
 
 func (d Distro) Packages() (packages []string, err error) {
 	for _, dd := range distros {
-		if d.ID != None && d.ID != dd.ID() {
+		if d.ID != None && d.ID != dd.Distro().ID {
 			continue
 		}
 

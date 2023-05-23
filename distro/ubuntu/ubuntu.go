@@ -35,16 +35,12 @@ type Ubuntu struct {
 	container string
 }
 
-func (u Ubuntu) ID() distro.ID {
-	return distro.Ubuntu
-}
-
-func (u Ubuntu) Release() string {
-	return u.release
-}
-
 func (u Ubuntu) Equal(d distro.Distro) bool {
 	return u.release == d.Release && distro.Ubuntu == d.ID
+}
+
+func (u Ubuntu) Distro() distro.Distro {
+	return distro.Distro{ID: distro.Ubuntu, Release: u.release}
 }
 
 func (u Ubuntu) Packages() (pkgs []string, err error) {
