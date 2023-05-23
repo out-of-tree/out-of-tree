@@ -276,9 +276,18 @@ func (d Debian) runs() (commands []string) {
 	return
 }
 
-func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) {
-	cpath := config.Dir("volumes", d.Name)
-	rootfs := config.File("images", d.Name+".img")
+func (d Debian) Kernels() (kernels []distro.KernelInfo, err error) {
+	c, err := container.New(d.Distro())
+	if err != nil {
+		return
+	}
+
+	if !c.Exist() {
+		return
+	}
+
+	cpath := config.Dir("volumes", c.Name())
+	rootfs := config.File("images", c.Name()+".img")
 
 	files, err := os.ReadDir(cpath)
 	if err != nil {
@@ -321,10 +330,10 @@ func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) 
 		release := strings.Replace(pkgname, "linux-image-", "", -1)
 
 		ki := distro.KernelInfo{
-			Distro:        d.Distro,
+			Distro:        d.Distro(),
 			KernelVersion: path.Base(modules),
 			KernelRelease: release,
-			ContainerName: d.Name,
+			ContainerName: c.Name(),
 
 			KernelPath:  vmlinuz,
 			InitrdPath:  initrd,
@@ -333,7 +342,7 @@ func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) 
 			RootFS: rootfs,
 		}
 
-		kcfg.Kernels = append(kcfg.Kernels, ki)
+		kernels = append(kernels, ki)
 	}
 
 	return

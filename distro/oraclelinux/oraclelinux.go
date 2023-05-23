@@ -59,6 +59,15 @@ func (ol OracleLinux) Packages() (pkgs []string, err error) {
 	return
 }
 
+func (ol OracleLinux) Kernels() (kernels []distro.KernelInfo, err error) {
+	c, err := container.New(ol.Distro())
+	if err != nil {
+		return
+	}
+
+	return c.Kernels()
+}
+
 func (ol OracleLinux) envs() (envs []string) {
 	return
 }

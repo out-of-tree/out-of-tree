@@ -11,6 +11,7 @@ type distribution interface {
 	Distro() Distro
 	Equal(Distro) bool
 	Packages() (packages []string, err error)
+	Kernels() (kernels []KernelInfo, err error)
 }
 
 func Register(d distribution) {
@@ -49,6 +50,15 @@ func (d Distro) Packages() (packages []string, err error) {
 		}
 
 		packages = append(packages, pkgs...)
+	}
+	return
+}
+
+func (d Distro) Kernels() (kernels []KernelInfo, err error) {
+	for _, dd := range distros {
+		if dd.Equal(d) {
+			return dd.Kernels()
+		}
 	}
 	return
 }

@@ -63,6 +63,15 @@ func (u Ubuntu) Packages() (pkgs []string, err error) {
 	return
 }
 
+func (u Ubuntu) Kernels() (kernels []distro.KernelInfo, err error) {
+	c, err := container.New(u.Distro())
+	if err != nil {
+		return
+	}
+
+	return c.Kernels()
+}
+
 func (u Ubuntu) envs() (envs []string) {
 	envs = append(envs, "DEBIAN_FRONTEND=noninteractive")
 	return

@@ -21,7 +21,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
-func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
+func GenHostKernels(download bool) (kernels []distro.KernelInfo, err error) {
 	si := sysinfo.SysInfo{}
 	si.GetSysInfo()
 
@@ -97,7 +97,7 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 			ki.VmlinuxPath = vmlinux
 		}
 
-		kcfg.Kernels = append(kcfg.Kernels, ki)
+		kernels = append(kernels, ki)
 	}
 
 	return

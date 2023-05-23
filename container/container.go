@@ -147,6 +147,10 @@ func NewFromKernelInfo(ki distro.KernelInfo) (
 	return
 }
 
+func (c Container) Name() string {
+	return c.name
+}
+
 func (c Container) Exist() (yes bool) {
 	cmd := exec.Command(Runtime, "images", "-q", c.name)
 
@@ -329,6 +333,10 @@ func (c Container) Run(workdir string, cmds []string) (out string, err error) {
 }
 
 func (c Container) Kernels() (kernels []distro.KernelInfo, err error) {
+	if !c.Exist() {
+		return
+	}
+
 	var libmodules, boot string
 	for _, volume := range c.Volumes {
 		switch volume.Dest {

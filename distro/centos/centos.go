@@ -58,6 +58,15 @@ func (centos CentOS) Packages() (pkgs []string, err error) {
 	return
 }
 
+func (centos CentOS) Kernels() (kernels []distro.KernelInfo, err error) {
+	c, err := container.New(centos.Distro())
+	if err != nil {
+		return
+	}
+
+	return c.Kernels()
+}
+
 func (centos CentOS) envs() (envs []string) {
 	return
 }

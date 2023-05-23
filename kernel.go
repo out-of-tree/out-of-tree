@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"time"
 
+	"github.com/naoina/toml"
 	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog/log"
 
@@ -35,6 +37,41 @@ type KernelCmd struct {
 	Genall      KernelGenallCmd      `cmd:"" help:"generate all kernels for distro"`
 	Install     KernelInstallCmd     `cmd:"" help:"install specific kernel"`
 	ConfigRegen KernelConfigRegenCmd `cmd:"" help:"regenerate config"`
+}
+
+func (cmd KernelCmd) UpdateConfig() (err error) {
+	kcfg := config.KernelConfig{}
+
+	if cmd.UseHost {
+		// Get host kernels
+		kcfg.Kernels, err = kernel.GenHostKernels(!cmd.NoDownload)
+		if err != nil {
+			return
+		}
+	}
+
+	for _, dist := range distro.List() {
+		var kernels []distro.KernelInfo
+		kernels, err = dist.Kernels()
+		if err != nil {
+			return
+		}
+
+		kcfg.Kernels = append(kcfg.Kernels, kernels...)
+	}
+
+	buf, err := toml.Marshal(&kcfg)
+	if err != nil {
+		return
+	}
+
+	err = os.WriteFile(config.File("kernels.toml"), buf, os.ModePerm)
+	if err != nil {
+		return
+	}
+
+	log.Info().Msgf("kernels.toml successfully updated")
+	return
 }
 
 func (cmd KernelCmd) Generate(g *Globals, km config.Target, max int,
@@ -194,7 +231,7 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		}
 	}
 
-	return kernel.UpdateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
+	return kernelCmd.UpdateConfig()
 }
 
 type KernelGenallCmd struct {
@@ -220,7 +257,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		return
 	}
 
-	return kernel.UpdateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
+	return kernelCmd.UpdateConfig()
 }
 
 type KernelInstallCmd struct {
@@ -247,11 +284,11 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		return
 	}
 
-	return kernel.UpdateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
+	return kernelCmd.UpdateConfig()
 }
 
 type KernelConfigRegenCmd struct{}
 
 func (cmd *KernelConfigRegenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
-	return kernel.UpdateKernelsCfg(kernelCmd.UseHost, !kernelCmd.NoDownload)
+	return kernelCmd.UpdateConfig()
 }
