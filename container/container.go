@@ -250,10 +250,10 @@ func (c Container) build(imagePath string) (output string, err error) {
 	return
 }
 
-func (c Container) Run(workdir string, command string) (output string, err error) {
+func (c Container) Run(workdir string, cmds []string) (out string, err error) {
 	flog := c.Log.With().
 		Str("workdir", workdir).
-		Str("command", command).
+		Str("command", fmt.Sprintf("%v", cmds)).
 		Logger()
 
 	var args []string
@@ -266,6 +266,11 @@ func (c Container) Run(workdir string, command string) (output string, err error
 	for _, volume := range c.Volumes {
 		mount := fmt.Sprintf("%s:%s", volume.Src, volume.Dest)
 		args = append(args, "-v", mount)
+	}
+
+	command := "true"
+	for _, c := range cmds {
+		command += fmt.Sprintf(" && %s", c)
 	}
 
 	args = append(args, c.name, "bash", "-c")
@@ -307,7 +312,7 @@ func (c Container) Run(workdir string, command string) (output string, err error
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
 			m := scanner.Text()
-			output += m + "\n"
+			out += m + "\n"
 			flog.Trace().Str("stdout", m).Msg("")
 		}
 	}()
@@ -315,7 +320,7 @@ func (c Container) Run(workdir string, command string) (output string, err error
 	err = cmd.Wait()
 	if err != nil {
 		e := fmt.Sprintf("error `%v` for cmd `%v` with output `%v`",
-			err, command, output)
+			err, cmds, out)
 		err = errors.New(e)
 		return
 	}
@@ -379,7 +384,7 @@ func (c Container) Kernels() (kernels []config.KernelInfo, err error) {
 	for _, cmd := range []string{
 		"find /boot -type f -exec chmod a+r {} \\;",
 	} {
-		_, err = c.Run(config.Dir("tmp"), cmd)
+		_, err = c.Run(config.Dir("tmp"), []string{cmd})
 		if err != nil {
 			return
 		}

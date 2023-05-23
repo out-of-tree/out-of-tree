@@ -296,7 +296,9 @@ func build(flog zerolog.Logger, tmp string, ka config.Artifact,
 			log.Fatal().Err(err).Msg("container creation failure")
 		}
 
-		output, err = c.Run(outdir, buildCommand+" && chmod -R 777 /work")
+		output, err = c.Run(outdir, []string{
+			buildCommand + " && chmod -R 777 /work",
+		})
 	} else {
 		cmd := exec.Command("bash", "-c", "cd "+outdir+" && "+
 			buildCommand)

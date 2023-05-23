@@ -51,7 +51,7 @@ func (u Ubuntu) Packages() (pkgs []string, err error) {
 		"--names-only '^linux-image-[0-9\\.\\-]*-generic$' " +
 		"| awk '{ print $1 }'"
 
-	output, err := c.Run(config.Dir("tmp"), cmd)
+	output, err := c.Run(config.Dir("tmp"), []string{cmd})
 	if err != nil {
 		return
 	}

@@ -172,7 +172,7 @@ func installKernel(sk config.Target, pkgname string, force, headers bool) (err e
 		cmd += " && cp -r /usr/src /target/usr/"
 	}
 
-	_, err = c.Run("", cmd)
+	_, err = c.Run("", []string{cmd})
 	if err != nil {
 		return
 	}
