@@ -10,10 +10,10 @@ package kernel
 import (
 	"errors"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 )
 
-func GenHostKernels(download bool) (kcfg config.KernelConfig, err error) {
+func GenHostKernels(download bool) (kernels []distro.KernelInfo, err error) {
 	err = errors.New("generate host kernels for macOS is not supported")
 	return
 }
