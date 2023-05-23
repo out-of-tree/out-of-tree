@@ -96,7 +96,7 @@ func (ol OracleLinux) runs() (commands []string) {
 	return
 }
 
-func Install(km config.Target, pkgname string, headers bool) (commands []string, err error) {
+func (ol OracleLinux) Install(pkgname string, headers bool) (err error) {
 	var headerspkg string
 	if headers {
 		if strings.Contains(pkgname, "uek") {
@@ -108,6 +108,7 @@ func Install(km config.Target, pkgname string, headers bool) (commands []string,
 		}
 	}
 
+	var commands []string
 	cmdf := func(f string, s ...interface{}) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}
@@ -121,7 +122,7 @@ func Install(km config.Target, pkgname string, headers bool) (commands []string,
 		version = strings.Replace(pkgname, "kernel-", "", -1)
 	}
 
-	if km.Distro.Release <= "7" {
+	if ol.release <= "7" {
 		cmdf("dracut -v --add-drivers 'e1000 ext4' -f "+
 			"/boot/initramfs-%s.img %s", version, version)
 	} else {
@@ -130,9 +131,23 @@ func Install(km config.Target, pkgname string, headers bool) (commands []string,
 			"/boot/initramfs-%s.img %s", version, version)
 	}
 
-	return
-}
+	cmdf("cp -r /boot /target/")
+	cmdf("cp -r /lib/modules /target/lib/")
+	cmdf("cp -r /usr/src /target/usr/")
 
-func Cleanup(km config.Target, pkgname string) {
+	c, err := container.New(ol.Distro())
+	if err != nil {
+		return
+	}
+
+	for i := range c.Volumes {
+		c.Volumes[i].Dest = "/target" + c.Volumes[i].Dest
+	}
+
+	_, err = c.Run("", commands)
+	if err != nil {
+		return
+	}
+
 	return
 }

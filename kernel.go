@@ -129,7 +129,8 @@ func (cmd KernelCmd) Generate(g *Globals, km config.Target, max int,
 					return
 				}
 
-				err = kernel.InstallKernel(km, p, cmd.Force, !cmd.NoHeaders)
+				// TODO cmd.Force
+				err = km.Distro.Install(p, !cmd.NoHeaders)
 				if err == nil {
 					max--
 					break

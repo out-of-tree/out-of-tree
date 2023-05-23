@@ -348,8 +348,13 @@ func (d Debian) Kernels() (kernels []distro.KernelInfo, err error) {
 	return
 }
 
-func Volumes(km config.Target, pkgname string) (volumes []container.Volume) {
-	pkgdir := filepath.Join("volumes", km.DockerName(), pkgname)
+func (d Debian) volumes(pkgname string) (volumes []container.Volume) {
+	c, err := container.New(d.Distro())
+	if err != nil {
+		return
+	}
+
+	pkgdir := filepath.Join("volumes", c.Name(), pkgname)
 
 	volumes = append(volumes, container.Volume{
 		Src:  config.Dir(pkgdir, "/lib/modules"),
@@ -369,7 +374,13 @@ func Volumes(km config.Target, pkgname string) (volumes []container.Volume) {
 	return
 }
 
-func Install(km config.Target, pkgname string, headers bool) (cmds []string, err error) {
+func (d Debian) Install(pkgname string, headers bool) (err error) {
+	defer func() {
+		if err != nil {
+			d.cleanup(pkgname)
+		}
+	}()
+
 	dk, err := getCachedKernel(pkgname + ".deb")
 	if err != nil {
 		return
@@ -382,9 +393,11 @@ func Install(km config.Target, pkgname string, headers bool) (cmds []string, err
 		pkgs = []snapshot.Package{dk.Image}
 	}
 
+	var cmds []string
+
 	for _, pkg := range pkgs {
 		found, newurl := cache.PackageURL(
-			km.Distro.ID,
+			distro.Debian,
 			pkg.Deb.URL,
 		)
 		if found {
@@ -402,15 +415,39 @@ func Install(km config.Target, pkgname string, headers bool) (cmds []string, err
 
 	cmds = append(cmds, "dpkg -i ./*.deb")
 
+	c, err := container.New(d.Distro())
+	if err != nil {
+		return
+	}
+
+	c.Volumes = d.volumes(pkgname)
+	for i := range c.Volumes {
+		c.Volumes[i].Dest = "/target" + c.Volumes[i].Dest
+	}
+
+	cmds = append(cmds, "cp -r /boot /target/")
+	cmds = append(cmds, "cp -r /lib/modules /target/lib/")
+	cmds = append(cmds, "cp -r /usr/src /target/usr/")
+
+	_, err = c.Run("", cmds)
+	if err != nil {
+		return
+	}
+
 	return
 }
 
-func Cleanup(km config.Target, pkgname string) {
-	pkgdir := config.Dir(filepath.Join("volumes", km.DockerName(), pkgname))
+func (d Debian) cleanup(pkgname string) {
+	c, err := container.New(d.Distro())
+	if err != nil {
+		return
+	}
+
+	pkgdir := config.Dir(filepath.Join("volumes", c.Name(), pkgname))
 
 	log.Debug().Msgf("cleanup %s", pkgdir)
 
-	err := os.RemoveAll(pkgdir)
+	err = os.RemoveAll(pkgdir)
 	if err != nil {
 		log.Warn().Err(err).Msg("cleanup")
 	}

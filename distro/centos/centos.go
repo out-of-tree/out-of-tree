@@ -158,3 +158,48 @@ func (centos CentOS) runs() (commands []string) {
 
 	return
 }
+
+func (centos CentOS) Install(pkgname string, headers bool) (err error) {
+	var headerspkg string
+	if headers {
+		headerspkg = strings.Replace(pkgname, "kernel", "kernel-devel", -1)
+	}
+
+	var commands []string
+	cmdf := func(f string, s ...interface{}) {
+		commands = append(commands, fmt.Sprintf(f, s...))
+	}
+
+	cmdf("yum -y install %s %s", pkgname, headerspkg)
+
+	version := strings.Replace(pkgname, "kernel-", "", -1)
+
+	if centos.release <= "7" {
+		cmdf("dracut -v --add-drivers 'e1000 ext4' -f "+
+			"/boot/initramfs-%s.img %s", version, version)
+	} else {
+		cmdf("dracut -v --add-drivers 'ata_piix libata' "+
+			"--force-drivers 'e1000 ext4 sd_mod' -f "+
+			"/boot/initramfs-%s.img %s", version, version)
+	}
+
+	cmdf("cp -r /boot /target/")
+	cmdf("cp -r /lib/modules /target/lib/")
+	cmdf("cp -r /usr/src /target/usr/")
+
+	c, err := container.New(centos.Distro())
+	if err != nil {
+		return
+	}
+
+	for i := range c.Volumes {
+		c.Volumes[i].Dest = "/target" + c.Volumes[i].Dest
+	}
+
+	_, err = c.Run("", commands)
+	if err != nil {
+		return
+	}
+
+	return
+}

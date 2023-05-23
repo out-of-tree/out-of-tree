@@ -122,22 +122,35 @@ func (u Ubuntu) runs() (commands []string) {
 	return
 }
 
-func Install(km config.Target, pkgname string, headers bool) (commands []string, err error) {
-
+func (u Ubuntu) Install(pkgname string, headers bool) (err error) {
 	var headerspkg string
 	if headers {
 		headerspkg = strings.Replace(pkgname, "image", "headers", -1)
 	}
 
+	var commands []string
 	cmdf := func(f string, s ...interface{}) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}
 
 	cmdf("apt-get install -y %s %s", pkgname, headerspkg)
+	cmdf("cp -r /boot /target/")
+	cmdf("cp -r /lib/modules /target/lib/")
+	cmdf("cp -r /usr/src /target/usr/")
 
-	return
-}
+	c, err := container.New(u.Distro())
+	if err != nil {
+		return
+	}
 
-func Cleanup(km config.Target, pkgname string) {
+	for i := range c.Volumes {
+		c.Volumes[i].Dest = "/target" + c.Volumes[i].Dest
+	}
+
+	_, err = c.Run("", commands)
+	if err != nil {
+		return
+	}
+
 	return
 }

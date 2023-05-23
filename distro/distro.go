@@ -1,6 +1,7 @@
 package distro
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -11,6 +12,7 @@ type distribution interface {
 	Distro() Distro
 	Equal(Distro) bool
 	Packages() (packages []string, err error)
+	Install(pkg string, headers bool) (err error)
 	Kernels() (kernels []KernelInfo, err error)
 }
 
@@ -52,6 +54,17 @@ func (d Distro) Packages() (packages []string, err error) {
 		packages = append(packages, pkgs...)
 	}
 	return
+}
+
+func (d Distro) Install(pkg string, headers bool) (err error) {
+	for _, dd := range distros {
+		if !dd.Equal(d) {
+			continue
+		}
+
+		return dd.Install(pkg, headers)
+	}
+	return errors.New("not found")
 }
 
 func (d Distro) Kernels() (kernels []KernelInfo, err error) {

@@ -5,7 +5,6 @@
 package kernel
 
 import (
-	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -20,10 +19,6 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
-	"code.dumpstack.io/tools/out-of-tree/distro"
-	"code.dumpstack.io/tools/out-of-tree/distro/debian"
-	"code.dumpstack.io/tools/out-of-tree/distro/oraclelinux"
-	"code.dumpstack.io/tools/out-of-tree/distro/ubuntu"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -62,119 +57,6 @@ func vsyscallAvailable() (available bool, err error) {
 	}
 
 	available = strings.Contains(string(buf), "[vsyscall]")
-	return
-}
-
-func InstallKernel(sk config.Target, pkgname string, force, headers bool) (err error) {
-	slog := log.With().
-		Str("distro_type", sk.Distro.ID.String()).
-		Str("distro_release", sk.Distro.Release).
-		Str("pkg", pkgname).
-		Logger()
-
-	c, err := container.New(sk.Distro) // TODO conf
-	if err != nil {
-		return
-	}
-
-	searchdir := ""
-	for _, volume := range c.Volumes {
-		if volume.Dest == "/lib/modules" {
-			searchdir = volume.Src
-		}
-	}
-
-	if sk.Distro.ID == distro.Debian {
-		// TODO We need some kind of API for that
-		searchdir = config.Dir("volumes", sk.DockerName())
-	}
-
-	moddirs, err := ioutil.ReadDir(searchdir)
-	if err != nil {
-		return
-	}
-
-	for _, krel := range moddirs {
-		if strings.Contains(pkgname, krel.Name()) {
-			if force {
-				slog.Info().Msg("Reinstall")
-			} else {
-				slog.Info().Msg("Already installed")
-				return
-			}
-		}
-	}
-
-	if sk.Distro.ID == distro.Debian {
-		// Debian has different kernels (package version) by the
-		// same name (ABI), so we need to separate /boot
-		c.Volumes = debian.Volumes(sk, pkgname)
-	}
-
-	slog.Debug().Msgf("Installing kernel")
-
-	var commands []string
-
-	// TODO install/cleanup kernel interface
-	switch sk.Distro.ID {
-	case distro.Ubuntu:
-		commands, err = ubuntu.Install(sk, pkgname, headers)
-		if err != nil {
-			return
-		}
-		defer func() {
-			if err != nil {
-				ubuntu.Cleanup(sk, pkgname)
-			}
-		}()
-	case distro.OracleLinux, distro.CentOS:
-		commands, err = oraclelinux.Install(sk, pkgname, headers)
-		if err != nil {
-			return
-		}
-		defer func() {
-			if err != nil {
-				oraclelinux.Cleanup(sk, pkgname)
-			}
-		}()
-	case distro.Debian:
-		commands, err = debian.Install(sk, pkgname, headers)
-		if err != nil {
-			return
-		}
-		defer func() {
-			if err != nil {
-				debian.Cleanup(sk, pkgname)
-			}
-		}()
-	default:
-		err = fmt.Errorf("%s not yet supported", sk.Distro.ID.String())
-		return
-	}
-
-	cmd := "true"
-	for _, command := range commands {
-		cmd += fmt.Sprintf(" && %s", command)
-	}
-
-	for i := range c.Volumes {
-		c.Volumes[i].Dest = "/target" + c.Volumes[i].Dest
-	}
-
-	cmd += " && cp -r /boot /target/"
-	cmd += " && cp -r /lib/modules /target/lib/"
-	if sk.Distro.ID == distro.Debian {
-		cmd += " && cp -rL /usr/src /target/usr/"
-	} else {
-		cmd += " && cp -r /usr/src /target/usr/"
-	}
-
-	_, err = c.Run("", []string{cmd})
-	if err != nil {
-		return
-	}
-
-	slog.Debug().Msgf("Success")
 	return
 }
 
