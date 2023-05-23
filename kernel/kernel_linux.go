@@ -76,7 +76,7 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 			continue
 		}
 
-		ki := config.KernelInfo{
+		ki := distro.KernelInfo{
 			Distro: distro.Distro{
 				ID:      distroType,
 				Release: si.OS.Version,

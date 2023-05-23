@@ -251,7 +251,7 @@ func applyPatches(src string, ka config.Artifact) (err error) {
 }
 
 func build(flog zerolog.Logger, tmp string, ka config.Artifact,
-	ki config.KernelInfo, dockerTimeout time.Duration) (
+	ki distro.KernelInfo, dockerTimeout time.Duration) (
 	outdir, outpath, output string, err error) {
 
 	target := fmt.Sprintf("%d", rand.Int())
@@ -404,7 +404,7 @@ func copyFile(sourcePath, destinationPath string) (err error) {
 	return destinationFile.Close()
 }
 
-func dumpResult(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
+func dumpResult(q *qemu.System, ka config.Artifact, ki distro.KernelInfo,
 	res *phasesResult, dist, tag, binary string, db *sql.DB) {
 
 	colored := ""
@@ -544,7 +544,7 @@ func copyTest(q *qemu.System, testPath string, ka config.Artifact) (
 	return
 }
 
-func copyStandardModules(q *qemu.System, ki config.KernelInfo) (err error) {
+func copyStandardModules(q *qemu.System, ki distro.KernelInfo) (err error) {
 	_, err = q.Command("root", "mkdir -p /lib/modules/"+ki.KernelRelease)
 	if err != nil {
 		return
@@ -576,7 +576,7 @@ func copyStandardModules(q *qemu.System, ki config.KernelInfo) (err error) {
 }
 
 func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
-	ka config.Artifact, ki config.KernelInfo) {
+	ka config.Artifact, ki distro.KernelInfo) {
 
 	defer swg.Done()
 
@@ -797,7 +797,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	}
 }
 
-func shuffleKernels(a []config.KernelInfo) []config.KernelInfo {
+func shuffleKernels(a []distro.KernelInfo) []distro.KernelInfo {
 	// Fisher–Yates shuffle
 	for i := len(a) - 1; i > 0; i-- {
 		j := rand.Intn(i + 1)

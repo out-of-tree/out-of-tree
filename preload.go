@@ -16,11 +16,12 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
-func preloadModules(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
+func preloadModules(q *qemu.System, ka config.Artifact, ki distro.KernelInfo,
 	dockerTimeout time.Duration) (err error) {
 
 	for _, pm := range ka.Preload {
@@ -32,7 +33,7 @@ func preloadModules(q *qemu.System, ka config.Artifact, ki config.KernelInfo,
 	return
 }
 
-func preload(q *qemu.System, ki config.KernelInfo, pm config.PreloadModule,
+func preload(q *qemu.System, ki distro.KernelInfo, pm config.PreloadModule,
 	dockerTimeout time.Duration) (err error) {
 
 	var workPath, cache string
@@ -57,7 +58,7 @@ func preload(q *qemu.System, ki config.KernelInfo, pm config.PreloadModule,
 	return
 }
 
-func buildAndInsmod(workPath string, q *qemu.System, ki config.KernelInfo,
+func buildAndInsmod(workPath string, q *qemu.System, ki distro.KernelInfo,
 	dockerTimeout time.Duration, cache string) (err error) {
 
 	tmp, err := fs.TempDir()
@@ -90,7 +91,7 @@ func buildAndInsmod(workPath string, q *qemu.System, ki config.KernelInfo,
 	return
 }
 
-func buildPreload(workPath, tmp string, ki config.KernelInfo,
+func buildPreload(workPath, tmp string, ki distro.KernelInfo,
 	dockerTimeout time.Duration) (artifact string, err error) {
 
 	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
@@ -114,7 +115,7 @@ func buildPreload(workPath, tmp string, ki config.KernelInfo,
 	return
 }
 
-func cloneOrPull(repo string, ki config.KernelInfo) (workPath, cache string,
+func cloneOrPull(repo string, ki distro.KernelInfo) (workPath, cache string,
 	err error) {
 
 	base := config.Dir("preload")

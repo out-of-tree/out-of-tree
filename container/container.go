@@ -120,7 +120,7 @@ func New(dist distro.Distro) (c Container, err error) {
 	return
 }
 
-func NewFromKernelInfo(ki config.KernelInfo) (
+func NewFromKernelInfo(ki distro.KernelInfo) (
 	c Container, err error) {
 
 	c.name = ki.ContainerName
@@ -328,7 +328,7 @@ func (c Container) Run(workdir string, cmds []string) (out string, err error) {
 	return
 }
 
-func (c Container) Kernels() (kernels []config.KernelInfo, err error) {
+func (c Container) Kernels() (kernels []distro.KernelInfo, err error) {
 	var libmodules, boot string
 	for _, volume := range c.Volumes {
 		switch volume.Dest {
@@ -365,7 +365,7 @@ func (c Container) Kernels() (kernels []config.KernelInfo, err error) {
 			continue
 		}
 
-		ki := config.KernelInfo{
+		ki := distro.KernelInfo{
 			Distro:        c.dist,
 			KernelVersion: krel.Name(),
 			KernelRelease: krel.Name(),

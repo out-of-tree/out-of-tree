@@ -320,7 +320,7 @@ func ContainerKernels(d container.Image, kcfg *config.KernelConfig) (err error) 
 
 		release := strings.Replace(pkgname, "linux-image-", "", -1)
 
-		ki := config.KernelInfo{
+		ki := distro.KernelInfo{
 			Distro:        d.Distro,
 			KernelVersion: path.Base(modules),
 			KernelRelease: release,

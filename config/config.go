@@ -165,7 +165,7 @@ type Artifact struct {
 	Preload []PreloadModule
 }
 
-func (ka Artifact) checkSupport(ki KernelInfo, km Target) (
+func (ka Artifact) checkSupport(ki distro.KernelInfo, km Target) (
 	supported bool, err error) {
 
 	if ki.Distro.ID != km.Distro.ID {
@@ -184,7 +184,7 @@ func (ka Artifact) checkSupport(ki KernelInfo, km Target) (
 }
 
 // Supported returns true if given kernel is supported by artifact
-func (ka Artifact) Supported(ki KernelInfo) (supported bool, err error) {
+func (ka Artifact) Supported(ki distro.KernelInfo) (supported bool, err error) {
 	for _, km := range ka.Targets {
 		supported, err = ka.checkSupport(ki, km)
 		if supported {
@@ -195,40 +195,9 @@ func (ka Artifact) Supported(ki KernelInfo) (supported bool, err error) {
 	return
 }
 
-// ByRootFS is sorting by .RootFS lexicographically
-type ByRootFS []KernelInfo
-
-func (a ByRootFS) Len() int           { return len(a) }
-func (a ByRootFS) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByRootFS) Less(i, j int) bool { return a[i].RootFS < a[j].RootFS }
-
-// KernelInfo defines kernels.toml entries
-type KernelInfo struct {
-	Distro distro.Distro
-
-	// Must be *exactly* same as in `uname -r`
-	KernelVersion string
-
-	KernelRelease string
-
-	// Build-time information
-	KernelSource  string // module/exploit will be build on host
-	ContainerName string
-
-	// Runtime information
-	KernelPath  string
-	InitrdPath  string
-	ModulesPath string
-
-	RootFS string
-
-	// Debug symbols
-	VmlinuxPath string
-}
-
 // KernelConfig is the ~/.out-of-tree/kernels.toml configuration description
 type KernelConfig struct {
-	Kernels []KernelInfo
+	Kernels []distro.KernelInfo
 }
 
 func readFileAll(path string) (buf []byte, err error) {

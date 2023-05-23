@@ -15,6 +15,7 @@ import (
 	"gopkg.in/logrusorgru/aurora.v2"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
@@ -222,7 +223,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 }
 
 func firstSupported(kcfg config.KernelConfig, ka config.Artifact,
-	kernel string) (ki config.KernelInfo, err error) {
+	kernel string) (ki distro.KernelInfo, err error) {
 
 	km, err := kernelMask(kernel)
 	if err != nil {

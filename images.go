@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
@@ -57,7 +58,7 @@ func (cmd *ImageEditCmd) Run(g *Globals) (err error) {
 		return errors.New("No kernels found")
 	}
 
-	ki := config.KernelInfo{}
+	ki := distro.KernelInfo{}
 	for _, k := range kcfg.Kernels {
 		if k.RootFS == image {
 			ki = k

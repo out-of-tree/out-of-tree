@@ -13,6 +13,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
@@ -28,7 +29,7 @@ type logEntry struct {
 
 	qemu.System
 	config.Artifact
-	config.KernelInfo
+	distro.KernelInfo
 	phasesResult
 }
 
@@ -121,7 +122,7 @@ func getVersion(db *sql.DB) (version int, err error) {
 }
 
 func addToLog(db *sql.DB, q *qemu.System, ka config.Artifact,
-	ki config.KernelInfo, res *phasesResult, tag string) (err error) {
+	ki distro.KernelInfo, res *phasesResult, tag string) (err error) {
 
 	stmt, err := db.Prepare("INSERT INTO log (name, type, tag, " +
 		"distro_type, distro_release, kernel_release, " +

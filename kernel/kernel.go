@@ -270,7 +270,7 @@ func listContainersKernels(dii container.Image, newkcfg *config.KernelConfig,
 	return
 }
 
-func hasKernel(ki config.KernelInfo, kcfg config.KernelConfig) bool {
+func hasKernel(ki distro.KernelInfo, kcfg config.KernelConfig) bool {
 	for _, sk := range kcfg.Kernels {
 		if sk == ki {
 			return true
