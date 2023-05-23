@@ -18,6 +18,7 @@ require (
 	github.com/rapidloop/skv v0.0.0-20180909015525-9def2caac4cc
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/rs/zerolog v1.29.1
+	github.com/stretchr/testify v1.7.0
 	github.com/zcalusic/sysinfo v0.9.5
 	golang.org/x/crypto v0.9.0
 	golang.org/x/time v0.3.0
@@ -43,6 +44,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/naoina/go-stringutil v0.1.0 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/skeema/knownhosts v1.1.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
@@ -50,4 +52,5 @@ require (
 	golang.org/x/sys v0.8.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	gopkg.in/yaml.v3 v3.0.0 // indirect
 )

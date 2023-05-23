@@ -2,6 +2,10 @@ package debian
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"code.dumpstack.io/tools/out-of-tree/distro"
 )
 
 func TestKernelRelease(t *testing.T) {
@@ -37,4 +41,17 @@ func TestKernelRelease(t *testing.T) {
 			t.Fatalf("%v -> %v != %v", tc.Deb, r, tc.Release)
 		}
 	}
+}
+
+func TestDebian(t *testing.T) {
+	assert := assert.New(t)
+
+	u := Debian{release: Wheezy, container: "out_of_tree_debian_7"}
+
+	assert.Equal(u.ID(), distro.Debian)
+	assert.Equal(u.Release(), "wheezy")
+
+	assert.True(u.Equal(distro.Distro{Release: "wheezy", ID: distro.Debian}))
+
+	assert.NotEmpty(u.Packages())
 }

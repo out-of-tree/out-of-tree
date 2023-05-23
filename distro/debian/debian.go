@@ -60,6 +60,16 @@ func (d Debian) Equal(dd distro.Distro) bool {
 }
 
 func (d Debian) Packages() (packages []string, err error) {
+	c, err := container.New(d.container)
+	if err != nil {
+		return
+	}
+
+	err = c.Build(d.image(), d.envs(), d.runs())
+	if err != nil {
+		return
+	}
+
 	kernels, err := GetKernels()
 	if err != nil {
 		log.Error().Err(err).Msg("get kernels")
@@ -178,15 +188,15 @@ func kernelRelease(deb string) (r Release, err error) {
 	return
 }
 
-func Envs(km config.Target) (envs []string) {
+func (d Debian) envs() (envs []string) {
 	envs = append(envs, "DEBIAN_FRONTEND=noninteractive")
 	return
 }
 
-func ContainerImage(km config.Target) (image string) {
+func (d Debian) image() (image string) {
 	image += "debian:"
 
-	switch ReleaseFromString(km.Distro.Release) {
+	switch d.release {
 	case Wheezy:
 		image += "wheezy-20190228"
 	case Jessie:
@@ -194,7 +204,7 @@ func ContainerImage(km config.Target) (image string) {
 	case Stretch:
 		image += "stretch-20220622"
 	default:
-		image += km.Distro.Release
+		image += d.release.String()
 	}
 
 	return
@@ -231,14 +241,12 @@ func repositories(release Release) (repos []string) {
 	return
 }
 
-func Runs(km config.Target) (commands []string) {
-	release := ReleaseFromString(km.Distro.Release)
-
+func (d Debian) runs() (commands []string) {
 	cmdf := func(f string, s ...interface{}) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}
 
-	repos := repositories(release)
+	repos := repositories(d.release)
 
 	if len(repos) != 0 {
 		cmdf("rm /etc/apt/sources.list")
@@ -260,7 +268,7 @@ func Runs(km config.Target) (commands []string) {
 		"'^(gcc-[0-9].[0-9]|gcc-[0-9])$'",
 	}
 
-	if release < 9 {
+	if d.release < 9 {
 		pkglist = append(pkglist, "module-init-tools")
 	}
 

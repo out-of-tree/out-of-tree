@@ -53,6 +53,11 @@ func (u Ubuntu) Packages() (pkgs []string, err error) {
 		return
 	}
 
+	err = c.Build("ubuntu:"+u.release, u.envs(), u.runs())
+	if err != nil {
+		return
+	}
+
 	cmd := "apt-cache search " +
 		"--names-only '^linux-image-[0-9\\.\\-]*-generic$' " +
 		"| awk '{ print $1 }'"
@@ -69,17 +74,17 @@ func (u Ubuntu) Packages() (pkgs []string, err error) {
 	return
 }
 
-func Envs(km config.Target) (envs []string) {
+func (u Ubuntu) envs() (envs []string) {
 	envs = append(envs, "DEBIAN_FRONTEND=noninteractive")
 	return
 }
 
-func Runs(km config.Target) (commands []string) {
+func (u Ubuntu) runs() (commands []string) {
 	cmdf := func(f string, s ...interface{}) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}
 
-	if km.Distro.Release < "14.04" {
+	if u.release < "14.04" {
 		cmdf("sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/' " +
 			"/etc/apt/sources.list")
 	}
@@ -88,14 +93,14 @@ func Runs(km config.Target) (commands []string) {
 	cmdf("apt-get install -y build-essential libelf-dev")
 	cmdf("apt-get install -y wget git")
 
-	if km.Distro.Release == "12.04" {
+	if u.release == "12.04" {
 		cmdf("apt-get install -y grub")
 		cmdf("cp /bin/true /usr/sbin/grub-probe")
 		cmdf("mkdir -p /boot/grub")
 		cmdf("touch /boot/grub/menu.lst")
 	}
 
-	if km.Distro.Release < "14.04" {
+	if u.release < "14.04" {
 		return
 	}
 

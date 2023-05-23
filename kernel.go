@@ -75,15 +75,8 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 		return
 	}
 
-	err = kernel.GenerateBaseDockerImage(
-		g.Config.Docker.Registry,
-		g.Config.Docker.Commands,
-		km,
-		kernelCmd.Update,
-	)
-	if err != nil {
-		return
-	}
+	container.Registry = g.Config.Docker.Registry
+	container.Commands = g.Config.Docker.Commands
 
 	pkgs, err := kernel.MatchPackages(km)
 	// error check skipped on purpose

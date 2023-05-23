@@ -47,6 +47,11 @@ func (centos CentOS) Packages() (pkgs []string, err error) {
 		return
 	}
 
+	err = c.Build("centos:"+centos.release, centos.envs(), centos.runs())
+	if err != nil {
+		return
+	}
+
 	cmd := "yum search kernel --showduplicates 2>/dev/null " +
 		"| grep '^kernel-[0-9]' " +
 		"| grep -v src " +
@@ -63,11 +68,11 @@ func (centos CentOS) Packages() (pkgs []string, err error) {
 	return
 }
 
-func Envs(km config.Target) (envs []string) {
+func (centos CentOS) envs() (envs []string) {
 	return
 }
 
-func Runs(km config.Target) (commands []string) {
+func (centos CentOS) runs() (commands []string) {
 	cmdf := func(f string, s ...interface{}) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}
@@ -75,7 +80,7 @@ func Runs(km config.Target) (commands []string) {
 	var repos []string
 
 	// TODO refactor
-	switch km.Distro.Release {
+	switch centos.release {
 	case "6":
 		repofmt := "[6.%d-%s]\\nbaseurl=https://vault.centos.org/6.%d/%s/$basearch/\\ngpgcheck=0"
 		for i := 0; i <= 10; i++ {
@@ -109,7 +114,7 @@ func Runs(km config.Target) (commands []string) {
 			repos = append(repos, fmt.Sprintf(repofmt, ver, "appstream", ver, "AppStream"))
 		}
 	default:
-		log.Fatal().Msgf("no support for %s %s", km.Distro.ID, km.Distro.Release)
+		log.Fatal().Msgf("no support for centos %s", centos.release)
 		return
 	}
 
@@ -126,14 +131,14 @@ func Runs(km config.Target) (commands []string) {
 
 	cmdf("yum -y groupinstall 'Development Tools'")
 
-	if km.Distro.Release < "8" {
+	if centos.release < "8" {
 		cmdf("yum -y install deltarpm")
 	} else {
 		cmdf("yum -y install grub2-tools-minimal elfutils-libelf-devel")
 	}
 
 	var flags string
-	if km.Distro.Release >= "8" {
+	if centos.release >= "8" {
 		flags = "--noautoremove"
 	}
 

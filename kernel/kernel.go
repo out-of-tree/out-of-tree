@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"regexp"
@@ -26,7 +25,6 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro"
-	"code.dumpstack.io/tools/out-of-tree/distro/centos"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian"
 	"code.dumpstack.io/tools/out-of-tree/distro/oraclelinux"
 	"code.dumpstack.io/tools/out-of-tree/distro/ubuntu"
@@ -68,117 +66,6 @@ func vsyscallAvailable() (available bool, err error) {
 	}
 
 	available = strings.Contains(string(buf), "[vsyscall]")
-	return
-}
-
-func GenerateBaseDockerImage(registry string, commands []config.DockerCommand,
-	sk config.Target, forceUpdate bool) (err error) {
-
-	imagePath := container.ImagePath(sk)
-	dockerPath := imagePath + "/Dockerfile"
-
-	d := "# BASE\n"
-
-	// TODO move as function to container.go
-	cmd := exec.Command(container.Runtime, "images", "-q", sk.DockerName())
-	log.Debug().Msgf("run %v", cmd)
-
-	rawOutput, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Error().Err(err).Msg(string(rawOutput))
-		return
-	}
-
-	if fs.PathExists(dockerPath) && string(rawOutput) != "" {
-		log.Debug().Msgf("Base image for %s:%s found",
-			sk.Distro.ID.String(), sk.Distro.Release)
-		if !forceUpdate {
-			return
-		} else {
-			log.Info().Msgf("Update Containerfile")
-		}
-	}
-
-	log.Debug().Msgf("Base image for %s:%s not found, start generating",
-		sk.Distro.ID.String(), sk.Distro.Release)
-	os.MkdirAll(imagePath, os.ModePerm)
-
-	d += "FROM "
-	if registry != "" {
-		d += registry + "/"
-	}
-
-	switch sk.Distro.ID {
-	case distro.Debian:
-		d += debian.ContainerImage(sk) + "\n"
-	default:
-		d += fmt.Sprintf("%s:%s\n",
-			strings.ToLower(sk.Distro.ID.String()),
-			sk.Distro.Release)
-	}
-
-	for _, c := range commands {
-		d += "RUN " + c.Command + "\n"
-	}
-
-	// TODO container runs/envs interface
-	switch sk.Distro.ID {
-	case distro.Ubuntu:
-		for _, e := range ubuntu.Envs(sk) {
-			d += "ENV " + e + "\n"
-		}
-		for _, c := range ubuntu.Runs(sk) {
-			d += "RUN " + c + "\n"
-		}
-	case distro.CentOS:
-		for _, e := range centos.Envs(sk) {
-			d += "ENV " + e + "\n"
-		}
-		for _, c := range centos.Runs(sk) {
-			d += "RUN " + c + "\n"
-		}
-	case distro.OracleLinux:
-		for _, e := range oraclelinux.Envs(sk) {
-			d += "ENV " + e + "\n"
-		}
-		for _, c := range oraclelinux.Runs(sk) {
-			d += "RUN " + c + "\n"
-		}
-	case distro.Debian:
-		for _, e := range debian.Envs(sk) {
-			d += "ENV " + e + "\n"
-		}
-		for _, c := range debian.Runs(sk) {
-			d += "RUN " + c + "\n"
-		}
-	default:
-		err = fmt.Errorf("%s not yet supported", sk.Distro.ID.String())
-		return
-	}
-
-	d += "# END BASE\n\n"
-
-	err = ioutil.WriteFile(dockerPath, []byte(d), 0644)
-	if err != nil {
-		return
-	}
-
-	c, err := container.New(sk.DockerName())
-	if err != nil {
-		return
-	}
-
-	output, err := c.Build(imagePath)
-	if err != nil {
-		log.Error().Err(err).Msgf("Base image for %s:%s generating error",
-			sk.Distro.ID.String(), sk.Distro.Release)
-		log.Fatal().Msg(output)
-		return
-	}
-
-	log.Debug().Msgf("Base image for %s:%s generating success",
-		sk.Distro.ID.String(), sk.Distro.Release)
-
 	return
 }
 
@@ -519,15 +406,13 @@ func GenerateKernels(km config.Target, registry string,
 	download, force, headers, shuffle, update bool,
 	shutdown *bool) (err error) {
 
+	container.Commands = commands
+	container.Registry = registry
+
 	log.Info().Msgf("Generating for kernel mask %v", km)
 
 	_, err = GenRootfsImage(container.Image{Name: km.DockerName()},
 		download)
-	if err != nil || *shutdown {
-		return
-	}
-
-	err = GenerateBaseDockerImage(registry, commands, km, update)
 	if err != nil || *shutdown {
 		return
 	}

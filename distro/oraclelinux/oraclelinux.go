@@ -47,6 +47,11 @@ func (ol OracleLinux) Packages() (pkgs []string, err error) {
 		return
 	}
 
+	err = c.Build("oraclelinux:"+ol.release, ol.envs(), ol.runs())
+	if err != nil {
+		return
+	}
+
 	cmd := "yum search kernel --showduplicates 2>/dev/null " +
 		"| grep '^kernel-[0-9]\\|^kernel-uek-[0-9]' " +
 		"| grep -v src " +
@@ -64,16 +69,16 @@ func (ol OracleLinux) Packages() (pkgs []string, err error) {
 	return
 }
 
-func Envs(km config.Target) (envs []string) {
+func (ol OracleLinux) envs() (envs []string) {
 	return
 }
 
-func Runs(km config.Target) (commands []string) {
+func (ol OracleLinux) runs() (commands []string) {
 	cmdf := func(f string, s ...interface{}) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}
 
-	if km.Distro.Release < "6" {
+	if ol.release < "6" {
 		log.Fatal().Msgf("no support for pre-EL6")
 	}
 
@@ -83,7 +88,7 @@ func Runs(km config.Target) (commands []string) {
 	cmdf("yum -y groupinstall 'Development Tools'")
 
 	packages := "linux-firmware grubby"
-	if km.Distro.Release <= "7" {
+	if ol.release <= "7" {
 		packages += " libdtrace-ctf"
 	}
 

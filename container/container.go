@@ -25,7 +25,11 @@ import (
 
 var Runtime = "docker"
 
+var Registry = ""
+
 var Timeout = time.Hour
+
+var Commands []config.DockerCommand
 
 type Image struct {
 	Name   string
@@ -140,7 +144,76 @@ func NewFromKernelInfo(ki config.KernelInfo) (
 	return
 }
 
-func (c Container) Build(imagePath string) (output string, err error) {
+func (c Container) Exist() (yes bool) {
+	cmd := exec.Command(Runtime, "images", "-q", c.name)
+
+	c.Log.Debug().Msgf("run %v", cmd)
+
+	raw, err := cmd.CombinedOutput()
+	if err != nil {
+		c.Log.Error().Err(err).Msg(string(raw))
+		return false
+	}
+
+	yes = string(raw) != ""
+
+	if yes {
+		c.Log.Debug().Msg("exist")
+	} else {
+		c.Log.Debug().Msg("does not exist")
+	}
+
+	return
+}
+
+func (c Container) Build(image string, envs, runs []string) (err error) {
+	cdir := config.Dir("containers", c.name)
+	cfile := filepath.Join(cdir, "Dockerfile")
+
+	cf := "FROM "
+	if Registry != "" {
+		cf += Registry + "/"
+	}
+	cf += image + "\n"
+
+	for _, c := range Commands {
+		// TODO check for distro type
+		cf += "RUN " + c.Command + "\n"
+	}
+
+	for _, e := range envs {
+		cf += "ENV " + e + "\n"
+	}
+
+	for _, c := range runs {
+		cf += "RUN " + c + "\n"
+	}
+
+	buf, err := os.ReadFile(cfile)
+	if err != nil {
+		err = os.WriteFile(cfile, []byte(cf), os.ModePerm)
+		if err != nil {
+			return
+		}
+	}
+
+	if string(buf) == cf && c.Exist() {
+		return
+	}
+
+	c.Log.Debug().Msg("generate")
+
+	output, err := c.build(cdir)
+	if err != nil {
+		c.Log.Error().Err(err).Msg(output)
+		return
+	}
+
+	c.Log.Debug().Msg("success")
+	return
+}
+
+func (c Container) build(imagePath string) (output string, err error) {
 	args := []string{"build"}
 	args = append(args, "-t", c.name, imagePath)
 
