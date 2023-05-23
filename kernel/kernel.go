@@ -14,10 +14,8 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/naoina/toml"
-	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
@@ -68,7 +66,7 @@ func vsyscallAvailable() (available bool, err error) {
 	return
 }
 
-func installKernel(sk config.Target, pkgname string, force, headers bool) (err error) {
+func InstallKernel(sk config.Target, pkgname string, force, headers bool) (err error) {
 	slog := log.With().
 		Str("distro_type", sk.Distro.ID.String()).
 		Str("distro_release", sk.Distro.Release).
@@ -281,7 +279,7 @@ func hasKernel(ki config.KernelInfo, kcfg config.KernelConfig) bool {
 	return false
 }
 
-func shuffleStrings(a []string) []string {
+func ShuffleStrings(a []string) []string {
 	// Fisher–Yates shuffle
 	for i := len(a) - 1; i > 0; i-- {
 		j := rand.Intn(i + 1)
@@ -308,80 +306,4 @@ func SetSigintHandler(variable *bool) {
 		}
 	}()
 
-}
-
-// FIXME too many parameters
-func GenerateKernels(km config.Target, registry string,
-	commands []config.DockerCommand, max, retries, threads int,
-	download, force, headers, shuffle, update bool,
-	shutdown *bool) (err error) {
-
-	container.Commands = commands
-	container.Registry = registry
-
-	log.Info().Msgf("Generating for kernel mask %v", km)
-
-	_, err = GenRootfsImage(container.Image{Name: km.DockerName()},
-		download)
-	if err != nil || *shutdown {
-		return
-	}
-
-	pkgs, err := MatchPackages(km)
-	if err != nil || *shutdown {
-		return
-	}
-
-	if shuffle {
-		pkgs = shuffleStrings(pkgs)
-	}
-
-	swg := sizedwaitgroup.New(threads)
-
-	for i, pkg := range pkgs {
-		if *shutdown {
-			err = nil
-			return
-		}
-
-		swg.Add()
-
-		if max <= 0 {
-			log.Print("Max is reached")
-			swg.Done()
-			break
-		}
-
-		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
-
-		go func(p string) {
-			defer swg.Done()
-			var attempt int
-			for {
-				attempt++
-
-				if *shutdown {
-					err = nil
-					return
-				}
-
-				err = installKernel(km, p, force, headers)
-				if err == nil {
-					max--
-					break
-				} else if attempt >= retries {
-					log.Error().Err(err).Msg("install kernel")
-					log.Debug().Msg("skip")
-					break
-				} else {
-					log.Warn().Err(err).Msg("install kernel")
-					time.Sleep(time.Second)
-					log.Info().Msg("retry")
-				}
-			}
-		}(pkg)
-	}
-	swg.Wait()
-
-	return
 }

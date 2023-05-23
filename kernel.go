@@ -8,7 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"time"
 
+	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
@@ -33,6 +35,82 @@ type KernelCmd struct {
 	Genall      KernelGenallCmd      `cmd:"" help:"generate all kernels for distro"`
 	Install     KernelInstallCmd     `cmd:"" help:"install specific kernel"`
 	ConfigRegen KernelConfigRegenCmd `cmd:"" help:"regenerate config"`
+}
+
+func (cmd KernelCmd) Generate(g *Globals, km config.Target, max int,
+	shutdown *bool) (err error) {
+
+	// TODO cmd.Update
+
+	container.Commands = g.Config.Docker.Commands
+	container.Registry = g.Config.Docker.Registry
+
+	log.Info().Msgf("Generating for kernel mask %v", km)
+
+	_, err = kernel.GenRootfsImage(container.Image{Name: km.DockerName()},
+		!cmd.NoDownload)
+	if err != nil || *shutdown {
+		return
+	}
+
+	pkgs, err := kernel.MatchPackages(km)
+	if err != nil || *shutdown {
+		return
+	}
+
+	if cmd.Shuffle {
+		pkgs = kernel.ShuffleStrings(pkgs)
+	}
+
+	swg := sizedwaitgroup.New(cmd.Threads)
+
+	for i, pkg := range pkgs {
+		if *shutdown {
+			err = nil
+			return
+		}
+
+		swg.Add()
+
+		if max <= 0 {
+			log.Print("Max is reached")
+			swg.Done()
+			break
+		}
+
+		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
+
+		// FIXME
+		go func(p string) {
+			defer swg.Done()
+			var attempt int
+			for {
+				attempt++
+
+				if *shutdown {
+					err = nil
+					return
+				}
+
+				err = kernel.InstallKernel(km, p, cmd.Force, !cmd.NoHeaders)
+				if err == nil {
+					max--
+					break
+				} else if attempt >= cmd.Retries {
+					log.Error().Err(err).Msg("install kernel")
+					log.Debug().Msg("skip")
+					break
+				} else {
+					log.Warn().Err(err).Msg("install kernel")
+					time.Sleep(time.Second)
+					log.Info().Msg("retry")
+				}
+			}
+		}(pkg)
+	}
+	swg.Wait()
+
+	return
 }
 
 type KernelListCmd struct{}
@@ -107,18 +185,7 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			return
 		}
 
-		err = kernel.GenerateKernels(sk,
-			g.Config.Docker.Registry,
-			g.Config.Docker.Commands,
-			cmd.Max, kernelCmd.Retries,
-			kernelCmd.Threads,
-			!kernelCmd.NoDownload,
-			kernelCmd.Force,
-			!kernelCmd.NoHeaders,
-			kernelCmd.Shuffle,
-			kernelCmd.Update,
-			&shutdown,
-		)
+		err = kernelCmd.Generate(g, sk, cmd.Max, &shutdown)
 		if err != nil {
 			return
 		}
@@ -148,18 +215,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
 		Kernel: config.Kernel{Regex: ".*"},
 	}
-	err = kernel.GenerateKernels(km,
-		g.Config.Docker.Registry,
-		g.Config.Docker.Commands,
-		math.MaxUint32, kernelCmd.Retries,
-		kernelCmd.Threads,
-		!kernelCmd.NoDownload,
-		kernelCmd.Force,
-		!kernelCmd.NoHeaders,
-		kernelCmd.Shuffle,
-		kernelCmd.Update,
-		&shutdown,
-	)
+	err = kernelCmd.Generate(g, km, math.MaxUint32, &shutdown)
 	if err != nil {
 		return
 	}
@@ -186,18 +242,7 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
 		Kernel: config.Kernel{Regex: cmd.Kernel},
 	}
-	err = kernel.GenerateKernels(km,
-		g.Config.Docker.Registry,
-		g.Config.Docker.Commands,
-		math.MaxUint32, kernelCmd.Retries,
-		kernelCmd.Threads,
-		!kernelCmd.NoDownload,
-		kernelCmd.Force,
-		!kernelCmd.NoHeaders,
-		kernelCmd.Shuffle,
-		kernelCmd.Update,
-		&shutdown,
-	)
+	err = kernelCmd.Generate(g, km, math.MaxUint32, &shutdown)
 	if err != nil {
 		return
 	}
