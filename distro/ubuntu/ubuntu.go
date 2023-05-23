@@ -20,19 +20,12 @@ func init() {
 	}
 
 	for _, release := range releases {
-		container := "out_of_tree_ubuntu_" + release
-		container = strings.Replace(container, ".", "__", -1)
-
-		distro.Register(Ubuntu{
-			release:   release,
-			container: container,
-		})
+		distro.Register(Ubuntu{release: release})
 	}
 }
 
 type Ubuntu struct {
-	release   string
-	container string
+	release string
 }
 
 func (u Ubuntu) Equal(d distro.Distro) bool {
@@ -44,7 +37,7 @@ func (u Ubuntu) Distro() distro.Distro {
 }
 
 func (u Ubuntu) Packages() (pkgs []string, err error) {
-	c, err := container.New(u.container)
+	c, err := container.New(u.Distro())
 	if err != nil {
 		return
 	}

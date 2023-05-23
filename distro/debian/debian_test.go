@@ -46,8 +46,7 @@ func TestKernelRelease(t *testing.T) {
 func TestDebian(t *testing.T) {
 	assert := assert.New(t)
 
-	u := Debian{release: Wheezy, container: "out_of_tree_debian_7"}
-
+	u := Debian{release: Wheezy}
 
 	assert.True(u.Equal(distro.Distro{Release: "wheezy", ID: distro.Debian}))
 

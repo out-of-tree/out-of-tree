@@ -5,7 +5,6 @@
 package kernel
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -76,7 +75,7 @@ func installKernel(sk config.Target, pkgname string, force, headers bool) (err e
 		Str("pkg", pkgname).
 		Logger()
 
-	c, err := container.New(sk.DockerName()) // TODO conf
+	c, err := container.New(sk.Distro) // TODO conf
 	if err != nil {
 		return
 	}
@@ -182,36 +181,6 @@ func installKernel(sk config.Target, pkgname string, force, headers bool) (err e
 	return
 }
 
-func findKernelFile(files []os.FileInfo, kname string) (name string, err error) {
-	for _, file := range files {
-		if strings.HasPrefix(file.Name(), "vmlinuz") {
-			if strings.Contains(file.Name(), kname) {
-				name = file.Name()
-				return
-			}
-		}
-	}
-
-	err = errors.New("cannot find kernel")
-	return
-}
-
-func findInitrdFile(files []os.FileInfo, kname string) (name string, err error) {
-	for _, file := range files {
-		if strings.HasPrefix(file.Name(), "initrd") ||
-			strings.HasPrefix(file.Name(), "initramfs") {
-
-			if strings.Contains(file.Name(), kname) {
-				name = file.Name()
-				return
-			}
-		}
-	}
-
-	err = errors.New("cannot find kernel")
-	return
-}
-
 func GenRootfsImage(d container.Image, download bool) (rootfs string, err error) {
 	imagesPath := config.Dir("images")
 	imageFile := d.Name + ".img"
@@ -289,76 +258,17 @@ func UpdateKernelsCfg(host, download bool) (err error) {
 func listContainersKernels(dii container.Image, newkcfg *config.KernelConfig,
 	download bool) (err error) {
 
-	rootfs, err := GenRootfsImage(dii, download)
+	c, err := container.New(dii.Distro)
 	if err != nil {
 		return
 	}
 
-	c, err := container.New(dii.Name)
+	kernels, err := c.Kernels()
 	if err != nil {
 		return
 	}
 
-	var libmodules, boot string
-	for _, volume := range c.Volumes {
-		switch volume.Dest {
-		case "/lib/modules":
-			libmodules = volume.Src
-		case "/boot":
-			boot = volume.Src
-		}
-	}
-
-	moddirs, err := ioutil.ReadDir(libmodules)
-	if err != nil {
-		return
-	}
-
-	bootfiles, err := ioutil.ReadDir(boot)
-	if err != nil {
-		return
-	}
-
-	for _, krel := range moddirs {
-		log.Debug().Msgf("generate config entry for %s", krel.Name())
-
-		var kernelFile, initrdFile string
-		kernelFile, err = findKernelFile(bootfiles, krel.Name())
-		if err != nil {
-			log.Warn().Msgf("cannot find kernel %s", krel.Name())
-			continue
-		}
-
-		initrdFile, err = findInitrdFile(bootfiles, krel.Name())
-		if err != nil {
-			log.Warn().Msgf("cannot find initrd %s", krel.Name())
-			continue
-		}
-
-		ki := config.KernelInfo{
-			Distro:        dii.Distro,
-			KernelVersion: krel.Name(),
-			KernelRelease: krel.Name(),
-			ContainerName: dii.Name,
-
-			KernelPath:  filepath.Join(boot, kernelFile),
-			InitrdPath:  filepath.Join(boot, initrdFile),
-			ModulesPath: filepath.Join(libmodules, krel.Name()),
-
-			RootFS: rootfs,
-		}
-		newkcfg.Kernels = append(newkcfg.Kernels, ki)
-	}
-
-	for _, cmd := range []string{
-		"find /boot -type f -exec chmod a+r {} \\;",
-	} {
-		_, err = c.Run(config.Dir("tmp"), cmd)
-		if err != nil {
-			return
-		}
-	}
-
+	newkcfg.Kernels = append(newkcfg.Kernels, kernels...)
 	return
 }
 

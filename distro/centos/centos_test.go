@@ -11,8 +11,7 @@ import (
 func TestCentOS(t *testing.T) {
 	assert := assert.New(t)
 
-	u := CentOS{release: "7", container: "out_of_tree_centos_7"}
-
+	u := CentOS{release: "7"}
 
 	assert.True(u.Equal(distro.Distro{Release: "7", ID: distro.CentOS}))
 

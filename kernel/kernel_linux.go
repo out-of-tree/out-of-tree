@@ -64,13 +64,13 @@ func genHostKernels(download bool) (kcfg config.KernelConfig, err error) {
 		log.Debug().Msgf("generate config entry for %s", krel)
 
 		var kernelFile, initrdFile string
-		kernelFile, err = findKernelFile(bootfiles, krel)
+		kernelFile, err = fs.FindKernel(bootfiles, krel)
 		if err != nil {
 			log.Warn().Msgf("cannot find kernel %s", krel)
 			continue
 		}
 
-		initrdFile, err = findInitrdFile(bootfiles, krel)
+		initrdFile, err = fs.FindInitrd(bootfiles, krel)
 		if err != nil {
 			log.Warn().Msgf("cannot find initrd %s", krel)
 			continue

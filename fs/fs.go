@@ -70,3 +70,33 @@ func FindBySubstring(dir, substring string) (k string, err error) {
 	err = errors.New("not found")
 	return
 }
+
+func FindKernel(files []os.FileInfo, kname string) (name string, err error) {
+	for _, file := range files {
+		if strings.HasPrefix(file.Name(), "vmlinuz") {
+			if strings.Contains(file.Name(), kname) {
+				name = file.Name()
+				return
+			}
+		}
+	}
+
+	err = errors.New("cannot find kernel")
+	return
+}
+
+func FindInitrd(files []os.FileInfo, kname string) (name string, err error) {
+	for _, file := range files {
+		if strings.HasPrefix(file.Name(), "initrd") ||
+			strings.HasPrefix(file.Name(), "initramfs") {
+
+			if strings.Contains(file.Name(), kname) {
+				name = file.Name()
+				return
+			}
+		}
+	}
+
+	err = errors.New("cannot find kernel")
+	return
+}

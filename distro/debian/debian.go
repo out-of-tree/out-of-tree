@@ -29,18 +29,12 @@ func init() {
 	}
 
 	for _, release := range releases {
-		container := fmt.Sprintf("out_of_tree_debian_%d", release)
-
-		distro.Register(Debian{
-			release:   release,
-			container: container,
-		})
+		distro.Register(Debian{release: release})
 	}
 }
 
 type Debian struct {
-	release   Release
-	container string
+	release Release
 }
 
 func (d Debian) Equal(dd distro.Distro) bool {
@@ -56,7 +50,7 @@ func (d Debian) Distro() distro.Distro {
 }
 
 func (d Debian) Packages() (packages []string, err error) {
-	c, err := container.New(d.container)
+	c, err := container.New(d.Distro())
 	if err != nil {
 		return
 	}

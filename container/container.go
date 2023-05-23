@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -21,6 +22,7 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/distro"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 var Runtime = "docker"
@@ -73,16 +75,13 @@ func Images() (diis []Image, err error) {
 	return
 }
 
-func ImagePath(sk config.Target) string {
-	return config.Dir("containers", sk.Distro.ID.String(), sk.Distro.Release)
-}
-
 type Volume struct {
 	Src, Dest string
 }
 
 type Container struct {
 	name string
+	dist distro.Distro
 
 	Volumes []Volume
 
@@ -92,25 +91,29 @@ type Container struct {
 	Log zerolog.Logger
 }
 
-func New(name string) (c Container, err error) {
+func New(dist distro.Distro) (c Container, err error) {
+	distro := strings.ToLower(dist.ID.String())
+	release := strings.Replace(dist.Release, ".", "__", -1)
+	c.name = fmt.Sprintf("out_of_tree_%s_%s", distro, release)
+
 	c.Log = log.With().
-		Str("container", name).
+		Str("container", c.name).
 		Logger()
 
-	c.name = name
+	c.dist = dist
 
 	c.Volumes = append(c.Volumes, Volume{
-		Src:  config.Dir("volumes", name, "lib", "modules"),
+		Src:  config.Dir("volumes", c.name, "lib", "modules"),
 		Dest: "/lib/modules",
 	})
 
 	c.Volumes = append(c.Volumes, Volume{
-		Src:  config.Dir("volumes", name, "usr", "src"),
+		Src:  config.Dir("volumes", c.name, "usr", "src"),
 		Dest: "/usr/src",
 	})
 
 	c.Volumes = append(c.Volumes, Volume{
-		Src:  config.Dir("volumes", name, "boot"),
+		Src:  config.Dir("volumes", c.name, "boot"),
 		Dest: "/boot",
 	})
 
@@ -315,6 +318,71 @@ func (c Container) Run(workdir string, command string) (output string, err error
 			err, command, output)
 		err = errors.New(e)
 		return
+	}
+
+	return
+}
+
+func (c Container) Kernels() (kernels []config.KernelInfo, err error) {
+	var libmodules, boot string
+	for _, volume := range c.Volumes {
+		switch volume.Dest {
+		case "/lib/modules":
+			libmodules = volume.Src
+		case "/boot":
+			boot = volume.Src
+		}
+	}
+
+	moddirs, err := ioutil.ReadDir(libmodules)
+	if err != nil {
+		return
+	}
+
+	bootfiles, err := ioutil.ReadDir(boot)
+	if err != nil {
+		return
+	}
+
+	for _, krel := range moddirs {
+		c.Log.Debug().Msgf("generate config entry for %s", krel.Name())
+
+		var kernelFile, initrdFile string
+		kernelFile, err = fs.FindKernel(bootfiles, krel.Name())
+		if err != nil {
+			c.Log.Warn().Msgf("cannot find kernel %s", krel.Name())
+			continue
+		}
+
+		initrdFile, err = fs.FindInitrd(bootfiles, krel.Name())
+		if err != nil {
+			c.Log.Warn().Msgf("cannot find initrd %s", krel.Name())
+			continue
+		}
+
+		ki := config.KernelInfo{
+			Distro:        c.dist,
+			KernelVersion: krel.Name(),
+			KernelRelease: krel.Name(),
+			ContainerName: c.name,
+
+			KernelPath:  filepath.Join(boot, kernelFile),
+			InitrdPath:  filepath.Join(boot, initrdFile),
+			ModulesPath: filepath.Join(libmodules, krel.Name()),
+
+			RootFS: config.File("images", c.name+".img"),
+		}
+
+		kernels = append(kernels, ki)
+	}
+
+	for _, cmd := range []string{
+		"find /boot -type f -exec chmod a+r {} \\;",
+	} {
+		_, err = c.Run(config.Dir("tmp"), cmd)
+		if err != nil {
+			return
+		}
 	}
 
 	return

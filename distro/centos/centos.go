@@ -15,18 +15,12 @@ func init() {
 	releases := []string{"6", "7", "8"}
 
 	for _, release := range releases {
-		container := "out_of_tree_centos_" + release
-
-		distro.Register(CentOS{
-			release:   release,
-			container: container,
-		})
+		distro.Register(CentOS{release: release})
 	}
 }
 
 type CentOS struct {
-	release   string
-	container string
+	release string
 }
 
 func (centos CentOS) Equal(d distro.Distro) bool {
@@ -38,7 +32,7 @@ func (centos CentOS) Distro() distro.Distro {
 }
 
 func (centos CentOS) Packages() (pkgs []string, err error) {
-	c, err := container.New(centos.container)
+	c, err := container.New(centos.Distro())
 	if err != nil {
 		return
 	}

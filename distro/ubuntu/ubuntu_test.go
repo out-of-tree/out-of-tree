@@ -11,7 +11,7 @@ import (
 func TestUbuntu(t *testing.T) {
 	assert := assert.New(t)
 
-	u := Ubuntu{release: "22.04", container: "out_of_tree_ubuntu_22__04"}
+	u := Ubuntu{release: "22.04"}
 
 	assert.True(u.Equal(distro.Distro{Release: "22.04", ID: distro.Ubuntu}))
 

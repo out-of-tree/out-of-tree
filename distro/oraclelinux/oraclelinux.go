@@ -15,18 +15,12 @@ func init() {
 	releases := []string{"6", "7", "8", "9"}
 
 	for _, release := range releases {
-		container := "out_of_tree_oraclelinux_" + release
-
-		distro.Register(OracleLinux{
-			release:   release,
-			container: container,
-		})
+		distro.Register(OracleLinux{release: release})
 	}
 }
 
 type OracleLinux struct {
-	release   string
-	container string
+	release string
 }
 
 func (ol OracleLinux) Equal(d distro.Distro) bool {
@@ -38,7 +32,7 @@ func (ol OracleLinux) Distro() distro.Distro {
 }
 
 func (ol OracleLinux) Packages() (pkgs []string, err error) {
-	c, err := container.New(ol.container)
+	c, err := container.New(ol.Distro())
 	if err != nil {
 		return
 	}
