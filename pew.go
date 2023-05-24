@@ -376,6 +376,8 @@ type phasesResult struct {
 		Output string
 		Ok     bool
 	}
+
+	InternalError error
 }
 
 func copyFile(sourcePath, destinationPath string) (err error) {
@@ -398,6 +400,14 @@ func copyFile(sourcePath, destinationPath string) (err error) {
 
 func dumpResult(q *qemu.System, ka config.Artifact, ki distro.KernelInfo,
 	res *phasesResult, dist, tag, binary string, db *sql.DB) {
+
+	if res.InternalError != nil {
+		q.Log.Error().Err(res.InternalError).
+			Str("panic", fmt.Sprintf("%v", q.KernelPanic)).
+			Str("timeout", fmt.Sprintf("%v", q.KilledByTimeout)).
+			Msg("internal")
+		return
+	}
 
 	colored := ""
 	switch ka.Type {
@@ -464,6 +474,7 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka config.Artifact
 		}
 		err = q.CopyFile(f.User, f.Local, f.Remote)
 		if err != nil {
+			res.InternalError = err
 			slog.Error().Err(err).Msg("copy test file")
 			return
 		}
@@ -717,11 +728,13 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 
 	err = q.WaitForSSH(cmd.QemuTimeout)
 	if err != nil {
+		result.InternalError = err
 		return
 	}
 
 	remoteTest, err := copyTest(q, cmd.Test, ka)
 	if err != nil {
+		result.InternalError = err
 		slog.Error().Err(err).Msg("copy test script")
 		return
 	}
@@ -731,6 +744,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		start := time.Now()
 		err = copyStandardModules(q, ki)
 		if err != nil {
+			result.InternalError = err
 			slog.Error().Err(err).Msg("copy standard modules")
 			return
 		}
@@ -740,6 +754,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 
 	err = preloadModules(q, ka, ki, cmd.DockerTimeout)
 	if err != nil {
+		result.InternalError = err
 		slog.Error().Err(err).Msg("preload modules")
 		return
 	}
