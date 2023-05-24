@@ -198,7 +198,7 @@ func (d Debian) image() (image string) {
 	case Stretch:
 		image += "stretch-20220622"
 	default:
-		image += d.release.String()
+		image += d.release.Name()
 	}
 
 	return
