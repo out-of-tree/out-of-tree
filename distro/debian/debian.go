@@ -230,6 +230,7 @@ func repositories(release Release) (repos []string) {
 
 	repo("debian", "")
 	repo("debian", "-updates")
+	repo("debian", "-backports")
 	repo("debian-security", "/updates")
 
 	return
