@@ -42,9 +42,10 @@ for version in 7 8 9 10 11 12; do
     # TODO: grep -Po 'http://snapshot[^ ]*' /etc/apt/sources.list | head -n1
 
     if [[ $version -eq 12 ]]; then
-	repository=http://deb.debian.org/debian
+        repository=http://deb.debian.org/debian
+        sed -i '/sources.list/d' 12/Dockerfile
     else
-	repository=$(wget -q -O - https://cdimage.debian.org/mirror/cdimage/archive/${last_version}/amd64/jigdo-bd/debian-${last_version}-amd64-BD-1.jigdo | gunzip | awk -F= '/snapshot.debian.org/ {print $2}' | cut -d ' ' -f 1)
+        repository=$(wget -q -O - https://cdimage.debian.org/mirror/cdimage/archive/${last_version}/amd64/jigdo-bd/debian-${last_version}-amd64-BD-1.jigdo | gunzip | awk -F= '/snapshot.debian.org/ {print $2}' | cut -d ' ' -f 1)
     fi
 
     sed -i "s;_REPOSITORY_;${repository};" $version/Dockerfile
