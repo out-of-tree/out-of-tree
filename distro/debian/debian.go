@@ -236,7 +236,7 @@ func repositories(release Release) (repos []string) {
 
 	repo("debian", "")
 	repo("debian", "-updates")
-	if d.release <= 7 {
+	if release <= 7 {
 		repo("debian", "-backports")
 	}
 	repo("debian-security", "/updates")
