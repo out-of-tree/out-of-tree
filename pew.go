@@ -545,12 +545,12 @@ func copyTest(q *qemu.System, testPath string, ka config.Artifact) (
 }
 
 func copyStandardModules(q *qemu.System, ki distro.KernelInfo) (err error) {
-	_, err = q.Command("root", "mkdir -p /lib/modules/"+ki.KernelRelease)
+	_, err = q.Command("root", "mkdir -p /lib/modules/"+ki.KernelVersion)
 	if err != nil {
 		return
 	}
 
-	remotePath := "/lib/modules/" + ki.KernelRelease + "/"
+	remotePath := "/lib/modules/" + ki.KernelVersion + "/"
 
 	err = q.CopyDirectory("root", ki.ModulesPath+"/kernel", remotePath+"/kernel")
 	if err != nil {
