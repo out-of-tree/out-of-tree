@@ -260,7 +260,7 @@ func (d Debian) runs() (commands []string) {
 	pkglist := []string{
 		"wget", "build-essential", "libelf-dev", "git",
 		"kmod", "linux-base", "initramfs-tools", "libssl-dev",
-		"'^(gcc-[0-9].[0-9]|gcc-[0-9])$'",
+		"'^(gcc-[0-9].[0-9]|gcc-[0-9]|gcc-[1-9][0-9])$'",
 	}
 
 	if d.release < 9 {
