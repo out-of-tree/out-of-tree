@@ -263,9 +263,14 @@ func (d Debian) runs() (commands []string) {
 
 	cmdf("apt-get update || apt-get update || apt-get update")
 
+	// by default Debian backports repositories have a lower
+	// priority than stable, so we should specify it manually
+	cmdf("apt-get -y install -t %s-backports initramfs-tools",
+		d.release.Name())
+
 	pkglist := []string{
 		"wget", "build-essential", "libelf-dev", "git",
-		"kmod", "linux-base", "initramfs-tools", "libssl-dev",
+		"kmod", "linux-base", "libssl-dev",
 		"'^(gcc-[0-9].[0-9]|gcc-[0-9]|gcc-[1-9][0-9])$'",
 	}
 
