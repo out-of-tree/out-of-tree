@@ -119,7 +119,7 @@ func NewSystem(arch arch, kernel Kernel, drivePath string) (q *System, err error
 	// Default values
 	q.Cpus = 1
 	q.Memory = 512 // megabytes
-	q.SSH.Retries = 16
+	q.SSH.Retries = 4
 	q.SSH.RetryTimeout = time.Second / 4
 
 	return
