@@ -341,7 +341,7 @@ func (q *System) Stop() {
 	}
 }
 
-func (q System) WaitForSSH(timeout time.Duration) error {
+func (q *System) WaitForSSH(timeout time.Duration) error {
 	for start := time.Now(); time.Since(start) < timeout; {
 		time.Sleep(time.Second / 4)
 
