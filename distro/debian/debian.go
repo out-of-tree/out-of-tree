@@ -273,11 +273,6 @@ func (d Debian) runs() (commands []string) {
 
 	if d.release >= 8 {
 		pkglist = append(pkglist, "initramfs-tools")
-	} else {
-		// by default Debian backports repositories have a lower
-		// priority than stable, so we should specify it manually
-		cmdf("apt-get -y install -t %s-backports initramfs-tools",
-			d.release.Name())
 	}
 
 	if d.release < 9 {
@@ -292,6 +287,28 @@ func (d Debian) runs() (commands []string) {
 	cmdf("timeout 5m apt-get install -y %s "+
 		"|| timeout 10m apt-get install -y %s "+
 		"|| apt-get install -y %s", packages, packages, packages)
+
+	if d.release == 7 {
+		// by default Debian backports repositories have a lower
+		// priority than stable, so we should specify it manually
+		cmdf("apt-get -y install -t %s-backports "+
+			"initramfs-tools", d.release.Name())
+
+		// We need newer libc for deb8*~bpo70+1
+		format := "deb [check-valid-until=no trusted=yes] " +
+			"http://snapshot.debian.org/archive/debian/%s " +
+			"jessie main"
+		// Keep it here not in repos to have apt-priority close
+		repo := fmt.Sprintf(format, "20190321T212815Z")
+		cmdf("echo '%s' >> /etc/apt/sources.list", repo)
+		cmdf("echo 'Package: *' >> /etc/apt/preferences.d/jessie")
+		cmdf("echo 'Pin: release a=jessie' >> /etc/apt/preferences.d/jessie")
+		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/jessie")
+
+		cmdf("apt-get -y update")
+
+		cmdf("apt-get -y install -t jessie libc6")
+	}
 
 	cmdf("mkdir -p /lib/modules")
 
