@@ -408,7 +408,13 @@ func (q System) Command(user, cmd string) (output string, err error) {
 		flog.Debug().Err(err).Msg("ssh connection")
 		return
 	}
-	defer client.Close()
+	defer func() {
+		if client != nil {
+			client.Close()
+		} else {
+			log.Debug().Msg("why client is nil?")
+		}
+	}()
 
 	session, err := client.NewSession()
 	if err != nil {
