@@ -1,4 +1,4 @@
-FROM debian:_VERSION_
+FROM debian:_RELEASE_
 
 ENV DEBIAN_FRONTEND=noninteractive
 
