@@ -431,7 +431,7 @@ func (d Debian) Install(pkgname string, headers bool) (err error) {
 
 	cmds = append(cmds, "cp -r /boot /target/")
 	cmds = append(cmds, "cp -r /lib/modules /target/lib/")
-	cmds = append(cmds, "cp -r /usr/src /target/usr/")
+	cmds = append(cmds, "cp -rL /usr/src /target/usr/")
 
 	_, err = c.Run("", cmds)
 	if err != nil {
