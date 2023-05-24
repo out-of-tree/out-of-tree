@@ -1,12 +1,10 @@
 package debian
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -70,7 +68,7 @@ func (d Debian) Packages() (packages []string, err error) {
 		p := dk.Image.Deb.Name[:len(dk.Image.Deb.Name)-4] // w/o .deb
 
 		var kr Release
-		kr, err = kernelRelease(p)
+		kr, err = kernelRelease(dk)
 		if err != nil {
 			log.Warn().Err(err).Msg("")
 			continue
@@ -139,44 +137,51 @@ func ReleaseFromString(s string) (r Release) {
 		r = Buster
 	case "11", "bullseye":
 		r = Bullseye
+	case "12", "bookworm":
+		r = Bookworm
 	default:
 		r = None
 	}
 	return
 }
 
-func kernelRelease(deb string) (r Release, err error) {
-	// linux-image-4.17.0-2-amd64 -> 4.17
-	re := regexp.MustCompile(`([0-9]*\.[0-9]*)`)
-	sver := re.FindString(deb)
-	if sver == "" {
-		err = errors.New("empty result")
-		return
-	}
-	version := kver(sver)
+func kernelRelease(dk DebianKernel) (r Release, err error) {
+	var gcc string
+	for _, dep := range dk.Dependencies {
+		if !strings.HasPrefix(dep.Name, "linux-compiler-gcc-") {
+			continue
+		}
 
-	if version.LessThan(kver("3.0-rc0")) {
-		err = errors.New("not supported")
-		return
+		gcc = strings.Replace(dep.Name, "linux-compiler-gcc-", "", -1)
+		gcc = strings.Replace(gcc, "-x86", "", -1)
+
+		break
 	}
 
-	if version.LessThan(kver("3.8-rc0")) {
-		// Wheezy 3.2
-		// >=3.8 breaks initramfs-tools << 0.110~
-		// Wheezy initramfs-tools version is 0.109.1
+	switch gcc {
+	case "", "4.4", "4.6", "4.7":
+		// Note that we are catching an empty string, which
+		// means there is no linux-compiler-gcc- package
+		// present, which is the case with old Debian
+		// kernels. As the MR API only returns kernels from
+		// Wheezy onwards, we can safely assume that this is
+		// the correct release.
 		r = Wheezy
-	} else if version.LessThan(kver("4.9-rc0")) {
-		// Jessie 3.16
+	case "4.8", "4.9":
 		r = Jessie
-	} else if version.LessThan(kver("4.19-rc0")) {
-		// Stretch 4.9
+	case "5":
+		// No kernels compiled with gcc-5 have reached stable
+		r = None
+	case "6":
 		r = Stretch
-	} else if version.LessThan(kver("5.10-rc0")) {
-		// Buster 4.19
+	case "7", "8":
 		r = Buster
-	} else {
-		// Bullseye 5.10
+	case "9", "10":
 		r = Bullseye
+	case "11", "12":
+		r = Bookworm
+	default:
+		err = fmt.Errorf("unknown release with gcc-%s", gcc)
 	}
 
 	return
