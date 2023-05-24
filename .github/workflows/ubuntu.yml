@@ -113,7 +113,8 @@ jobs:
           { distro: Debian, release: 8 },
           { distro: Debian, release: 9 },
           { distro: Debian, release: 10 },
-          { distro: Debian, release: 11 }
+          { distro: Debian, release: 11 },
+          { distro: Debian, release: 12 }
           ]
 
     steps:

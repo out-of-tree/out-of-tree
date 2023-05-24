@@ -24,6 +24,7 @@ func init() {
 		Stretch,
 		Buster,
 		Bullseye,
+		Bookworm,
 	}
 
 	for _, release := range releases {
