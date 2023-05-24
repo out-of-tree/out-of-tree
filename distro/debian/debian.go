@@ -236,7 +236,9 @@ func repositories(release Release) (repos []string) {
 
 	repo("debian", "")
 	repo("debian", "-updates")
-	repo("debian", "-backports")
+	if d.release <= 7 {
+		repo("debian", "-backports")
+	}
 	repo("debian-security", "/updates")
 
 	return
@@ -263,15 +265,19 @@ func (d Debian) runs() (commands []string) {
 
 	cmdf("apt-get update || apt-get update || apt-get update")
 
-	// by default Debian backports repositories have a lower
-	// priority than stable, so we should specify it manually
-	cmdf("apt-get -y install -t %s-backports initramfs-tools",
-		d.release.Name())
-
 	pkglist := []string{
 		"wget", "build-essential", "libelf-dev", "git",
 		"kmod", "linux-base", "libssl-dev",
 		"'^(gcc-[0-9].[0-9]|gcc-[0-9]|gcc-[1-9][0-9])$'",
+	}
+
+	if d.release >= 8 {
+		pkglist = append(pkglist, "initramfs-tools")
+	} else {
+		// by default Debian backports repositories have a lower
+		// priority than stable, so we should specify it manually
+		cmdf("apt-get -y install -t %s-backports initramfs-tools",
+			d.release.Name())
 	}
 
 	if d.release < 9 {
