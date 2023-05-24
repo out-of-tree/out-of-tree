@@ -374,13 +374,17 @@ func (q *System) WaitForSSH(timeout time.Duration) error {
 	return errors.New("no ssh (timeout)")
 }
 
-func (q System) ssh(user string) (client *ssh.Client, err error) {
+func (q *System) ssh(user string) (client *ssh.Client, err error) {
 	cfg := &ssh.ClientConfig{
 		User:            user,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
 	for retries := q.SSH.Retries; retries > 0; retries-- {
+		if q.Died {
+			return
+		}
+
 		client, err = ssh.Dial("tcp", q.SSH.AddrPort, cfg)
 		if err == nil {
 			break
@@ -512,8 +516,12 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 	return
 }
 
-func (q System) scpWithRetry(user, localPath, remotePath string, recursive bool) (err error) {
+func (q *System) scpWithRetry(user, localPath, remotePath string, recursive bool) (err error) {
 	for retries := q.SSH.Retries; retries > 0; retries-- {
+		if q.Died {
+			return
+		}
+
 		err = q.scp(user, localPath, remotePath, recursive)
 		if err == nil {
 			break
