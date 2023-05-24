@@ -33,6 +33,10 @@ var Timeout = time.Hour
 
 var Commands []config.DockerCommand
 
+// Not thread-safe, but for our case there is no cmdline parameters
+// to update separate containers anyway
+var Update = false
+
 type Image struct {
 	Name   string
 	Distro distro.Distro
@@ -152,6 +156,10 @@ func (c Container) Name() string {
 }
 
 func (c Container) Exist() (yes bool) {
+	if Update {
+		return false
+	}
+
 	cmd := exec.Command(Runtime, "images", "-q", c.name)
 
 	c.Log.Debug().Msgf("run %v", cmd)
@@ -231,6 +239,9 @@ func (c Container) Build(image string, envs, runs []string) (err error) {
 
 func (c Container) build(imagePath string) (output string, err error) {
 	args := []string{"build"}
+	if Update {
+		args = append(args, "--pull", "--no-cache")
+	}
 	args = append(args, "-t", c.name, imagePath)
 
 	cmd := exec.Command(Runtime, args...)

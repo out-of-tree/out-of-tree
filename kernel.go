@@ -128,7 +128,9 @@ func (cmd *KernelCmd) GenKernel(km config.Target, pkg string, max *int) {
 }
 
 func (cmd *KernelCmd) Generate(g *Globals, km config.Target, max int) (err error) {
-	// TODO cmd.Update
+	if cmd.Update {
+		container.Update = true
+	}
 
 	cmd.kcfg, err = config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
