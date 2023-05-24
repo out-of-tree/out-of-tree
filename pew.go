@@ -90,9 +90,8 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 		return
 	}
 
-	if len(ka.Targets) == 0 {
-		log.Debug().Msg("no targets defined in .out-of-tree.toml, " +
-			"will use all available")
+	if len(ka.Targets) == 0 || cmd.Guess {
+		log.Debug().Msg("will use all available targets")
 
 		for _, dist := range distro.List() {
 			ka.Targets = append(ka.Targets, config.Target{
@@ -116,13 +115,6 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 		}
 
 		ka.Targets = []config.Target{km}
-	}
-
-	if cmd.Guess {
-		ka.Targets, err = genAllKernels()
-		if err != nil {
-			return
-		}
 	}
 
 	if cmd.QemuTimeout != 0 {
@@ -863,16 +855,6 @@ func kernelMask(kernel string) (km config.Target, err error) {
 	km = config.Target{
 		Distro: distro.Distro{ID: dt},
 		Kernel: config.Kernel{Regex: parts[1]},
-	}
-	return
-}
-
-func genAllKernels() (sk []config.Target, err error) {
-	for _, id := range distro.IDs {
-		sk = append(sk, config.Target{
-			Distro: distro.Distro{ID: id},
-			Kernel: config.Kernel{Regex: ".*"},
-		})
 	}
 	return
 }
