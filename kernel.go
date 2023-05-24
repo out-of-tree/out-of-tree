@@ -37,6 +37,8 @@ type KernelCmd struct {
 	Genall      KernelGenallCmd      `cmd:"" help:"generate all kernels for distro"`
 	Install     KernelInstallCmd     `cmd:"" help:"install specific kernel"`
 	ConfigRegen KernelConfigRegenCmd `cmd:"" help:"regenerate config"`
+
+	shutdown bool
 }
 
 func (cmd KernelCmd) UpdateConfig() (err error) {
@@ -74,8 +76,33 @@ func (cmd KernelCmd) UpdateConfig() (err error) {
 	return
 }
 
-func (cmd KernelCmd) Generate(g *Globals, km config.Target, max int,
-	shutdown *bool) (err error) {
+func (cmd *KernelCmd) GenKernel(km config.Target, pkg string, max *int) {
+	var attempt int
+	for {
+		attempt++
+
+		if cmd.shutdown {
+			return
+		}
+
+		// TODO cmd.Force
+		err := km.Distro.Install(pkg, !cmd.NoHeaders)
+		if err == nil {
+			*max--
+			break
+		} else if attempt >= cmd.Retries {
+			log.Error().Err(err).Msg("install kernel")
+			log.Debug().Msg("skip")
+			break
+		} else {
+			log.Warn().Err(err).Msg("install kernel")
+			time.Sleep(time.Second)
+			log.Info().Msg("retry")
+		}
+	}
+}
+
+func (cmd *KernelCmd) Generate(g *Globals, km config.Target, max int) (err error) {
 
 	// TODO cmd.Update
 
@@ -86,12 +113,12 @@ func (cmd KernelCmd) Generate(g *Globals, km config.Target, max int,
 
 	_, err = kernel.GenRootfsImage(container.Image{Name: km.DockerName()},
 		!cmd.NoDownload)
-	if err != nil || *shutdown {
+	if err != nil || cmd.shutdown {
 		return
 	}
 
 	pkgs, err := kernel.MatchPackages(km)
-	if err != nil || *shutdown {
+	if err != nil || cmd.shutdown {
 		return
 	}
 
@@ -102,7 +129,7 @@ func (cmd KernelCmd) Generate(g *Globals, km config.Target, max int,
 	swg := sizedwaitgroup.New(cmd.Threads)
 
 	for i, pkg := range pkgs {
-		if *shutdown {
+		if cmd.shutdown {
 			err = nil
 			return
 		}
@@ -117,33 +144,9 @@ func (cmd KernelCmd) Generate(g *Globals, km config.Target, max int,
 
 		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
 
-		// FIXME
 		go func(p string) {
 			defer swg.Done()
-			var attempt int
-			for {
-				attempt++
-
-				if *shutdown {
-					err = nil
-					return
-				}
-
-				// TODO cmd.Force
-				err = km.Distro.Install(p, !cmd.NoHeaders)
-				if err == nil {
-					max--
-					break
-				} else if attempt >= cmd.Retries {
-					log.Error().Err(err).Msg("install kernel")
-					log.Debug().Msg("skip")
-					break
-				} else {
-					log.Warn().Err(err).Msg("install kernel")
-					time.Sleep(time.Second)
-					log.Info().Msg("retry")
-				}
-			}
+			cmd.GenKernel(km, p, &max)
 		}(pkg)
 	}
 	swg.Wait()
@@ -214,8 +217,7 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		return
 	}
 
-	shutdown := false
-	kernel.SetSigintHandler(&shutdown)
+	kernel.SetSigintHandler(&kernelCmd.shutdown)
 
 	for _, sk := range ka.Targets {
 		if sk.Distro.Release == "" {
@@ -223,11 +225,11 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			return
 		}
 
-		err = kernelCmd.Generate(g, sk, cmd.Max, &shutdown)
+		err = kernelCmd.Generate(g, sk, cmd.Max)
 		if err != nil {
 			return
 		}
-		if shutdown {
+		if kernelCmd.shutdown {
 			break
 		}
 	}
@@ -246,14 +248,13 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		return
 	}
 
-	shutdown := false
-	kernel.SetSigintHandler(&shutdown)
+	kernel.SetSigintHandler(&kernelCmd.shutdown)
 
 	km := config.Target{
 		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
 		Kernel: config.Kernel{Regex: ".*"},
 	}
-	err = kernelCmd.Generate(g, km, math.MaxUint32, &shutdown)
+	err = kernelCmd.Generate(g, km, math.MaxUint32)
 	if err != nil {
 		return
 	}
@@ -273,14 +274,13 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		return
 	}
 
-	shutdown := false
-	kernel.SetSigintHandler(&shutdown)
+	kernel.SetSigintHandler(&kernelCmd.shutdown)
 
 	km := config.Target{
 		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
 		Kernel: config.Kernel{Regex: cmd.Kernel},
 	}
-	err = kernelCmd.Generate(g, km, math.MaxUint32, &shutdown)
+	err = kernelCmd.Generate(g, km, math.MaxUint32)
 	if err != nil {
 		return
 	}
