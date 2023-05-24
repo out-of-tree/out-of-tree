@@ -278,6 +278,7 @@ func getLogByID(db *sql.DB, id int) (le logEntry, err error) {
 }
 
 func getLastLog(db *sql.DB) (le logEntry, err error) {
+	var internalErr sql.NullString
 	err = db.QueryRow("SELECT MAX(id), time, name, type, tag, "+
 		"distro_type, distro_release, kernel_release, "+
 		"internal_err, "+
@@ -288,12 +289,18 @@ func getLastLog(db *sql.DB) (le logEntry, err error) {
 		"FROM log").Scan(&le.ID, &le.Timestamp,
 		&le.Name, &le.Type, &le.Tag,
 		&le.Distro.ID, &le.Distro.Release, &le.KernelRelease,
-		&le.InternalErrorString,
+		&internalErr,
 		&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 		&le.Build.Output, &le.Run.Output, &le.Test.Output,
 		&le.Stdout, &le.Stderr,
 		&le.KernelPanic, &le.KilledByTimeout,
 	)
+
+	if err != nil {
+		return
+	}
+
+	le.InternalErrorString = internalErr.String
 	return
 }
 
