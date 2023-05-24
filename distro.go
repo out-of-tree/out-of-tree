@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/cavaliergopher/grab/v3"
@@ -191,11 +190,6 @@ type DistroListCmd struct{}
 
 func (cmd *DistroListCmd) Run() (err error) {
 	for _, d := range distro.List() {
-		if d.ID == distro.Debian {
-			d.Release = fmt.Sprintf("%d %s",
-				debian.ReleaseFromString(d.Release),
-				strings.Title(d.Release))
-		}
 		fmt.Println(d.ID, d.Release)
 	}
 	return
