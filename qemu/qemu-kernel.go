@@ -382,6 +382,7 @@ func (q *System) ssh(user string) (client *ssh.Client, err error) {
 
 	for retries := q.SSH.Retries; retries > 0; retries-- {
 		if q.Died {
+			err = errors.New("qemu is dead")
 			return
 		}
 
@@ -519,6 +520,7 @@ func (q System) scp(user, localPath, remotePath string, recursive bool) (err err
 func (q *System) scpWithRetry(user, localPath, remotePath string, recursive bool) (err error) {
 	for retries := q.SSH.Retries; retries > 0; retries-- {
 		if q.Died {
+			err = errors.New("qemu is dead")
 			return
 		}
 
