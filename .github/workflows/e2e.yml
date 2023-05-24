@@ -123,6 +123,8 @@ jobs:
 
         ssh root@$IP systemctl daemon-reload
 
+        ssh root@$IP setenforce 0
+
         ssh root@$IP systemctl start test --no-block
 
         while ! ssh root@$IP systemctl show test -p SubState --value | grep -E '(failed|exited)'
