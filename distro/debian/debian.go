@@ -119,8 +119,12 @@ var ReleaseStrings = [...]string{
 	"bookworm",
 }
 
-func (cn Release) String() string {
+func (cn Release) Name() string {
 	return ReleaseStrings[cn]
+}
+
+func (cn Release) String() string {
+	return fmt.Sprintf("%d", cn)
 }
 
 func ReleaseFromString(s string) (r Release) {
@@ -220,7 +224,7 @@ func repositories(release Release) (repos []string) {
 		format := "deb [check-valid-until=no trusted=yes] " +
 			"http://snapshot.debian.org/archive/%s/%s " +
 			"%s%s main"
-		r := fmt.Sprintf(format, archive, snapshot, release, s)
+		r := fmt.Sprintf(format, archive, snapshot, release.Name(), s)
 		repos = append(repos, r)
 	}
 
