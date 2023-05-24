@@ -18,7 +18,7 @@ import (
 )
 
 // Change on ANY database update
-const currentDatabaseVersion = 2
+const currentDatabaseVersion = 3
 
 const versionField = "db_version"
 
@@ -46,6 +46,8 @@ func createLogTable(db *sql.DB) (err error) {
 		distro_type	TEXT,
 		distro_release	TEXT,
 		kernel_release	TEXT,
+
+		internal_err	TEXT,
 
 		build_output	TEXT,
 		build_ok	BOOLEAN,
@@ -126,13 +128,14 @@ func addToLog(db *sql.DB, q *qemu.System, ka config.Artifact,
 
 	stmt, err := db.Prepare("INSERT INTO log (name, type, tag, " +
 		"distro_type, distro_release, kernel_release, " +
+		"internal_err, " +
 		"build_output, build_ok, " +
 		"run_output, run_ok, " +
 		"test_output, test_ok, " +
 		"qemu_stdout, qemu_stderr, " +
 		"kernel_panic, timeout_kill) " +
 		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, " +
-		"$10, $11, $12, $13, $14, $15, $16);")
+		"$10, $11, $12, $13, $14, $15, $16, $17);")
 	if err != nil {
 		return
 	}
@@ -142,6 +145,7 @@ func addToLog(db *sql.DB, q *qemu.System, ka config.Artifact,
 	_, err = stmt.Exec(
 		ka.Name, ka.Type, tag,
 		ki.Distro.ID, ki.Distro.Release, ki.KernelRelease,
+		res.InternalErrorString,
 		res.Build.Output, res.Build.Ok,
 		res.Run.Output, res.Run.Ok,
 		res.Test.Output, res.Test.Ok,
@@ -158,6 +162,7 @@ func addToLog(db *sql.DB, q *qemu.System, ka config.Artifact,
 func getAllLogs(db *sql.DB, tag string, num int) (les []logEntry, err error) {
 	stmt, err := db.Prepare("SELECT id, time, name, type, tag, " +
 		"distro_type, distro_release, kernel_release, " +
+		"internal_err, " +
 		"build_ok, run_ok, test_ok, kernel_panic, " +
 		"timeout_kill FROM log ORDER BY datetime(time) DESC " +
 		"LIMIT $1")
@@ -173,16 +178,20 @@ func getAllLogs(db *sql.DB, tag string, num int) (les []logEntry, err error) {
 	defer rows.Close()
 
 	for rows.Next() {
+		var internalErr sql.NullString
 		le := logEntry{}
 		err = rows.Scan(&le.ID, &le.Timestamp,
 			&le.Name, &le.Type, &le.Tag,
 			&le.Distro.ID, &le.Distro.Release, &le.KernelRelease,
+			&internalErr,
 			&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 			&le.KernelPanic, &le.KilledByTimeout,
 		)
 		if err != nil {
 			return
 		}
+
+		le.InternalErrorString = internalErr.String
 
 		if tag == "" || tag == le.Tag {
 			les = append(les, le)
@@ -197,6 +206,7 @@ func getAllArtifactLogs(db *sql.DB, tag string, num int, ka config.Artifact) (
 
 	stmt, err := db.Prepare("SELECT id, time, name, type, tag, " +
 		"distro_type, distro_release, kernel_release, " +
+		"internal_err, " +
 		"build_ok, run_ok, test_ok, kernel_panic, " +
 		"timeout_kill FROM log WHERE name=$1 AND type=$2 " +
 		"ORDER BY datetime(time) DESC LIMIT $3")
@@ -212,16 +222,20 @@ func getAllArtifactLogs(db *sql.DB, tag string, num int, ka config.Artifact) (
 	defer rows.Close()
 
 	for rows.Next() {
+		var internalErr sql.NullString
 		le := logEntry{}
 		err = rows.Scan(&le.ID, &le.Timestamp,
 			&le.Name, &le.Type, &le.Tag,
 			&le.Distro.ID, &le.Distro.Release, &le.KernelRelease,
+			&internalErr,
 			&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 			&le.KernelPanic, &le.KilledByTimeout,
 		)
 		if err != nil {
 			return
 		}
+
+		le.InternalErrorString = internalErr.String
 
 		if tag == "" || tag == le.Tag {
 			les = append(les, le)
@@ -234,6 +248,7 @@ func getAllArtifactLogs(db *sql.DB, tag string, num int, ka config.Artifact) (
 func getLogByID(db *sql.DB, id int) (le logEntry, err error) {
 	stmt, err := db.Prepare("SELECT id, time, name, type, tag, " +
 		"distro_type, distro_release, kernel_release, " +
+		"internal_err, " +
 		"build_ok, run_ok, test_ok, " +
 		"build_output, run_output, test_output, " +
 		"qemu_stdout, qemu_stderr, " +
@@ -244,20 +259,28 @@ func getLogByID(db *sql.DB, id int) (le logEntry, err error) {
 	}
 	defer stmt.Close()
 
+	var internalErr sql.NullString
 	err = stmt.QueryRow(id).Scan(&le.ID, &le.Timestamp,
 		&le.Name, &le.Type, &le.Tag,
 		&le.Distro.ID, &le.Distro.Release, &le.KernelRelease,
+		&internalErr,
 		&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 		&le.Build.Output, &le.Run.Output, &le.Test.Output,
 		&le.Stdout, &le.Stderr,
 		&le.KernelPanic, &le.KilledByTimeout,
 	)
+	if err != nil {
+		return
+	}
+
+	le.InternalErrorString = internalErr.String
 	return
 }
 
 func getLastLog(db *sql.DB) (le logEntry, err error) {
 	err = db.QueryRow("SELECT MAX(id), time, name, type, tag, "+
 		"distro_type, distro_release, kernel_release, "+
+		"internal_err, "+
 		"build_ok, run_ok, test_ok, "+
 		"build_output, run_output, test_output, "+
 		"qemu_stdout, qemu_stderr, "+
@@ -265,6 +288,7 @@ func getLastLog(db *sql.DB) (le logEntry, err error) {
 		"FROM log").Scan(&le.ID, &le.Timestamp,
 		&le.Name, &le.Type, &le.Tag,
 		&le.Distro.ID, &le.Distro.Release, &le.KernelRelease,
+		&le.InternalErrorString,
 		&le.Build.Ok, &le.Run.Ok, &le.Test.Ok,
 		&le.Build.Output, &le.Run.Output, &le.Test.Output,
 		&le.Stdout, &le.Stderr,
@@ -324,6 +348,19 @@ func openDatabase(path string) (db *sql.DB, err error) {
 		}
 
 		version = 2
+
+	} else if version == 2 {
+		_, err = db.Exec(`ALTER TABLE log ADD internal_err TEXT`)
+		if err != nil {
+			return
+		}
+
+		err = metaSetValue(db, versionField, "3")
+		if err != nil {
+			return
+		}
+
+		version = 3
 	}
 
 	if version != currentDatabaseVersion {

@@ -214,7 +214,11 @@ func logLogEntry(l logEntry) {
 	artifactInfo := fmt.Sprintf("{[%s] %s}", l.Type, l.Name)
 
 	colored := ""
-	if l.Type == config.KernelExploit {
+	if l.InternalErrorString != "" {
+		colored = aurora.Sprintf("[%4d %4s] [%s] %40s %40s: %s",
+			l.ID, l.Tag, l.Timestamp, artifactInfo, distroInfo,
+			genOkFail("", false))
+	} else if l.Type == config.KernelExploit {
 		colored = aurora.Sprintf("[%4d %4s] [%s] %40s %40s: %s %s",
 			l.ID, l.Tag, l.Timestamp, artifactInfo, distroInfo,
 			genOkFail("BUILD", l.Build.Ok),

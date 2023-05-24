@@ -377,7 +377,8 @@ type phasesResult struct {
 		Ok     bool
 	}
 
-	InternalError error
+	InternalError       error
+	InternalErrorString string
 }
 
 func copyFile(sourcePath, destinationPath string) (err error) {
@@ -401,12 +402,14 @@ func copyFile(sourcePath, destinationPath string) (err error) {
 func dumpResult(q *qemu.System, ka config.Artifact, ki distro.KernelInfo,
 	res *phasesResult, dist, tag, binary string, db *sql.DB) {
 
+	// TODO refactor
+
 	if res.InternalError != nil {
 		q.Log.Error().Err(res.InternalError).
 			Str("panic", fmt.Sprintf("%v", q.KernelPanic)).
 			Str("timeout", fmt.Sprintf("%v", q.KilledByTimeout)).
 			Msg("internal")
-		return
+		res.InternalErrorString = res.InternalError.Error()
 	}
 
 	colored := ""
@@ -432,10 +435,12 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki distro.KernelInfo,
 		additional = "(timeout)"
 	}
 
-	if additional != "" {
-		q.Log.Info().Msgf("%v %v", colored, additional)
-	} else {
-		q.Log.Info().Msgf("%v", colored)
+	if res.InternalError == nil {
+		if additional != "" {
+			q.Log.Info().Msgf("%v %v", colored, additional)
+		} else {
+			q.Log.Info().Msgf("%v", colored)
+		}
 	}
 
 	err := addToLog(db, q, ka, ki, res, tag)
