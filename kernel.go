@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/naoina/toml"
@@ -39,6 +40,7 @@ type KernelCmd struct {
 	ConfigRegen KernelConfigRegenCmd `cmd:"" help:"regenerate config"`
 
 	shutdown bool
+	kcfg     config.KernelConfig
 }
 
 func (cmd KernelCmd) UpdateConfig() (err error) {
@@ -77,6 +79,29 @@ func (cmd KernelCmd) UpdateConfig() (err error) {
 }
 
 func (cmd *KernelCmd) GenKernel(km config.Target, pkg string, max *int) {
+	flog := log.With().
+		Str("kernel", pkg).
+		Str("distro", km.Distro.String()).
+		Logger()
+
+	reinstall := false
+	for _, kinfo := range cmd.kcfg.Kernels {
+		if strings.Contains(pkg, kinfo.KernelVersion) {
+			if !cmd.Force {
+				flog.Info().Msg("already installed")
+				return
+			}
+			reinstall = true
+			break
+		}
+	}
+
+	if reinstall {
+		flog.Info().Msg("reinstall")
+	} else {
+		flog.Info().Msg("install")
+	}
+
 	var attempt int
 	for {
 		attempt++
@@ -85,31 +110,35 @@ func (cmd *KernelCmd) GenKernel(km config.Target, pkg string, max *int) {
 			return
 		}
 
-		// TODO cmd.Force
 		err := km.Distro.Install(pkg, !cmd.NoHeaders)
 		if err == nil {
 			*max--
+			flog.Info().Msg("success")
 			break
 		} else if attempt >= cmd.Retries {
-			log.Error().Err(err).Msg("install kernel")
-			log.Debug().Msg("skip")
+			flog.Error().Err(err).Msg("install kernel")
+			flog.Debug().Msg("skip")
 			break
 		} else {
-			log.Warn().Err(err).Msg("install kernel")
+			flog.Warn().Err(err).Msg("install kernel")
 			time.Sleep(time.Second)
-			log.Info().Msg("retry")
+			flog.Info().Msg("retry")
 		}
 	}
 }
 
 func (cmd *KernelCmd) Generate(g *Globals, km config.Target, max int) (err error) {
-
 	// TODO cmd.Update
+
+	cmd.kcfg, err = config.ReadKernelConfig(g.Config.Kernels)
+	if err != nil {
+		log.Debug().Err(err).Msg("read kernels config")
+	}
 
 	container.Commands = g.Config.Docker.Commands
 	container.Registry = g.Config.Docker.Registry
 
-	log.Info().Msgf("Generating for kernel mask %v", km)
+	log.Info().Msgf("Generating for target %v", km)
 
 	_, err = kernel.GenRootfsImage(container.Image{Name: km.DockerName()},
 		!cmd.NoDownload)

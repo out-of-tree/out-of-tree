@@ -35,6 +35,10 @@ type Distro struct {
 	Release string
 }
 
+func (d Distro) String() string {
+	return d.ID.String() + " " + d.Release
+}
+
 func (d Distro) Packages() (packages []string, err error) {
 	for _, dd := range distros {
 		if d.ID != None && d.ID != dd.Distro().ID {
