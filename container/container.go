@@ -208,7 +208,16 @@ func (c Container) Build(image string, envs, runs []string) (err error) {
 		return
 	}
 
-	c.Log.Debug().Msg("generate")
+	if c.Exist() {
+		c.Log.Info().Msg("update")
+		err = os.WriteFile(cfile, []byte(cf), os.ModePerm)
+		if err != nil {
+			return
+		}
+
+	} else {
+		c.Log.Info().Msg("build")
+	}
 
 	output, err := c.build(cdir)
 	if err != nil {
@@ -216,7 +225,7 @@ func (c Container) Build(image string, envs, runs []string) (err error) {
 		return
 	}
 
-	c.Log.Debug().Msg("success")
+	c.Log.Info().Msg("success")
 	return
 }
 
