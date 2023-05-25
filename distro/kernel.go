@@ -29,4 +29,7 @@ type KernelInfo struct {
 
 	// Debug symbols
 	VmlinuxPath string
+
+	// Package name, not mandatory (yet)
+	Package string
 }

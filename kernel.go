@@ -86,7 +86,14 @@ func (cmd *KernelCmd) GenKernel(km config.Target, pkg string, max *int) {
 
 	reinstall := false
 	for _, kinfo := range cmd.kcfg.Kernels {
-		if strings.Contains(pkg, kinfo.KernelVersion) {
+		var found bool
+		if kinfo.Distro.ID == distro.Debian { // FIXME
+			found = pkg == kinfo.Package
+		} else {
+			found = strings.Contains(pkg, kinfo.KernelVersion)
+		}
+
+		if found {
 			if !cmd.Force {
 				flog.Info().Msg("already installed")
 				return

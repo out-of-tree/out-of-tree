@@ -379,6 +379,8 @@ func (d Debian) Kernels() (kernels []distro.KernelInfo, err error) {
 			ModulesPath: modules,
 
 			RootFS: rootfs,
+
+			Package: pkgname,
 		}
 
 		kernels = append(kernels, ki)
