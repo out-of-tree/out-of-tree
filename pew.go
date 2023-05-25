@@ -493,6 +493,10 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka config.Artifact
 		res.Run.Output, err = q.CopyAndInsmod(res.BuildArtifact)
 		if err != nil {
 			slog.Error().Err(err).Msg(res.Run.Output)
+			// TODO errors.As
+			if strings.Contains(err.Error(), "connection refused") {
+				res.InternalError = err
+			}
 			return
 		}
 		res.Run.Ok = true
