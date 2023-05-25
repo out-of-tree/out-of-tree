@@ -269,8 +269,8 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 }
 
 type KernelGenallCmd struct {
-	Distro string `required:"" help:"distribution"`
-	Ver    string `required:"" help:"distro version"`
+	Distro string `help:"distribution"`
+	Ver    string `help:"distro version"`
 }
 
 func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
@@ -281,13 +281,24 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 
 	kernel.SetSigintHandler(&kernelCmd.shutdown)
 
-	km := config.Target{
-		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
-		Kernel: config.Kernel{Regex: ".*"},
-	}
-	err = kernelCmd.Generate(g, km, math.MaxUint32)
-	if err != nil {
-		return
+	for _, dist := range distro.List() {
+		if distroType != distro.None && distroType != dist.ID {
+			continue
+		}
+
+		if cmd.Ver != "" && dist.Release != cmd.Ver {
+			continue
+		}
+
+		target := config.Target{
+			Distro: dist,
+			Kernel: config.Kernel{Regex: ".*"},
+		}
+
+		err = kernelCmd.Generate(g, target, math.MaxUint32)
+		if err != nil {
+			return
+		}
 	}
 
 	return kernelCmd.UpdateConfig()
