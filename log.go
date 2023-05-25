@@ -257,7 +257,7 @@ func logLogEntry(l logEntry) {
 		additional = "(timeout)"
 	}
 
-	colored := aurora.Sprintf("[%4d %4s] [%s] %-40s %-70s: %s %s",
+	colored := aurora.Sprintf("[%4d %4s] [%s] %s    %-70s: %s %s",
 		l.ID, l.Tag, timestamp, artifactInfo, distroInfo, status,
 		additional)
 
