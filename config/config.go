@@ -24,7 +24,8 @@ type Kernel struct {
 	// To      string
 
 	// prev. ReleaseMask
-	Regex string
+	Regex        string
+	ExcludeRegex string
 }
 
 // Target defines the kernel
@@ -178,7 +179,25 @@ func (ka Artifact) checkSupport(ki distro.KernelInfo, target Target) (
 		}
 	}
 
-	supported, err = regexp.MatchString(target.Kernel.Regex, ki.KernelRelease)
+	r, err := regexp.Compile(target.Kernel.Regex)
+	if err != nil {
+		return
+	}
+
+	exr, err := regexp.Compile(target.Kernel.ExcludeRegex)
+	if err != nil {
+		return
+	}
+
+	if !r.MatchString(ki.KernelRelease) {
+		return
+	}
+
+	if target.Kernel.ExcludeRegex != "" && exr.MatchString(ki.KernelRelease) {
+		return
+	}
+
+	supported = true
 	return
 }
 

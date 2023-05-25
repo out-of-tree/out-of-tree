@@ -33,10 +33,21 @@ func MatchPackages(km config.Target) (packages []string, err error) {
 		return
 	}
 
+	exr, err := regexp.Compile(km.Kernel.ExcludeRegex)
+	if err != nil {
+		return
+	}
+
 	for _, pkg := range pkgs {
-		if r.MatchString(pkg) {
-			packages = append(packages, pkg)
+		if !r.MatchString(pkg) {
+			continue
 		}
+
+		if km.Kernel.ExcludeRegex != "" && exr.MatchString(pkg) {
+			continue
+		}
+
+		packages = append(packages, pkg)
 	}
 
 	return
