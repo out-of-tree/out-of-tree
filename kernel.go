@@ -174,6 +174,12 @@ func (cmd *KernelCmd) Generate(g *Globals, km config.Target, max int) (err error
 
 		swg.Add()
 
+		if cmd.shutdown {
+			err = nil
+			swg.Done()
+			return
+		}
+
 		if max <= 0 {
 			log.Print("Max is reached")
 			swg.Done()
