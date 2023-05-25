@@ -207,6 +207,20 @@ func (cmd *LogMarkdownCmd) Run(g *Globals) (err error) {
 	return
 }
 
+func center(s string, w int) string {
+	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
+}
+
+func genOkFailCentered(name string, ok bool) (aurv aurora.Value) {
+	name = center(name, 10)
+	if ok {
+		aurv = aurora.BgGreen(aurora.Black(name))
+	} else {
+		aurv = aurora.BgRed(aurora.White(aurora.Bold(name)))
+	}
+	return
+}
+
 func logLogEntry(l logEntry) {
 	distroInfo := fmt.Sprintf("%s-%s {%s}", l.Distro.ID,
 		l.Distro.Release, l.KernelRelease)
@@ -215,22 +229,25 @@ func logLogEntry(l logEntry) {
 
 	timestamp := l.Timestamp.Format("2006-01-02 15:04")
 
-	colored := ""
+	var status aurora.Value
 	if l.InternalErrorString != "" {
-		colored = aurora.Sprintf("[%4d %4s] [%s] %20s %-70s: %s",
-			l.ID, l.Tag, timestamp, artifactInfo, distroInfo,
-			genOkFail("", false))
+		status = genOkFailCentered("INTERNAL", false)
 	} else if l.Type == config.KernelExploit {
-		colored = aurora.Sprintf("[%4d %4s] [%s] %20s %-70s: %s %s",
-			l.ID, l.Tag, timestamp, artifactInfo, distroInfo,
-			genOkFail("BUILD", l.Build.Ok),
-			genOkFail("LPE", l.Test.Ok))
+		if l.Build.Ok {
+			status = genOkFailCentered("LPE", l.Test.Ok)
+		} else {
+			status = genOkFailCentered("BUILD", l.Build.Ok)
+		}
 	} else {
-		colored = aurora.Sprintf("[%4d %4s] [%s] %20s %-70s: %s %s %s",
-			l.ID, l.Tag, timestamp, artifactInfo, distroInfo,
-			genOkFail("BUILD", l.Build.Ok),
-			genOkFail("INSMOD", l.Run.Ok),
-			genOkFail("TEST", l.Test.Ok))
+		if l.Build.Ok {
+			if l.Run.Ok {
+				status = genOkFailCentered("TEST", l.Test.Ok)
+			} else {
+				status = genOkFailCentered("INSMOD", l.Run.Ok)
+			}
+		} else {
+			status = genOkFailCentered("BUILD", l.Build.Ok)
+		}
 	}
 
 	additional := ""
@@ -240,11 +257,11 @@ func logLogEntry(l logEntry) {
 		additional = "(timeout)"
 	}
 
-	if additional != "" {
-		fmt.Println(colored, additional)
-	} else {
-		fmt.Println(colored)
-	}
+	colored := aurora.Sprintf("[%4d %4s] [%s] %-40s %-70s: %s %s",
+		l.ID, l.Tag, timestamp, artifactInfo, distroInfo, status,
+		additional)
+
+	fmt.Println(colored)
 }
 
 type runstat struct {
