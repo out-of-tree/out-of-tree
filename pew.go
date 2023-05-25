@@ -353,13 +353,11 @@ func testKernelExploit(q *qemu.System, ka config.Artifact,
 }
 
 func genOkFail(name string, ok bool) (aurv aurora.Value) {
-	state.Overall += 1
 	s := " " + name
 	if name == "" {
 		s = ""
 	}
 	if ok {
-		state.Success += 1
 		s += " SUCCESS "
 		aurv = aurora.BgGreen(aurora.Black(s))
 	} else {
@@ -410,32 +408,37 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki distro.KernelInfo,
 			Str("timeout", fmt.Sprintf("%v", q.KilledByTimeout)).
 			Msg("internal")
 		res.InternalErrorString = res.InternalError.Error()
-	}
+	} else {
+		colored := ""
 
-	colored := ""
-	switch ka.Type {
-	case config.KernelExploit:
-		colored = aurora.Sprintf("%s %s",
-			genOkFail("BUILD", res.Build.Ok),
-			genOkFail("LPE", res.Test.Ok))
-	case config.KernelModule:
-		colored = aurora.Sprintf("%s %s %s",
-			genOkFail("BUILD", res.Build.Ok),
-			genOkFail("INSMOD", res.Run.Ok),
-			genOkFail("TEST", res.Test.Ok))
-	case config.Script:
-		colored = aurora.Sprintf("%s",
-			genOkFail("", res.Test.Ok))
-	}
+		state.Overall += 1
 
-	additional := ""
-	if q.KernelPanic {
-		additional = "(panic)"
-	} else if q.KilledByTimeout {
-		additional = "(timeout)"
-	}
+		if res.Test.Ok {
+			state.Success += 1
+		}
 
-	if res.InternalError == nil {
+		switch ka.Type {
+		case config.KernelExploit:
+			colored = aurora.Sprintf("%s %s",
+				genOkFail("BUILD", res.Build.Ok),
+				genOkFail("LPE", res.Test.Ok))
+		case config.KernelModule:
+			colored = aurora.Sprintf("%s %s %s",
+				genOkFail("BUILD", res.Build.Ok),
+				genOkFail("INSMOD", res.Run.Ok),
+				genOkFail("TEST", res.Test.Ok))
+		case config.Script:
+			colored = aurora.Sprintf("%s",
+				genOkFail("", res.Test.Ok))
+		}
+
+		additional := ""
+		if q.KernelPanic {
+			additional = "(panic)"
+		} else if q.KilledByTimeout {
+			additional = "(timeout)"
+		}
+
 		if additional != "" {
 			q.Log.Info().Msgf("%v %v", colored, additional)
 		} else {
