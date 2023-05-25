@@ -130,7 +130,8 @@ func (centos CentOS) runs() (commands []string) {
 
 	cmdf("yum -y groupinstall 'Development Tools'")
 
-	if centos.release <= 6 {
+	// TODO do not use lexycographical comparison, change to parse int
+	if centos.release <= "6" {
 		cmdf("yum -y install kernel-firmware")
 	} else {
 		cmdf("yum -y install linux-firmware")
