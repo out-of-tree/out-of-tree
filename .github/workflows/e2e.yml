@@ -103,7 +103,7 @@ jobs:
         echo 'distro = { id = "${{ matrix.os.distro }}", release = "${{ matrix.os.release }}" }' >> examples/kernel-module/.out-of-tree.toml
         echo 'kernel = { regex = ".*" }' >> examples/kernel-module/.out-of-tree.toml
 
-        echo 'modprobe uio' >> examples/kernel-module/test.sh
+        echo 'modprobe uio || modprobe 9p' >> examples/kernel-module/test.sh
 
         scp -r examples/kernel-module root@$IP:test
 
