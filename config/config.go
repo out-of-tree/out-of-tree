@@ -165,20 +165,20 @@ type Artifact struct {
 	Preload []PreloadModule
 }
 
-func (ka Artifact) checkSupport(ki distro.KernelInfo, km Target) (
+func (ka Artifact) checkSupport(ki distro.KernelInfo, target Target) (
 	supported bool, err error) {
 
-	if km.Distro.Release == "" {
-		if ki.Distro.ID != km.Distro.ID {
+	if target.Distro.Release == "" {
+		if ki.Distro.ID != target.Distro.ID {
 			return
 		}
 	} else {
-		if !ki.Distro.Equal(km.Distro) {
+		if !ki.Distro.Equal(target.Distro) {
 			return
 		}
 	}
 
-	supported, err = regexp.MatchString(km.Kernel.Regex, ki.KernelRelease)
+	supported, err = regexp.MatchString(target.Kernel.Regex, ki.KernelRelease)
 	return
 }
 
