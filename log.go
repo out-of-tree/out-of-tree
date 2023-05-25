@@ -106,7 +106,7 @@ func (cmd *LogDumpCmd) Run(g *Globals) (err error) {
 	}
 
 	fmt.Println("ID:", l.ID)
-	fmt.Println("Date:", l.Timestamp)
+	fmt.Println("Date:", l.Timestamp.Format("2006-01-02 15:04"))
 	fmt.Println("Tag:", l.Tag)
 	fmt.Println()
 
@@ -213,19 +213,21 @@ func logLogEntry(l logEntry) {
 
 	artifactInfo := fmt.Sprintf("{[%s] %s}", l.Type, l.Name)
 
+	timestamp := l.Timestamp.Format("2006-01-02 15:04")
+
 	colored := ""
 	if l.InternalErrorString != "" {
-		colored = aurora.Sprintf("[%4d %4s] [%s] %40s %40s: %s",
-			l.ID, l.Tag, l.Timestamp, artifactInfo, distroInfo,
+		colored = aurora.Sprintf("[%4d %4s] [%s] %20s %-70s: %s",
+			l.ID, l.Tag, timestamp, artifactInfo, distroInfo,
 			genOkFail("", false))
 	} else if l.Type == config.KernelExploit {
-		colored = aurora.Sprintf("[%4d %4s] [%s] %40s %40s: %s %s",
-			l.ID, l.Tag, l.Timestamp, artifactInfo, distroInfo,
+		colored = aurora.Sprintf("[%4d %4s] [%s] %20s %-70s: %s %s",
+			l.ID, l.Tag, timestamp, artifactInfo, distroInfo,
 			genOkFail("BUILD", l.Build.Ok),
 			genOkFail("LPE", l.Test.Ok))
 	} else {
-		colored = aurora.Sprintf("[%4d %4s] [%s] %40s %40s: %s %s %s",
-			l.ID, l.Tag, l.Timestamp, artifactInfo, distroInfo,
+		colored = aurora.Sprintf("[%4d %4s] [%s] %20s %-70s: %s %s %s",
+			l.ID, l.Tag, timestamp, artifactInfo, distroInfo,
 			genOkFail("BUILD", l.Build.Ok),
 			genOkFail("INSMOD", l.Run.Ok),
 			genOkFail("TEST", l.Test.Ok))
