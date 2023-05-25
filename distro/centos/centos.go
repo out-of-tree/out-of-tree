@@ -130,6 +130,8 @@ func (centos CentOS) runs() (commands []string) {
 
 	cmdf("yum -y groupinstall 'Development Tools'")
 
+	cmdf("yum -y install linux-firmware")
+
 	if centos.release < "8" {
 		cmdf("yum -y install deltarpm")
 	} else {
