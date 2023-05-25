@@ -528,7 +528,7 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka config.Artifact
 			slog.Error().Err(err).Msg(res.Test.Output)
 			return
 		}
-		slog.Debug().Msg(res.Test.Output)
+		slog.Info().Msgf("\n%v\n", res.Test.Output)
 		res.Run.Ok = true
 		res.Test.Ok = true
 	default:
