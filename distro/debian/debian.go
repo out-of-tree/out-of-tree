@@ -298,8 +298,6 @@ func (d Debian) runs() (commands []string) {
 		"|| apt-get install -y %s", packages, packages, packages)
 
 	if d.release == 7 {
-		cmdf("apt-get -y install gcc-4.9-backport")
-
 		// by default Debian backports repositories have a lower
 		// priority than stable, so we should specify it manually
 		cmdf("apt-get -y install -t %s-backports "+
@@ -319,6 +317,8 @@ func (d Debian) runs() (commands []string) {
 		cmdf("apt-get -y update")
 
 		cmdf("apt-get -y install -t jessie libc6")
+
+		cmdf("apt-get -y install gcc-4.6 gcc-4.8 gcc-4.9-backport")
 	}
 
 	cmdf("mkdir -p /lib/modules")
