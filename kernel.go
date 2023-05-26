@@ -7,7 +7,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"math"
 	"os"
 	"strings"
 	"time"
@@ -31,6 +30,7 @@ type KernelCmd struct {
 	Retries    int  `help:"amount of tries for each kernel" default:"2"`
 	Threads    int  `help:"threads for parallel installation" default:"1"`
 	Update     bool `help:"update container"`
+	Max        int  `help:"maximum kernels to download" default:"100500"`
 
 	List        KernelListCmd        `cmd:"" help:"list kernels"`
 	ListRemote  KernelListRemoteCmd  `cmd:"" help:"list remote kernels"`
@@ -41,9 +41,20 @@ type KernelCmd struct {
 
 	shutdown bool
 	kcfg     config.KernelConfig
+
+	stats struct {
+		overall int
+		success int
+	}
 }
 
 func (cmd KernelCmd) UpdateConfig() (err error) {
+	if cmd.stats.success != cmd.stats.overall {
+		log.Warn().Msgf("%d kernels failed to install",
+			cmd.stats.overall-cmd.stats.success)
+	}
+
+	log.Info().Msgf("updating kernels.toml")
 	kcfg := config.KernelConfig{}
 
 	if cmd.UseHost {
@@ -78,7 +89,7 @@ func (cmd KernelCmd) UpdateConfig() (err error) {
 	return
 }
 
-func (cmd *KernelCmd) GenKernel(km config.Target, pkg string, max *int) {
+func (cmd *KernelCmd) GenKernel(km config.Target, pkg string) {
 	flog := log.With().
 		Str("kernel", pkg).
 		Str("distro", km.Distro.String()).
@@ -119,7 +130,7 @@ func (cmd *KernelCmd) GenKernel(km config.Target, pkg string, max *int) {
 
 		err := km.Distro.Install(pkg, !cmd.NoHeaders)
 		if err == nil {
-			*max--
+			cmd.stats.success += 1
 			flog.Info().Msg("success")
 			break
 		} else if attempt >= cmd.Retries {
@@ -134,7 +145,7 @@ func (cmd *KernelCmd) GenKernel(km config.Target, pkg string, max *int) {
 	}
 }
 
-func (cmd *KernelCmd) Generate(g *Globals, km config.Target, max int) (err error) {
+func (cmd *KernelCmd) Generate(g *Globals, km config.Target) (err error) {
 	if cmd.Update {
 		container.Update = true
 	}
@@ -180,17 +191,19 @@ func (cmd *KernelCmd) Generate(g *Globals, km config.Target, max int) (err error
 			return
 		}
 
-		if max <= 0 {
+		if cmd.stats.success >= cmd.Max {
 			log.Print("Max is reached")
 			swg.Done()
 			break
 		}
 
+		cmd.stats.overall += 1
+
 		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
 
 		go func(p string) {
 			defer swg.Done()
-			cmd.GenKernel(km, p, &max)
+			cmd.GenKernel(km, p)
 		}(pkg)
 	}
 	swg.Wait()
@@ -251,9 +264,7 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 	return
 }
 
-type KernelAutogenCmd struct {
-	Max int `help:"download kernels from set defined by regex in release_mask, but no more than X for each of release_mask" default:"100500"`
-}
+type KernelAutogenCmd struct{}
 
 func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	ka, err := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
@@ -269,7 +280,7 @@ func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			return
 		}
 
-		err = kernelCmd.Generate(g, sk, cmd.Max)
+		err = kernelCmd.Generate(g, sk)
 		if err != nil {
 			return
 		}
@@ -308,7 +319,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			Kernel: config.Kernel{Regex: ".*"},
 		}
 
-		err = kernelCmd.Generate(g, target, math.MaxUint32)
+		err = kernelCmd.Generate(g, target)
 		if err != nil {
 			return
 		}
@@ -335,7 +346,7 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
 		Kernel: config.Kernel{Regex: cmd.Kernel},
 	}
-	err = kernelCmd.Generate(g, km, math.MaxUint32)
+	err = kernelCmd.Generate(g, km)
 	if err != nil {
 		return
 	}
