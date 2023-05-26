@@ -30,6 +30,7 @@ func lowerLimit() {
 		time.Now().Add(limiterUpdateDelay),
 		rate.Every(limiterTimeout),
 	)
+	time.Sleep(limiterUpdateDelay)
 }
 
 // Retries in case of 5xx errors
