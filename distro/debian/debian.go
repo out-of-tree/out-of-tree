@@ -460,8 +460,8 @@ func (d Debian) Install(pkgname string, headers bool) (err error) {
 	// prepare local repository
 	cmdf("mkdir debs && mv *.deb debs/")
 	cmdf("dpkg-scanpackages debs /dev/null | gzip > debs/Packages.gz")
-	cmdf(`echo "deb file:$(pwd) debs/" >> /etc/apt/sources.list`)
-	cmdf("apt-get update")
+	cmdf(`echo "deb file:$(pwd) debs/" >> /etc/apt/sources.list.d/local.list`)
+	cmdf("apt-get update -o Dir::Etc::sourcelist='sources.list.d/local.list' -o Dir::Etc::sourceparts='-' -o APT::Get::List-Cleanup='0'")
 
 	// cut package names and install
 	cmdf("ls debs | grep deb | cut -d '_' -f 1 | " +
