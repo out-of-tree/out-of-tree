@@ -28,7 +28,7 @@ type KernelCmd struct {
 	Force      bool `help:"force reinstall kernel"`
 	NoHeaders  bool `help:"do not install kernel headers"`
 	Shuffle    bool `help:"randomize kernels installation order"`
-	Retries    int  `help:"amount of tries for each kernel" default:"10"`
+	Retries    int  `help:"amount of tries for each kernel" default:"2"`
 	Threads    int  `help:"threads for parallel installation" default:"1"`
 	Update     bool `help:"update container"`
 
