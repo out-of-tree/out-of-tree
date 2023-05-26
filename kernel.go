@@ -32,6 +32,8 @@ type KernelCmd struct {
 	Update     bool `help:"update container"`
 	Max        int  `help:"maximum kernels to download" default:"100500"`
 
+	ContainerTimeout time.Duration `help:"container timeout"`
+
 	List        KernelListCmd        `cmd:"" help:"list kernels"`
 	ListRemote  KernelListRemoteCmd  `cmd:"" help:"list remote kernels"`
 	Autogen     KernelAutogenCmd     `cmd:"" help:"generate kernels based on the current config"`
@@ -159,6 +161,10 @@ func (cmd *KernelCmd) Generate(g *Globals, km config.Target) (err error) {
 
 	container.Commands = g.Config.Docker.Commands
 	container.Registry = g.Config.Docker.Registry
+	container.Timeout = g.Config.Docker.Timeout.Duration
+	if cmd.ContainerTimeout != 0 {
+		container.Timeout = cmd.ContainerTimeout
+	}
 
 	log.Info().Msgf("Generating for target %v", km)
 

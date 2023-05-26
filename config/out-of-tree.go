@@ -104,7 +104,7 @@ func ReadOutOfTreeConf(path string) (c OutOfTree, err error) {
 	}
 
 	if c.Docker.Timeout.Duration == 0 {
-		c.Docker.Timeout.Duration = time.Minute
+		c.Docker.Timeout.Duration = 8 * time.Minute
 	}
 
 	return
