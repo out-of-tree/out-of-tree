@@ -311,6 +311,17 @@ func (d Debian) runs() (commands []string) {
 		cmdf("apt-get -y update")
 	}
 
+	if d.release == 12 {
+		// For some kernels that use gcc-11 but depend on libssl1
+		repo := "deb http://deb.debian.org/debian bullseye main"
+		cmdf("echo '%s' >> /etc/apt/sources.list.d/11.list", repo)
+		cmdf("echo 'Package: *' >> /etc/apt/preferences.d/jessie")
+		cmdf("echo 'Pin: release a=bullseye' >> /etc/apt/preferences.d/jessie")
+		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/jessie")
+
+		cmdf("apt-get -y update")
+	}
+
 	cmdf("mkdir -p /lib/modules")
 
 	return
