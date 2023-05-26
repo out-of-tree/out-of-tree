@@ -120,6 +120,8 @@ func (cmd *KernelCmd) GenKernel(km config.Target, pkg string) {
 		flog.Info().Msg("install")
 	}
 
+	cmd.stats.overall += 1
+
 	var attempt int
 	for {
 		attempt++
@@ -196,8 +198,6 @@ func (cmd *KernelCmd) Generate(g *Globals, km config.Target) (err error) {
 			swg.Done()
 			break
 		}
-
-		cmd.stats.overall += 1
 
 		log.Info().Msgf("%d/%d %s", i+1, len(pkgs), pkg)
 
