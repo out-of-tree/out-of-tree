@@ -268,6 +268,7 @@ func (d Debian) runs() (commands []string) {
 	pkglist := []string{
 		"wget", "build-essential", "libelf-dev", "git",
 		"kmod", "linux-base", "libssl-dev",
+		"firmware-linux-free",
 	}
 
 	gccs := "'^(gcc-[0-9].[0-9]|gcc-[0-9]|gcc-[1-9][0-9])$'"
@@ -460,12 +461,20 @@ func (d Debian) Install(pkgname string, headers bool) (err error) {
 	// prepare local repository
 	cmdf("mkdir debs && mv *.deb debs/")
 	cmdf("dpkg-scanpackages debs /dev/null | gzip > debs/Packages.gz")
-	cmdf(`echo "deb file:$(pwd) debs/" >> /etc/apt/sources.list.d/local.list`)
+	cmdf(`echo "deb [trusted=yes] file:$(pwd) debs/" >> /etc/apt/sources.list.d/local.list`)
 	cmdf("apt-get update -o Dir::Etc::sourcelist='sources.list.d/local.list' -o Dir::Etc::sourceparts='-' -o APT::Get::List-Cleanup='0'")
+
+	// make sure apt-get will not download the repo version
+	cmdf("echo 'Package: *' >> /etc/apt/preferences.d/pin")
+	cmdf(`echo 'Pin: origin "snapshot.debian.org"' >> /etc/apt/preferences.d/pin`)
+	cmdf("echo 'Pin-Priority: 100' >> /etc/apt/preferences.d/pin")
 
 	// cut package names and install
 	cmdf("ls debs | grep deb | cut -d '_' -f 1 | " +
 		"xargs apt-get -y --force-yes install")
+
+	// for debug
+	cmdf("ls debs | grep deb | cut -d '_' -f 1 | xargs apt-cache policy")
 
 	c, err := container.New(d.Distro())
 	if err != nil {
