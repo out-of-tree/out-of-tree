@@ -117,7 +117,7 @@ jobs:
         echo 'WorkingDirectory=/root/test' >> test.service
         echo 'TimeoutStopSec=1' >> test.service
         echo 'ExecStart=/usr/local/bin/out-of-tree kernel autogen --threads=4' >> test.service
-        echo 'ExecStart=/usr/local/bin/out-of-tree pew --threads=4' >> test.service
+        echo 'ExecStart=/usr/local/bin/out-of-tree pew --qemu-timeout=4m --threads=4' >> test.service
 
         scp test.service root@$IP:/etc/systemd/system/test.service
 
