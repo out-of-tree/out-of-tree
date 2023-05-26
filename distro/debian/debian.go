@@ -154,6 +154,7 @@ func kernelRelease(dk DebianKernel) (r Release, err error) {
 		//     to e6216f6f935fe1bc3c35ad5bfa037422a5a3ee95
 		if dep.Name == "linux-compiler-3.12-x86" {
 			gcc = "4.8"
+			break
 		}
 
 		if !strings.HasPrefix(dep.Name, "linux-compiler-gcc-") {
