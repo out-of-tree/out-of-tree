@@ -216,13 +216,13 @@ func (c Container) Build(image string, envs, runs []string) (err error) {
 		return
 	}
 
+	err = os.WriteFile(cfile, []byte(cf), os.ModePerm)
+	if err != nil {
+		return
+	}
+
 	if c.Exist() {
 		c.Log.Info().Msg("update")
-		err = os.WriteFile(cfile, []byte(cf), os.ModePerm)
-		if err != nil {
-			return
-		}
-
 	} else {
 		c.Log.Info().Msg("build")
 	}
