@@ -276,10 +276,11 @@ func (d Debian) runs() (commands []string) {
 	pkglist := []string{
 		"wget", "build-essential", "libelf-dev", "git",
 		"kmod", "linux-base", "libssl-dev",
-		"'^(gcc-[0-9].[0-9]|gcc-[0-9]|gcc-[1-9][0-9])$'",
 	}
 
 	if d.release >= 8 {
+		gccs := "'^(gcc-[0-9].[0-9]|gcc-[0-9]|gcc-[1-9][0-9])$'"
+		pkglist = append(pkglist, gccs)
 		pkglist = append(pkglist, "initramfs-tools")
 	}
 
@@ -297,6 +298,8 @@ func (d Debian) runs() (commands []string) {
 		"|| apt-get install -y %s", packages, packages, packages)
 
 	if d.release == 7 {
+		cmdf("apt-get -y install gcc-4.9-backport")
+
 		// by default Debian backports repositories have a lower
 		// priority than stable, so we should specify it manually
 		cmdf("apt-get -y install -t %s-backports "+
