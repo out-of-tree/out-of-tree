@@ -29,7 +29,7 @@ var Runtime = "docker"
 
 var Registry = ""
 
-var Timeout = time.Hour
+var Timeout = 8 * time.Minutes
 
 var Commands []config.DockerCommand
 
