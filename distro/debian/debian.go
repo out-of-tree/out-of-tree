@@ -466,7 +466,7 @@ func (d Debian) Install(pkgname string, headers bool) (err error) {
 
 	// make sure apt-get will not download the repo version
 	cmdf("echo 'Package: *' >> /etc/apt/preferences.d/pin")
-	cmdf(`echo 'Pin: origin "snapshot.debian.org"' >> /etc/apt/preferences.d/pin`)
+	cmdf(`echo 'Pin: origin "*.debian.org"' >> /etc/apt/preferences.d/pin`)
 	cmdf("echo 'Pin-Priority: 100' >> /etc/apt/preferences.d/pin")
 
 	// cut package names and install
