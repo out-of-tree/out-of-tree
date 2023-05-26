@@ -149,14 +149,6 @@ func ReleaseFromString(s string) (r Release) {
 func kernelRelease(dk DebianKernel) (r Release, err error) {
 	var gcc string
 	for _, dep := range dk.Dependencies {
-		// https://salsa.debian.org/kernel-team/linux
-		//   from 08a7d92f2b772849cbf438102a61239ff71b0091
-		//     to e6216f6f935fe1bc3c35ad5bfa037422a5a3ee95
-		if dep.Name == "linux-compiler-3.12-x86" {
-			gcc = "4.8"
-			break
-		}
-
 		if !strings.HasPrefix(dep.Name, "linux-compiler-gcc-") {
 			continue
 		}
