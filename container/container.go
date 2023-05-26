@@ -29,7 +29,7 @@ var Runtime = "docker"
 
 var Registry = ""
 
-var Timeout = 8 * time.Minutes
+var Timeout time.Duration
 
 var Commands []config.DockerCommand
 
@@ -314,18 +314,20 @@ func (c Container) Run(workdir string, cmds []string) (out string, err error) {
 	}
 	cmd.Stderr = cmd.Stdout
 
-	timer := time.AfterFunc(Timeout, func() {
-		flog.Info().Msg("killing container by timeout")
+	if Timeout != 0 {
+		timer := time.AfterFunc(Timeout, func() {
+			flog.Info().Msg("killing container by timeout")
 
-		flog.Debug().Msg("SIGINT")
-		cmd.Process.Signal(os.Interrupt)
+			flog.Debug().Msg("SIGINT")
+			cmd.Process.Signal(os.Interrupt)
 
-		time.Sleep(time.Minute)
+			time.Sleep(time.Minute)
 
-		flog.Debug().Msg("SIGKILL")
-		cmd.Process.Kill()
-	})
-	defer timer.Stop()
+			flog.Debug().Msg("SIGKILL")
+			cmd.Process.Kill()
+		})
+		defer timer.Stop()
+	}
 
 	err = cmd.Start()
 	if err != nil {
