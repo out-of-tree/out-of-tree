@@ -270,10 +270,16 @@ func (d Debian) runs() (commands []string) {
 		"kmod", "linux-base", "libssl-dev",
 	}
 
+	gccs := "'^(gcc-[0-9].[0-9]|gcc-[0-9]|gcc-[1-9][0-9])$'"
+	pkglist = append(pkglist, gccs)
+
 	if d.release >= 8 {
-		gccs := "'^(gcc-[0-9].[0-9]|gcc-[0-9]|gcc-[1-9][0-9])$'"
-		pkglist = append(pkglist, gccs)
 		pkglist = append(pkglist, "initramfs-tools")
+	} else {
+		// by default Debian backports repositories have a lower
+		// priority than stable, so we should specify it manually
+		cmdf("apt-get -y install -t %s-backports "+
+			"initramfs-tools", d.release.Name())
 	}
 
 	if d.release < 9 {
@@ -290,11 +296,6 @@ func (d Debian) runs() (commands []string) {
 		"|| apt-get install -y %s", packages, packages, packages)
 
 	if d.release == 7 {
-		// by default Debian backports repositories have a lower
-		// priority than stable, so we should specify it manually
-		cmdf("apt-get -y install -t %s-backports "+
-			"initramfs-tools", d.release.Name())
-
 		// We need newer libc for deb8*~bpo70+1
 		format := "deb [check-valid-until=no trusted=yes] " +
 			"http://snapshot.debian.org/archive/debian/%s " +
@@ -307,10 +308,6 @@ func (d Debian) runs() (commands []string) {
 		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/jessie")
 
 		cmdf("apt-get -y update")
-
-		cmdf("apt-get -y install -t jessie libc6")
-
-		cmdf("apt-get -y install gcc-4.6 gcc-4.8 gcc-4.9-backport")
 	}
 
 	cmdf("mkdir -p /lib/modules")
@@ -437,7 +434,10 @@ func (d Debian) Install(pkgname string, headers bool) (err error) {
 		pkgs = []snapshot.Package{dk.Image}
 	}
 
-	var cmds []string
+	var commands []string
+	cmdf := func(f string, s ...interface{}) {
+		commands = append(commands, fmt.Sprintf(f, s...))
+	}
 
 	for _, pkg := range pkgs {
 		found, newurl := cache.PackageURL(
@@ -452,12 +452,20 @@ func (d Debian) Install(pkgname string, headers bool) (err error) {
 		// TODO use faketime on old releases?
 		pkg.Deb.URL = strings.Replace(pkg.Deb.URL, "https", "http", -1)
 
-		cmds = append(cmds, "wget --no-verbose "+
-			"--timeout=10 --waitretry=1 --tries=10 "+
-			"--no-check-certificate "+pkg.Deb.URL)
+		cmdf("wget --no-verbose " +
+			"--timeout=10 --waitretry=1 --tries=10 " +
+			"--no-check-certificate " + pkg.Deb.URL)
 	}
 
-	cmds = append(cmds, "dpkg -i ./*.deb")
+	// prepare local repository
+	cmdf("mkdir debs && mv *.deb debs/")
+	cmdf("dpkg-scanpackages debs /dev/null | gzip > debs/Packages.gz")
+	cmdf(`echo "deb file:$(pwd) debs/" >> /etc/apt/sources.list`)
+	cmdf("apt-get update")
+
+	// cut package names and install
+	cmdf("ls debs | grep deb | cut -d '_' -f 1 | " +
+		"xargs apt-get -y --force-yes install")
 
 	c, err := container.New(d.Distro())
 	if err != nil {
@@ -469,11 +477,11 @@ func (d Debian) Install(pkgname string, headers bool) (err error) {
 		c.Volumes[i].Dest = "/target" + c.Volumes[i].Dest
 	}
 
-	cmds = append(cmds, "cp -r /boot /target/")
-	cmds = append(cmds, "cp -r /lib/modules /target/lib/")
-	cmds = append(cmds, "cp -rL /usr/src /target/usr/")
+	cmdf("cp -r /boot /target/")
+	cmdf("cp -r /lib/modules /target/lib/")
+	cmdf("cp -rL /usr/src /target/usr/")
 
-	_, err = c.Run("", cmds)
+	_, err = c.Run("", commands)
 	if err != nil {
 		return
 	}
