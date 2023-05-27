@@ -314,6 +314,9 @@ func (d Debian) runs() (commands []string) {
 		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/jessie")
 
 		cmdf("apt-get -y update")
+
+		// glibc guarantee backwards compatibility, so should be no problem
+		cmdf("apt-get -y install -t jessie libc6-dev")
 	}
 
 	if d.release == 12 {
