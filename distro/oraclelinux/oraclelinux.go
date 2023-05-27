@@ -42,6 +42,15 @@ func (ol OracleLinux) Packages() (pkgs []string, err error) {
 		return
 	}
 
+	if ol.release == "8" {
+		// Image for ol9 is required for some kernels
+		// See notes in OracleLinux.Kernels()
+		_, err = OracleLinux{release: "9"}.Packages()
+		if err != nil {
+			return
+		}
+	}
+
 	cmd := "yum search kernel --showduplicates 2>/dev/null " +
 		"| grep '^kernel-[0-9]\\|^kernel-uek-[0-9]' " +
 		"| grep -v src " +
@@ -65,7 +74,23 @@ func (ol OracleLinux) Kernels() (kernels []distro.KernelInfo, err error) {
 		return
 	}
 
-	return c.Kernels()
+	kernels, err = c.Kernels()
+	if err != nil {
+		return
+	}
+
+	for i, k := range kernels {
+		// The latest uek kernels require gcc-11, which is
+		// only present in el8 with scl load, so not so
+		// convinient. It is possible to just build from
+		// the next release container.
+		if strings.Contains(k.KernelVersion, "5.15.0") {
+			cnt := strings.Replace(k.ContainerName, "8", "9", -1)
+			kernels[i].ContainerName = cnt
+		}
+	}
+
+	return
 }
 
 func (ol OracleLinux) envs() (envs []string) {
