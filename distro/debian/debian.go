@@ -164,6 +164,11 @@ func kernelRelease(dk DebianKernel) (r Release, err error) {
 		break
 	}
 
+	switch dk.Version.ABI {
+	case "3.11-1", "3.11-2":
+		gcc = "4.8"
+	}
+
 	switch gcc {
 	case "", "4.4", "4.6", "4.7":
 		// Note that we are catching an empty string, which
