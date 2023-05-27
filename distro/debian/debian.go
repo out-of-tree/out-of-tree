@@ -66,6 +66,11 @@ func (d Debian) Packages() (packages []string, err error) {
 	}
 
 	for _, dk := range kernels {
+		// filter out experimental kernels
+		if strings.Contains(dk.Version.Package, "~exp") {
+			continue
+		}
+
 		p := dk.Image.Deb.Name[:len(dk.Image.Deb.Name)-4] // w/o .deb
 
 		var kr Release
