@@ -19,7 +19,7 @@ var (
 	limiterTimeout     time.Duration = time.Second / 20
 	limiterMaxTimeout  time.Duration = time.Second
 	limiterBurst       int           = 1
-	limiterUpdateDelay time.Duration = time.Minute
+	limiterUpdateDelay time.Duration = time.Second
 
 	Limiter = rate.NewLimiter(rate.Every(limiterTimeout), limiterBurst)
 )
