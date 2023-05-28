@@ -17,7 +17,7 @@ const apiURL = "https://snapshot.debian.org/mr"
 
 var (
 	limiterTimeout     time.Duration = time.Second / 20
-	limiterMaxTimeout  time.Duration = time.Second
+	limiterMaxTimeout  time.Duration = time.Second * 2
 	limiterBurst       int           = 1
 	limiterUpdateDelay time.Duration = time.Second
 

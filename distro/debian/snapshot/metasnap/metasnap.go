@@ -20,7 +20,7 @@ const apiURL = "http://metasnap.debian.net/cgi-bin/api?"
 
 var (
 	limiterTimeout     time.Duration = time.Second / 20
-	limiterMaxTimeout  time.Duration = time.Second
+	limiterMaxTimeout  time.Duration = time.Second * 2
 	limiterBurst       int           = 1
 	limiterUpdateDelay time.Duration = time.Second
 
