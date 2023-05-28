@@ -2,6 +2,7 @@ package debian
 
 import (
 	"errors"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -260,7 +261,7 @@ func findKbuild(versions []string, kpkgver string) (
 }
 
 func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
-	version string) (kernels []DebianKernel) {
+	version string) (kernels []DebianKernel, fromcache bool) {
 
 	var dk DebianKernel
 	dks, err := c.Get(version)
@@ -269,6 +270,7 @@ func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
 		if !dk.Internal.Invalid {
 			slog.Trace().Msgf("found in cache")
 			kernels = append(kernels, dk)
+			fromcache = true
 			return
 		}
 	}
@@ -336,7 +338,9 @@ var (
 	RefetchDays int = 14
 )
 
-func GetKernels() (kernels []DebianKernel, err error) {
+// GetKernelsWithLimit is workaround for testing and building the
+// first cache, which is heavily rate limited by snapshot.debian.org
+func GetKernelsWithLimit(limit int) (kernels []DebianKernel, err error) {
 	if CachePath == "" {
 		CachePath = config.File("debian.cache")
 		log.Debug().Msgf("Use default kernels cache path: %s", CachePath)
@@ -381,10 +385,19 @@ func GetKernels() (kernels []DebianKernel, err error) {
 	for i, version := range versions {
 		slog := log.With().Str("version", version).Logger()
 		slog.Trace().Msgf("%03d/%03d", i, len(versions))
-		vkernels := getKernelsByVersion(slog, c, toolsVersions, version)
+		vkernels, fromcache := getKernelsByVersion(slog, c, toolsVersions, version)
 		kernels = append(kernels, vkernels...)
-
+		if !fromcache {
+			limit--
+		}
+		if limit <= 0 {
+			return
+		}
 	}
 
 	return
+}
+
+func GetKernels() (kernels []DebianKernel, err error) {
+	return GetKernelsWithLimit(math.MaxInt32)
 }

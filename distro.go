@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -30,6 +31,7 @@ type DebianCmd struct {
 	Cache DebianCacheCmd `cmd:"" help:"populate cache"`
 	Fetch DebianFetchCmd `cmd:"" help:"download deb packages"`
 
+	Limit int    `help:"limit amount of kernels to fetch"`
 	Regex string `help:"match deb pkg names by regex" default:".*"`
 }
 
@@ -47,7 +49,11 @@ func (cmd *DebianCacheCmd) Run(dcmd *DebianCmd) (err error) {
 
 	log.Info().Msg("Fetching kernels...")
 
-	kernels, err := debian.GetKernels()
+	if dcmd.Limit == 0 {
+		dcmd.Limit = math.MaxInt32
+	}
+
+	kernels, err := debian.GetKernelsWithLimit(dcmd.Limit)
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return
@@ -152,7 +158,11 @@ func (cmd *DebianFetchCmd) Run(dcmd *DebianCmd) (err error) {
 	log.Info().Msg("will not download packages that exist on the mirror")
 	log.Info().Msg("use --ignore-mirror if you really need it")
 
-	kernels, err := debian.GetKernels()
+	if dcmd.Limit == 0 {
+		dcmd.Limit = math.MaxInt32
+	}
+
+	kernels, err := debian.GetKernelsWithLimit(dcmd.Limit)
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return
