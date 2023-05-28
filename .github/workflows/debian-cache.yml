@@ -25,7 +25,7 @@ jobs:
       run: go build
 
     - name: Cache
-      run: ./out-of-tree --log-level=trace distro debian cache --refetch=0 --limit=64
+      run: ./out-of-tree --log-level=trace distro debian cache --refetch=0 --limit=128
 
     - name: Install s3cmd
       run: sudo apt install s3cmd
@@ -71,7 +71,7 @@ jobs:
 
         def get_kernels() -> bool:
             status, output = getstatusoutput(
-                "./out-of-tree distro debian fetch --max=16"
+                "./out-of-tree distro debian fetch --max=16 --limit=1"
             )
             logging.info(output)
             return status == 0
