@@ -145,7 +145,10 @@ func getRelease(p snapshot.Package) Release {
 	for _, repo := range repos {
 		for _, rel := range ReleaseStrings[1:] {
 			switch repo.Suite {
-			case rel, rel + "-backports", rel + "-updates":
+			case rel, rel + "-backports",
+				rel + "-updates",
+				rel + "-proposed-updates":
+
 				return ReleaseFromString(rel)
 			}
 		}
