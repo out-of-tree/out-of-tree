@@ -19,7 +19,7 @@ var (
 	limiterTimeout     time.Duration = time.Second / 20
 	limiterMaxTimeout  time.Duration = time.Second
 	limiterBurst       int           = 1
-	limiterUpdateDelay time.Duration = time.Second * 10
+	limiterUpdateDelay time.Duration = time.Minute
 
 	Limiter = rate.NewLimiter(rate.Every(limiterTimeout), limiterBurst)
 )
@@ -34,6 +34,7 @@ func lowerLimit() {
 		time.Now().Add(limiterUpdateDelay),
 		rate.Every(limiterTimeout),
 	)
+	log.Info().Msgf("wait %v", limiterUpdateDelay)
 	time.Sleep(limiterUpdateDelay)
 }
 
