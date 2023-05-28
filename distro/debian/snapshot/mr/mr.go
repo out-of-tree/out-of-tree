@@ -17,6 +17,7 @@ const apiURL = "https://snapshot.debian.org/mr"
 
 var (
 	limiterTimeout     time.Duration = time.Second / 20
+	limiterMaxTimeout  time.Duration = time.Second * 3
 	limiterBurst       int           = 3
 	limiterUpdateDelay time.Duration = time.Second * 10
 
@@ -25,6 +26,9 @@ var (
 
 func lowerLimit() {
 	limiterTimeout = limiterTimeout * 2
+	if limiterTimeout > limiterMaxTimeout {
+		limiterTimeout = limiterMaxTimeout
+	}
 	log.Info().Msgf("limiter timeout set to %v", limiterTimeout)
 	Limiter.SetLimitAt(
 		time.Now().Add(limiterUpdateDelay),
