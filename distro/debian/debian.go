@@ -133,6 +133,18 @@ func (cn Release) String() string {
 
 func ReleaseFromString(s string) (r Release) {
 	switch strings.ToLower(s) {
+	case "1", "buzz":
+		r = Buzz
+	case "2", "hamm":
+		r = Hamm
+	case "3", "woody":
+		r = Woody
+	case "4", "etch":
+		r = Etch
+	case "5", "lenny":
+		r = Lenny
+	case "6", "squeeze":
+		r = Squeeze
 	case "7", "wheezy":
 		r = Wheezy
 	case "8", "jessie":

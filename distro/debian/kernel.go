@@ -125,24 +125,7 @@ func getDebianKernel(version string) (dk DebianKernel, err error) {
 	s := strings.Replace(dk.Image.Name, "linux-image-", "", -1)
 	dk.Version.ABI = strings.Replace(s, "-amd64", "", -1)
 
-	p := dk.Image
-	repos, err := metasnap.GetRepos(p.Repo.Archive, p.Name, p.Arch, version)
-	if err != nil {
-		flog.Debug().Err(err).Msg("ignore metasnap")
-		err = nil
-	}
-	for _, repo := range repos {
-		for _, release := range ReleaseStrings[1:] {
-			if strings.Contains(repo.Suite, release) {
-				dk.Release = ReleaseFromString(release)
-				break
-			}
-		}
-
-		if dk.Release != None {
-			break
-		}
-	}
+	dk.Release = getRelease(dk.Image)
 	if dk.Release == None {
 		flog.Warn().Msg("release not found")
 	} else {
@@ -150,6 +133,25 @@ func getDebianKernel(version string) (dk DebianKernel, err error) {
 	}
 
 	return
+}
+
+func getRelease(p snapshot.Package) Release {
+	repos, err := metasnap.GetRepos(p.Repo.Archive, p.Name, p.Arch, p.Version)
+	if err != nil {
+		log.Debug().Err(err).Msg("metasnap")
+		return None
+	}
+
+	for _, repo := range repos {
+		for _, rel := range ReleaseStrings[1:] {
+			switch repo.Suite {
+			case rel, rel + "-backports", rel + "-updates":
+				return ReleaseFromString(rel)
+			}
+		}
+	}
+
+	return None
 }
 
 // GetCachedKernel by deb package name
