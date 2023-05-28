@@ -128,8 +128,8 @@ func getDebianKernel(version string) (dk DebianKernel, err error) {
 	p := dk.Image
 	repos, err := metasnap.GetRepos(p.Repo.Archive, p.Name, p.Arch, version)
 	if err != nil {
-		err = nil
 		flog.Debug().Err(err).Msg("ignore metasnap")
+		err = nil
 	}
 	for _, repo := range repos {
 		for _, release := range ReleaseStrings[1:] {
