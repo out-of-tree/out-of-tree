@@ -13,6 +13,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
+	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot/metasnap"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -38,6 +39,8 @@ type DebianKernel struct {
 		Invalid   bool
 		LastFetch time.Time
 	}
+
+	Release Release
 }
 
 func (dk DebianKernel) HasDependency(pkgname string) bool {
@@ -70,6 +73,10 @@ var (
 )
 
 func getDebianKernel(version string) (dk DebianKernel, err error) {
+	flog := log.With().
+		Str("version", version).
+		Logger()
+
 	dk.Version.Package = version
 
 	regex := `^(linux-(image|headers)-[a-z+~0-9\.\-]*-(common|amd64|amd64-unsigned)|linux-kbuild-.*|linux-compiler-.*-x86)$`
@@ -117,6 +124,30 @@ func getDebianKernel(version string) (dk DebianKernel, err error) {
 
 	s := strings.Replace(dk.Image.Name, "linux-image-", "", -1)
 	dk.Version.ABI = strings.Replace(s, "-amd64", "", -1)
+
+	p := dk.Image
+	repos, err := metasnap.GetRepos(p.Repo.Archive, p.Name, p.Arch, version)
+	if err != nil {
+		err = nil
+		flog.Debug().Err(err).Msg("ignore metasnap")
+	}
+	for _, repo := range repos {
+		for _, release := range ReleaseStrings[1:] {
+			if strings.Contains(repo.Suite, release) {
+				dk.Release = ReleaseFromString(release)
+				break
+			}
+		}
+
+		if dk.Release != None {
+			break
+		}
+	}
+	if dk.Release == None {
+		flog.Warn().Msg("release not found")
+	} else {
+		flog.Debug().Msgf("release is %s", dk.Release.Name())
+	}
 
 	return
 }

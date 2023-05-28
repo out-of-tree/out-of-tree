@@ -19,8 +19,9 @@ import (
 const apiURL = "http://metasnap.debian.net/cgi-bin/api?"
 
 var (
-	limiterTimeout time.Duration = time.Second
-	limiterBurst   int           = 3
+	limiterTimeout     time.Duration = time.Second / 20
+	limiterBurst       int           = 3
+	limiterUpdateDelay time.Duration = time.Second * 10
 
 	Limiter = rate.NewLimiter(rate.Every(limiterTimeout), limiterBurst)
 )
@@ -28,7 +29,11 @@ var (
 func lowerLimit() {
 	limiterTimeout = limiterTimeout * 2
 	log.Info().Msgf("limiter timeout set to %v", limiterTimeout)
-	Limiter.SetLimit(rate.Every(limiterTimeout))
+	Limiter.SetLimitAt(
+		time.Now().Add(limiterUpdateDelay),
+		rate.Every(limiterTimeout),
+	)
+	time.Sleep(limiterUpdateDelay)
 }
 
 // Retries in case of 5xx errors
@@ -100,9 +105,9 @@ type Repo struct {
 	Snapshot  Snapshot
 }
 
-func GetRepo(archive, pkg, arch, ver string) (repos []Repo, err error) {
-	result, err := queryAPIf("archive=%s&pkg=%s&arch=%s&ver=%s",
-		archive, pkg, arch, ver)
+func GetRepos(archive, pkg, arch, ver string) (repos []Repo, err error) {
+	result, err := queryAPIf("archive=%s&pkg=%s&arch=%s",
+		archive, pkg, arch)
 
 	if err != nil {
 		return
@@ -119,22 +124,24 @@ func GetRepo(archive, pkg, arch, ver string) (repos []Repo, err error) {
 		}
 
 		fields := strings.Split(line, " ")
-		if len(fields) != 4 {
+		if len(fields) != 5 {
 			err = fmt.Errorf("metasnap api returned %s", result)
 			return
 		}
 
 		repo := Repo{
 			Archive:   archive,
-			Suite:     fields[0],
-			Component: fields[1],
+			Suite:     fields[1],
+			Component: fields[2],
 			Snapshot: Snapshot{
-				First: fields[2],
-				Last:  fields[3],
+				First: fields[3],
+				Last:  fields[4],
 			},
 		}
 
-		repos = append(repos, repo)
+		if fields[0] == ver {
+			repos = append(repos, repo)
+		}
 	}
 
 	if len(repos) == 0 {
