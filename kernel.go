@@ -151,7 +151,7 @@ func (cmd *KernelCmd) GenKernel(km config.Target, pkg string) {
 
 func (cmd *KernelCmd) Generate(g *Globals, km config.Target) (err error) {
 	if cmd.Update {
-		container.Update = true
+		container.UseCache = false
 	}
 
 	cmd.kcfg, err = config.ReadKernelConfig(g.Config.Kernels)
