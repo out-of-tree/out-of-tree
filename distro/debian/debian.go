@@ -279,6 +279,10 @@ func (d Debian) runs() (commands []string) {
 			"initramfs-tools", d.release.Name())
 	}
 
+	if d.release >= 9 {
+		pkglist = append(pkglist, "apparmor")
+	}
+
 	if d.release < 9 {
 		pkglist = append(pkglist, "module-init-tools")
 	}
