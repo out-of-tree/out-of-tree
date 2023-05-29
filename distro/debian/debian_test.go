@@ -17,33 +17,3 @@ func TestDebian(t *testing.T) {
 
 	assert.NotEmpty(u.Packages())
 }
-
-func TestKernelRelease(t *testing.T) {
-	kernels, err := GetKernels()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, k := range kernels {
-		r, err := kernelRelease(k)
-		if err != nil {
-			t.Log(k.Version, r, err)
-		}
-	}
-
-	for _, k := range kernels {
-		r, err := kernelRelease(k)
-		if err != nil {
-			continue
-		}
-
-		if r == Wheezy {
-			t.Log("Wheezy", k.Version)
-		}
-
-		if r == Jessie {
-			t.Log("Jessie", k.Version)
-		}
-	}
-
-}
