@@ -289,6 +289,24 @@ func (d Debian) runs() (commands []string) {
 		"|| timeout 10m apt-get install -y %s "+
 		"|| apt-get install -y %s", packages, packages, packages)
 
+	if d.release == Wheezy {
+		// We need newer libc for deb8*~bpo70+1
+		format := "deb [check-valid-until=no trusted=yes] " +
+			"http://snapshot.debian.org/archive/debian/%s " +
+			"jessie main"
+		// Keep it here not in repos to have apt-priority close
+		repo := fmt.Sprintf(format, "20190321T212815Z")
+		cmdf("echo '%s' >> /etc/apt/sources.list", repo)
+		cmdf("echo 'Package: *' >> /etc/apt/preferences.d/jessie")
+		cmdf("echo 'Pin: release a=jessie' >> /etc/apt/preferences.d/jessie")
+		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/jessie")
+
+		cmdf("apt-get -y update")
+
+		// glibc guarantee backwards compatibility, so should be no problem
+		cmdf("apt-get -y install -t jessie libc6-dev")
+	}
+
 	cmdf("mkdir -p /lib/modules")
 
 	return
