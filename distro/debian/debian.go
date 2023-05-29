@@ -70,6 +70,36 @@ func (d Debian) Packages() (packages []string, err error) {
 			continue
 		}
 
+		version := kver(dk.Version.Package)
+
+		// filter out pre-release kernels
+		switch dk.Release {
+		case Wheezy:
+			if version.LessThan(kver("3.2-rc0")) {
+				continue
+			}
+		case Jessie:
+			if version.LessThan(kver("3.16-rc0")) {
+				continue
+			}
+		case Stretch:
+			if version.LessThan(kver("4.9-rc0")) {
+				continue
+			}
+		case Buster:
+			if version.LessThan(kver("4.19-rc0")) {
+				continue
+			}
+		case Bullseye:
+			if version.LessThan(kver("5.10-rc0")) {
+				continue
+			}
+		case Bookworm:
+			if version.LessThan(kver("6.1-rc0")) {
+				continue
+			}
+		}
+
 		p := dk.Image.Deb.Name[:len(dk.Image.Deb.Name)-4] // w/o .deb
 		packages = append(packages, p)
 	}
@@ -258,68 +288,6 @@ func (d Debian) runs() (commands []string) {
 	cmdf("timeout 5m apt-get install -y %s "+
 		"|| timeout 10m apt-get install -y %s "+
 		"|| apt-get install -y %s", packages, packages, packages)
-
-	switch d.release {
-	// 7
-	case Wheezy:
-		// We need newer libc for deb8*~bpo70+1
-		format := "deb [check-valid-until=no trusted=yes] " +
-			"http://snapshot.debian.org/archive/debian/%s " +
-			"jessie main"
-		// Keep it here not in repos to have apt-priority close
-		repo := fmt.Sprintf(format, "20190321T212815Z")
-		cmdf("echo '%s' >> /etc/apt/sources.list", repo)
-		cmdf("echo 'Package: *' >> /etc/apt/preferences.d/jessie")
-		cmdf("echo 'Pin: release a=jessie' >> /etc/apt/preferences.d/jessie")
-		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/jessie")
-
-		cmdf("apt-get -y update")
-
-		// glibc guarantee backwards compatibility, so should be no problem
-		cmdf("apt-get -y install -t jessie libc6-dev")
-	// 9
-	case Stretch:
-		repo := "deb [check-valid-until=no trusted=yes] " +
-			"http://snapshot.debian.org/archive/debian/" +
-			"20190123T104530Z unstable main"
-
-		cmdf("echo '%s' >> /etc/apt/sources.list", repo)
-		cmdf("echo 'Package: *' >> /etc/apt/preferences.d/unstable")
-		cmdf("echo 'Pin: release a=unstable' >> /etc/apt/preferences.d/unstable")
-		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/unstable")
-
-		cmdf("apt-get -y update")
-
-		cmdf("apt-get -y install -t unstable gcc-5")
-
-	// 10
-	case Buster:
-		repo := "deb [check-valid-until=no trusted=yes] " +
-			"http://snapshot.debian.org/archive/debian/" +
-			"20230423T032533Z stretch main"
-
-		cmdf("echo '%s' >> /etc/apt/sources.list", repo)
-		cmdf("echo 'Package: *' >> /etc/apt/preferences.d/stretch")
-		cmdf("echo 'Pin: release a=stretch' >> /etc/apt/preferences.d/stretch")
-		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/stretch")
-
-		cmdf("apt-get -y update")
-
-		cmdf("apt-get -y install -t stretch gcc-6")
-
-	// 12
-	case Bookworm:
-		// For some kernels that use gcc-11 but depend on libssl1
-		repo := "deb http://deb.debian.org/debian bullseye main"
-		cmdf("echo '%s' >> /etc/apt/sources.list.d/11.list", repo)
-		cmdf("echo 'Package: *' >> /etc/apt/preferences.d/jessie")
-		cmdf("echo 'Pin: release a=bullseye' >> /etc/apt/preferences.d/jessie")
-		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/jessie")
-
-		cmdf("apt-get -y update")
-
-		cmdf("apt-get -y install gcc-10")
-	}
 
 	cmdf("mkdir -p /lib/modules")
 
