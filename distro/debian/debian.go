@@ -259,7 +259,9 @@ func (d Debian) runs() (commands []string) {
 		"|| timeout 10m apt-get install -y %s "+
 		"|| apt-get install -y %s", packages, packages, packages)
 
-	if d.release == 7 {
+	switch d.release {
+	// 7
+	case Wheezy:
 		// We need newer libc for deb8*~bpo70+1
 		format := "deb [check-valid-until=no trusted=yes] " +
 			"http://snapshot.debian.org/archive/debian/%s " +
@@ -275,9 +277,23 @@ func (d Debian) runs() (commands []string) {
 
 		// glibc guarantee backwards compatibility, so should be no problem
 		cmdf("apt-get -y install -t jessie libc6-dev")
-	}
+	// 9
+	case Stretch:
+		repo := "deb [check-valid-until=no trusted=yes] " +
+			"http://snapshot.debian.org/archive/debian/" +
+			"20190123T104530Z unstable main"
 
-	if d.release == 12 {
+		cmdf("echo '%s' >> /etc/apt/sources.list", repo)
+		cmdf("echo 'Package: *' >> /etc/apt/preferences.d/unstable")
+		cmdf("echo 'Pin: release a=unstable' >> /etc/apt/preferences.d/unstable")
+		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/unstable")
+
+		cmdf("apt-get -y update")
+
+		cmdf("apt-get -y install -t unstable gcc-5")
+
+	// 12
+	case Bookworm:
 		// For some kernels that use gcc-11 but depend on libssl1
 		repo := "deb http://deb.debian.org/debian bullseye main"
 		cmdf("echo '%s' >> /etc/apt/sources.list.d/11.list", repo)
