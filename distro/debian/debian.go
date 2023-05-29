@@ -66,23 +66,11 @@ func (d Debian) Packages() (packages []string, err error) {
 	}
 
 	for _, dk := range kernels {
-		// filter out experimental kernels
-		if strings.Contains(dk.Version.Package, "~exp") {
+		if d.release != dk.Release {
 			continue
 		}
 
 		p := dk.Image.Deb.Name[:len(dk.Image.Deb.Name)-4] // w/o .deb
-
-		var kr Release
-		kr, err = kernelRelease(dk)
-		if err != nil {
-			log.Warn().Err(err).Msg("")
-			continue
-		}
-		if kr != d.release {
-			continue
-		}
-
 		packages = append(packages, p)
 	}
 
@@ -160,53 +148,6 @@ func ReleaseFromString(s string) (r Release) {
 	default:
 		r = None
 	}
-	return
-}
-
-func kernelRelease(dk DebianKernel) (r Release, err error) {
-	var gcc string
-	for _, dep := range dk.Dependencies {
-		if !strings.HasPrefix(dep.Name, "linux-compiler-gcc-") {
-			continue
-		}
-
-		gcc = strings.Replace(dep.Name, "linux-compiler-gcc-", "", -1)
-		gcc = strings.Replace(gcc, "-x86", "", -1)
-
-		break
-	}
-
-	switch dk.Version.ABI {
-	case "3.11-1", "3.11-2":
-		gcc = "4.8"
-	}
-
-	switch gcc {
-	case "", "4.4", "4.6", "4.7":
-		// Note that we are catching an empty string, which
-		// means there is no linux-compiler-gcc- package
-		// present, which is the case with old Debian
-		// kernels. As the MR API only returns kernels from
-		// Wheezy onwards, we can safely assume that this is
-		// the correct release.
-		r = Wheezy
-	case "4.8", "4.9":
-		r = Jessie
-	case "5":
-		// No kernels compiled with gcc-5 have reached stable
-		r = None
-	case "6":
-		r = Stretch
-	case "7", "8":
-		r = Buster
-	case "9", "10":
-		r = Bullseye
-	case "11", "12":
-		r = Bookworm
-	default:
-		err = fmt.Errorf("unknown release with gcc-%s", gcc)
-	}
-
 	return
 }
 
