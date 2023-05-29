@@ -238,7 +238,7 @@ func (cmd *KernelListCmd) Run(g *Globals) (err error) {
 
 type KernelListRemoteCmd struct {
 	Distro string `required:"" help:"distribution"`
-	Ver    string `required:"" help:"distro version"`
+	Ver    string `help:"distro version"`
 }
 
 func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
