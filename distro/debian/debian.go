@@ -262,6 +262,9 @@ func (d Debian) runs() (commands []string) {
 		"wget", "build-essential", "libelf-dev", "git",
 		"kmod", "linux-base", "libssl-dev",
 		"firmware-linux-free",
+		"libxml2", "libglib2.0.0", "irqbalance", "libcap-ng0",
+		"libnuma1", "sgml-base", "shared-mime-info", "xdg-user-dirs",
+		"xml-core", "python3",
 	}
 
 	gccs := "'^(gcc-[0-9].[0-9]|gcc-[0-9]|gcc-[1-9][0-9])$'"
