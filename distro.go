@@ -36,9 +36,10 @@ type DebianCmd struct {
 }
 
 type DebianCacheCmd struct {
-	Path    string `help:"path to cache"`
-	Refetch int    `help:"days before refetch versions without deb package" default:"7"`
-	Dump    bool   `help:"dump cache"`
+	Path          string `help:"path to cache"`
+	Refetch       int    `help:"days before refetch versions without deb package" default:"7"`
+	UpdateRelease bool   `help:"update release data"`
+	Dump          bool   `help:"dump cache"`
 }
 
 func (cmd *DebianCacheCmd) Run(dcmd *DebianCmd) (err error) {
@@ -53,7 +54,12 @@ func (cmd *DebianCacheCmd) Run(dcmd *DebianCmd) (err error) {
 		dcmd.Limit = math.MaxInt32
 	}
 
-	kernels, err := debian.GetKernelsWithLimit(dcmd.Limit)
+	mode := debian.NoMode
+	if cmd.UpdateRelease {
+		mode = debian.UpdateRelease
+	}
+
+	kernels, err := debian.GetKernelsWithLimit(dcmd.Limit, mode)
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return
@@ -162,7 +168,7 @@ func (cmd *DebianFetchCmd) Run(dcmd *DebianCmd) (err error) {
 		dcmd.Limit = math.MaxInt32
 	}
 
-	kernels, err := debian.GetKernelsWithLimit(dcmd.Limit)
+	kernels, err := debian.GetKernelsWithLimit(dcmd.Limit, debian.NoMode)
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return

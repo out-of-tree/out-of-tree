@@ -261,7 +261,8 @@ func findKbuild(versions []string, kpkgver string) (
 }
 
 func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
-	version string) (kernels []DebianKernel, fromcache bool) {
+	version string, mode GetKernelsMode) (kernels []DebianKernel,
+	fromcache bool) {
 
 	var dk DebianKernel
 	dks, err := c.Get(version)
@@ -269,6 +270,18 @@ func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
 		dk = dks[0]
 		if !dk.Internal.Invalid {
 			slog.Trace().Msgf("found in cache")
+			if dk.Release == None && mode&UpdateRelease != 0 {
+				slog.Debug().Msg("update release")
+				dk.Release = getRelease(dk.Image)
+				if dk.Release != None {
+					slog.Debug().Msg("update cache")
+					err = c.Put([]DebianKernel{dk})
+					if err != nil {
+						slog.Error().Err(err).Msg("")
+						return
+					}
+				}
+			}
 			kernels = append(kernels, dk)
 			fromcache = true
 			return
@@ -338,9 +351,18 @@ var (
 	RefetchDays int = 14
 )
 
+type GetKernelsMode int
+
+const (
+	NoMode GetKernelsMode = iota
+	UpdateRelease
+)
+
 // GetKernelsWithLimit is workaround for testing and building the
 // first cache, which is heavily rate limited by snapshot.debian.org
-func GetKernelsWithLimit(limit int) (kernels []DebianKernel, err error) {
+func GetKernelsWithLimit(limit int, mode GetKernelsMode) (kernels []DebianKernel,
+	err error) {
+
 	if CachePath == "" {
 		CachePath = config.File("debian.cache")
 		log.Debug().Msgf("Use default kernels cache path: %s", CachePath)
@@ -385,7 +407,7 @@ func GetKernelsWithLimit(limit int) (kernels []DebianKernel, err error) {
 	for i, version := range versions {
 		slog := log.With().Str("version", version).Logger()
 		slog.Trace().Msgf("%03d/%03d", i, len(versions))
-		vkernels, fromcache := getKernelsByVersion(slog, c, toolsVersions, version)
+		vkernels, fromcache := getKernelsByVersion(slog, c, toolsVersions, version, mode)
 		kernels = append(kernels, vkernels...)
 		if !fromcache {
 			limit--
@@ -399,5 +421,5 @@ func GetKernelsWithLimit(limit int) (kernels []DebianKernel, err error) {
 }
 
 func GetKernels() (kernels []DebianKernel, err error) {
-	return GetKernelsWithLimit(math.MaxInt32)
+	return GetKernelsWithLimit(math.MaxInt32, NoMode)
 }
