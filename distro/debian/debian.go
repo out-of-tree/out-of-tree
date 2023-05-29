@@ -292,6 +292,21 @@ func (d Debian) runs() (commands []string) {
 
 		cmdf("apt-get -y install -t unstable gcc-5")
 
+	// 10
+	case Buster:
+		repo := "deb [check-valid-until=no trusted=yes] " +
+			"http://snapshot.debian.org/archive/debian/" +
+			"20230423T032533Z stretch main"
+
+		cmdf("echo '%s' >> /etc/apt/sources.list", repo)
+		cmdf("echo 'Package: *' >> /etc/apt/preferences.d/stretch")
+		cmdf("echo 'Pin: release a=stretch' >> /etc/apt/preferences.d/stretch")
+		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/stretch")
+
+		cmdf("apt-get -y update")
+
+		cmdf("apt-get -y install -t stretch gcc-6")
+
 	// 12
 	case Bookworm:
 		// For some kernels that use gcc-11 but depend on libssl1
