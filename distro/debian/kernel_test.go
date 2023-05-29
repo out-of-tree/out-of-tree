@@ -5,6 +5,8 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
+
+	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 )
 
 func TestGetDebianKernel(t *testing.T) {
@@ -35,5 +37,31 @@ func TestParseKernelVersion(t *testing.T) {
 		assert.True(!found)
 
 		versions[dkv.Package] = true
+	}
+}
+
+func TestKbuildVersion(t *testing.T) {
+	assert := assert.New(t)
+
+	kernels, err := GetKernels()
+	assert.Nil(err)
+	assert.NotEmpty(kernels)
+
+	toolsVersions, err := snapshot.SourcePackageVersions("linux-tools")
+	assert.Nil(err)
+
+	for _, dk := range kernels {
+		if !kver(dk.Version.Package).LessThan(kver("4.5-rc0")) {
+			continue
+		}
+
+		version := kbuildVersion(
+			toolsVersions,
+			dk.Version.Package,
+		)
+		assert.Nil(err)
+		assert.NotEmpty(version)
+
+		t.Log(dk.Version.Package, "->", version)
 	}
 }

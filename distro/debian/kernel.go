@@ -3,7 +3,6 @@ package debian
 import (
 	"errors"
 	"math"
-	"sort"
 	"strings"
 	"time"
 
@@ -227,10 +226,6 @@ func getCachedKernel(deb string) (dk DebianKernel, err error) {
 }
 
 func kbuildVersion(versions []string, kpkgver string) string {
-	sort.Slice(versions, func(i, j int) bool {
-		return kver(versions[i]).GreaterThan(kver(versions[j]))
-	})
-
 	for _, v := range versions {
 		if v == kpkgver {
 			return v
@@ -251,12 +246,6 @@ func kbuildVersion(versions []string, kpkgver string) string {
 		}
 
 		if ver.Minor() != cver.Minor() {
-			continue
-		}
-
-		// Use the first version that is newer than the kernel
-
-		if ver.LessThan(cver) {
 			continue
 		}
 
