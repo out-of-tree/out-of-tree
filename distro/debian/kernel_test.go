@@ -23,7 +23,7 @@ func TestGetDebianKernel(t *testing.T) {
 func TestParseKernelVersion(t *testing.T) {
 	assert := assert.New(t)
 
-	kernels, err := GetKernels()
+	kernels, err := GetKernelsWithLimit(16, NoMode)
 	assert.Nil(err)
 	assert.NotEmpty(kernels)
 
@@ -43,7 +43,7 @@ func TestParseKernelVersion(t *testing.T) {
 func TestKbuildVersion(t *testing.T) {
 	assert := assert.New(t)
 
-	kernels, err := GetKernels()
+	kernels, err := GetKernelsWithLimit(16, NoMode)
 	assert.Nil(err)
 	assert.NotEmpty(kernels)
 

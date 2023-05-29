@@ -25,7 +25,7 @@ jobs:
       run: go build
 
     - name: Cache
-      run: ./out-of-tree --log-level=trace distro debian cache --refetch=0 --limit=128 --update-release
+      run: ./out-of-tree --log-level=trace distro debian cache --refetch=0 --limit=128 --update-release --update-kbuild
 
     - name: Install s3cmd
       run: sudo apt install s3cmd

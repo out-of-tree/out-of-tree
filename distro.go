@@ -39,6 +39,7 @@ type DebianCacheCmd struct {
 	Path          string `help:"path to cache"`
 	Refetch       int    `help:"days before refetch versions without deb package" default:"7"`
 	UpdateRelease bool   `help:"update release data"`
+	UpdateKbuild  bool   `help:"update kbuild package"`
 	Dump          bool   `help:"dump cache"`
 }
 
@@ -56,7 +57,10 @@ func (cmd *DebianCacheCmd) Run(dcmd *DebianCmd) (err error) {
 
 	mode := debian.NoMode
 	if cmd.UpdateRelease {
-		mode = debian.UpdateRelease
+		mode |= debian.UpdateRelease
+	}
+	if cmd.UpdateKbuild {
+		mode |= debian.UpdateKbuild
 	}
 
 	kernels, err := debian.GetKernelsWithLimit(dcmd.Limit, mode)

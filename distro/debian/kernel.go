@@ -278,6 +278,30 @@ func findKbuild(versions []string, kpkgver string) (
 	return
 }
 
+func updateKbuild(toolsVersions []string, dk *DebianKernel) {
+	if !kver(dk.Version.Package).LessThan(kver("4.5-rc0")) {
+		dk.Internal.Invalid = true
+		return
+	}
+
+	var deps []snapshot.Package
+	for _, pkg := range dk.Dependencies {
+		if strings.Contains(pkg.Name, "kbuild") {
+			continue
+		}
+		deps = append(deps, pkg)
+	}
+	dk.Dependencies = deps
+
+	kbuildpkg, err := findKbuild(toolsVersions, dk.Version.Package)
+	if err != nil {
+		dk.Internal.Invalid = true
+		return
+	}
+
+	dk.Dependencies = append(dk.Dependencies, kbuildpkg)
+}
+
 func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
 	version string, mode GetKernelsMode) (kernels []DebianKernel,
 	fromcache bool) {
@@ -287,6 +311,7 @@ func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
 	if err == nil {
 		dk = dks[0]
 		if !dk.Internal.Invalid {
+			// TODO refactor
 			slog.Trace().Msgf("found in cache")
 			if dk.Release == None && mode&UpdateRelease != 0 {
 				slog.Debug().Msg("update release")
@@ -298,6 +323,16 @@ func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
 						slog.Error().Err(err).Msg("")
 						return
 					}
+				}
+			}
+			if mode&UpdateKbuild != 0 {
+				slog.Debug().Msg("update kbuild")
+				updateKbuild(toolsVersions, &dk)
+				slog.Debug().Msg("update cache")
+				err = c.Put([]DebianKernel{dk})
+				if err != nil {
+					slog.Error().Err(err).Msg("")
+					return
 				}
 			}
 			kernels = append(kernels, dk)
@@ -326,26 +361,11 @@ func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
 	}
 
 	if !dk.HasDependency("kbuild") {
-		if !kver(dk.Version.Package).LessThan(kver("4.5-rc0")) {
-			dk.Internal.Invalid = true
-		} else {
-			// Debian kernels prior to the 4.5 package
-			// version did not have a kbuild built from
-			// the linux source itself, but used the
-			// linux-tools source package.
-			kbuildpkg, err := findKbuild(
-				toolsVersions,
-				dk.Version.Package,
-			)
-			if err != nil {
-				dk.Internal.Invalid = true
-			} else {
-				dk.Dependencies = append(
-					dk.Dependencies,
-					kbuildpkg,
-				)
-			}
-		}
+		// Debian kernels prior to the 4.5 package
+		// version did not have a kbuild built from
+		// the linux source itself, but used the
+		// linux-tools source package.
+		updateKbuild(toolsVersions, &dk)
 	}
 
 	dk.Internal.LastFetch = time.Now()
@@ -374,6 +394,7 @@ type GetKernelsMode int
 const (
 	NoMode GetKernelsMode = iota
 	UpdateRelease
+	UpdateKbuild
 )
 
 // GetKernelsWithLimit is workaround for testing and building the
