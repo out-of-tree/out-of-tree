@@ -286,6 +286,8 @@ func (d Debian) runs() (commands []string) {
 		cmdf("echo 'Pin-Priority: 10' >> /etc/apt/preferences.d/jessie")
 
 		cmdf("apt-get -y update")
+
+		cmdf("apt-get -y install gcc-10")
 	}
 
 	cmdf("mkdir -p /lib/modules")
