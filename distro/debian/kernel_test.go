@@ -17,3 +17,23 @@ func TestGetDebianKernel(t *testing.T) {
 
 	t.Logf("%s", spew.Sdump(dk))
 }
+
+func TestParseKernelVersion(t *testing.T) {
+	assert := assert.New(t)
+
+	kernels, err := GetKernels()
+	assert.Nil(err)
+	assert.NotEmpty(kernels)
+
+	versions := make(map[string]bool)
+
+	for _, dk := range kernels {
+		dkv, err := ParseKernelVersion(dk.Image.Deb.Name)
+		assert.Nil(err)
+
+		_, found := versions[dkv.Package]
+		assert.True(!found)
+
+		versions[dkv.Package] = true
+	}
+}

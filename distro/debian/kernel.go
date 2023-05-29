@@ -29,6 +29,35 @@ type DebianKernelVersion struct {
 	ABI string
 }
 
+func ParseKernelVersion(pkg string) (dkv DebianKernelVersion, err error) {
+	// -> 4.11.0-trunk-amd64_4.11-1~exp2_amd64.deb
+	pkg = strings.Replace(pkg, "linux-image-", "", -1)
+
+	// -> [4.11.0-trunk-amd64 4.11-1~exp2 amd64.deb]
+	fields := strings.Split(pkg, "_")
+
+	if len(fields) != 3 {
+		err = errors.New("incorrect input format")
+		return
+	}
+
+	// 4.11.0-trunk-amd64 -> 4.11.0-trunk
+	// TODO other archs?
+	dkv.ABI = strings.Split(fields[0], "-amd64")[0]
+	if dkv.ABI == "" {
+		err = errors.New("incorrect input format")
+		return
+	}
+
+	dkv.Package = fields[1]
+	if dkv.Package == "" {
+		err = errors.New("incorrect input format")
+		return
+	}
+
+	return
+}
+
 type DebianKernel struct {
 	Version      DebianKernelVersion
 	Image        snapshot.Package
