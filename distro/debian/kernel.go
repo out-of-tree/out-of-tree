@@ -280,7 +280,6 @@ func findKbuild(versions []string, kpkgver string) (
 
 func updateKbuild(toolsVersions []string, dk *DebianKernel) {
 	if !kver(dk.Version.Package).LessThan(kver("4.5-rc0")) {
-		dk.Internal.Invalid = true
 		return
 	}
 
@@ -365,7 +364,11 @@ func getKernelsByVersion(slog zerolog.Logger, c *Cache, toolsVersions []string,
 		// version did not have a kbuild built from
 		// the linux source itself, but used the
 		// linux-tools source package.
-		updateKbuild(toolsVersions, &dk)
+		if !kver(dk.Version.Package).LessThan(kver("4.5-rc0")) {
+			dk.Internal.Invalid = true
+		} else {
+			updateKbuild(toolsVersions, &dk)
+		}
 	}
 
 	dk.Internal.LastFetch = time.Now()
