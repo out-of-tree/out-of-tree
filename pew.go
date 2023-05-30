@@ -867,8 +867,7 @@ func (cmd PewCmd) performCI(ka config.Artifact) (err error) {
 				}
 				swg.Add()
 				if threadCounter < cmd.Threads {
-					duration := time.Second * time.Duration(threadCounter)
-					time.Sleep(duration)
+					time.Sleep(time.Second)
 					threadCounter++
 				}
 				go cmd.testArtifact(&swg, ka, kernel)
