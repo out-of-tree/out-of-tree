@@ -839,6 +839,8 @@ func (cmd PewCmd) performCI(ka config.Artifact) (err error) {
 	found := false
 	max := cmd.Max
 
+	qemuCounter := 0
+
 	swg := sizedwaitgroup.New(cmd.Threads)
 	if cmd.Shuffle {
 		cmd.kcfg.Kernels = shuffleKernels(cmd.kcfg.Kernels)
@@ -864,6 +866,11 @@ func (cmd PewCmd) performCI(ka config.Artifact) (err error) {
 					break
 				}
 				swg.Add()
+				if qemuCounter < cmd.Threads {
+					duration := time.Second * time.Duration(qemuCounter)
+					time.Sleep(duration)
+					qemuCounter++
+				}
 				go cmd.testArtifact(&swg, ka, kernel)
 			}
 		}
