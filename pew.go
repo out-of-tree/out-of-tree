@@ -641,6 +641,12 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		Logger()
 
 	slog.Info().Msg("start")
+	testStart := time.Now()
+	defer func() {
+		slog.Debug().Str("test_duration",
+			time.Now().Sub(testStart).String()).
+			Msg("")
+	}()
 
 	kernel := qemu.Kernel{KernelPath: ki.KernelPath, InitrdPath: ki.InitrdPath}
 	if cmd.RootFS != "" {
@@ -678,6 +684,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		q.Timeout = 0
 	}
 
+	qemuStart := time.Now()
 	err = q.Start()
 	if err != nil {
 		slog.Error().Err(err).Msg("qemu start")
@@ -743,6 +750,9 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		result.InternalError = err
 		return
 	}
+	slog.Debug().Str("qemu_startup_duration",
+		time.Now().Sub(qemuStart).String()).
+		Msg("ssh is available")
 
 	remoteTest, err := copyTest(q, cmd.Test, ka)
 	if err != nil {
