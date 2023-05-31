@@ -1,5 +1,7 @@
 package distro
 
+import "code.dumpstack.io/tools/out-of-tree/qemu"
+
 // ByRootFS is sorting by .RootFS lexicographically
 type ByRootFS []KernelInfo
 
@@ -24,6 +26,8 @@ type KernelInfo struct {
 	KernelPath  string
 	InitrdPath  string
 	ModulesPath string
+
+	CPU qemu.CPU
 
 	RootFS string
 

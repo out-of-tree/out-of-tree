@@ -44,6 +44,11 @@ type Kernel struct {
 	InitrdPath string
 }
 
+type CPU struct {
+	Model string
+	Flags []string
+}
+
 // System describe qemu parameters and executed process
 type System struct {
 	arch      arch
@@ -54,6 +59,8 @@ type System struct {
 
 	Cpus   int
 	Memory int
+
+	CPU CPU
 
 	debug bool
 	gdb   string // tcp::1234
@@ -247,15 +254,23 @@ func (q *System) Args() (qemuArgs []string) {
 		qemuArgs = append(qemuArgs, "-initrd", q.kernel.InitrdPath)
 	}
 
+	cpu := "max"
+	if q.CPU.Model != "" {
+		cpu = q.CPU.Model
+	}
+	for _, flag := range q.CPU.Flags {
+		cpu += "," + flag
+	}
+	qemuArgs = append(qemuArgs, "-cpu", cpu)
+
 	if q.arch == X86x64 || q.arch == X86x32 {
 		if kvmExists() {
 			qemuArgs = append(qemuArgs, "-enable-kvm")
 		}
-		qemuArgs = append(qemuArgs, "-cpu", "max")
 	}
 
 	if q.arch == X86x64 && runtime.GOOS == "darwin" {
-		qemuArgs = append(qemuArgs, "-accel", "hvf", "-cpu", "max")
+		qemuArgs = append(qemuArgs, "-accel", "hvf")
 	}
 
 	qemuArgs = append(qemuArgs, "-append", q.cmdline())

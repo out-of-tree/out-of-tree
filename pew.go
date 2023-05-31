@@ -695,6 +695,14 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	q.SetSMAP(!ka.Mitigations.DisableSmap)
 	q.SetKPTI(!ka.Mitigations.DisableKpti)
 
+	if ki.CPU.Model != "" {
+		q.CPU.Model = ki.CPU.Model
+	}
+
+	if len(ki.CPU.Flags) != 0 {
+		q.CPU.Flags = ki.CPU.Flags
+	}
+
 	if cmd.Endless {
 		q.Timeout = 0
 	}
