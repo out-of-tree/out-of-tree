@@ -387,6 +387,17 @@ func (d Debian) Kernels() (kernels []distro.KernelInfo, err error) {
 			Package: pkgname,
 		}
 
+		smapBlocklist := []string{
+			"3.10.5-1~bpo70+1",
+			"3.10.11-1~bpo70+1",
+			"3.9.6-1~bpo70+1",
+		}
+		for _, ver := range smapBlocklist {
+			if strings.Contains(release, ver) {
+				ki.CPU.Flags = append(ki.CPU.Flags, "smap=off")
+			}
+		}
+
 		kernels = append(kernels, ki)
 	}
 
