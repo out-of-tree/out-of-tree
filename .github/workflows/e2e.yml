@@ -60,7 +60,7 @@ jobs:
     - name: Create droplet
       run: >-
         doctl compute droplet create
-        --size s-4vcpu-8gb
+        --size s-4vcpu-8gb-intel
         --tag-name=github-actions
         --image almalinux-9-x64
         --ssh-keys='b4:4c:66:7d:be:19:25:43:1c:e0:02:61:9f:49:12:94'
