@@ -139,16 +139,30 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 		return
 	}
 
-	log.Info().Msgf("Success rate: %.02f, Threshold: %.02f",
-		successRate(state), cmd.Threshold)
-	if successRate(state) < cmd.Threshold {
-		err = errors.New("reliability threshold not met")
+	if state.InternalErrors > 0 {
+		log.Warn().Msgf("%d internal errors "+
+			"(not counted towards success rate)",
+			state.InternalErrors)
 	}
+
+	msg := fmt.Sprintf("Success rate: %.02f (%d/%d), Threshold: %.02f",
+		successRate(state),
+		int(state.Success), int(state.Overall),
+		cmd.Threshold)
+
+	if successRate(state) < cmd.Threshold {
+		log.Error().Msg(msg)
+		err = errors.New("reliability threshold not met")
+	} else {
+		log.Info().Msg(msg)
+	}
+
 	return
 }
 
 type runstate struct {
 	Overall, Success float64
+	InternalErrors   int
 }
 
 var (
@@ -403,11 +417,12 @@ func dumpResult(q *qemu.System, ka config.Artifact, ki distro.KernelInfo,
 	// TODO refactor
 
 	if res.InternalError != nil {
-		q.Log.Error().Err(res.InternalError).
+		q.Log.Warn().Err(res.InternalError).
 			Str("panic", fmt.Sprintf("%v", q.KernelPanic)).
 			Str("timeout", fmt.Sprintf("%v", q.KilledByTimeout)).
 			Msg("internal")
 		res.InternalErrorString = res.InternalError.Error()
+		state.InternalErrors += 1
 	} else {
 		colored := ""
 
