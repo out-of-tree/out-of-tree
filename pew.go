@@ -50,7 +50,8 @@ type PewCmd struct {
 	QemuAfterStartTimeout time.Duration `help:"timeout after starting of the qemu vm before tests"`
 	DockerTimeout         time.Duration `help:"timeout for docker"`
 
-	Threshold float64 `help:"reliablity threshold for exit code" default:"1.00"`
+	Threshold             float64 `help:"reliablity threshold for exit code" default:"1.00"`
+	IncludeInternalErrors bool    `help:"count internal errors as part of the success rate"`
 
 	Endless        bool          `help:"endless tests"`
 	EndlessTimeout time.Duration `help:"timeout between tests" default:"1m"`
@@ -140,9 +141,16 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 	}
 
 	if state.InternalErrors > 0 {
+		s := "not counted towards success rate"
+		if cmd.IncludeInternalErrors {
+			s = "included in success rate"
+		}
 		log.Warn().Msgf("%d internal errors "+
-			"(not counted towards success rate)",
-			state.InternalErrors)
+			"(%s)", state.InternalErrors, s)
+	}
+
+	if cmd.IncludeInternalErrors {
+		state.Overall += float64(state.InternalErrors)
 	}
 
 	msg := fmt.Sprintf("Success rate: %.02f (%d/%d), Threshold: %.02f",
