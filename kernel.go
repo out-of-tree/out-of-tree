@@ -316,6 +316,10 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	kernel.SetSigintHandler(&kernelCmd.shutdown)
 
 	for _, dist := range distro.List() {
+		if kernelCmd.shutdown {
+			break
+		}
+
 		if distroType != distro.None && distroType != dist.ID {
 			continue
 		}
