@@ -79,6 +79,29 @@ func (ol OracleLinux) Kernels() (kernels []distro.KernelInfo, err error) {
 		return
 	}
 
+	// Some kernels do not work with the smap enabled
+	//
+	// BUG: unable to handle kernel paging request at 00007fffc64b2fda
+	// IP: [<ffffffff8127a9ed>] strnlen+0xd/0x40"
+	// ...
+	// Call Trace:
+	//  [<ffffffff81123bf8>] dtrace_psinfo_alloc+0x138/0x390
+	//  [<ffffffff8118b143>] do_execve_common.isra.24+0x3c3/0x460
+	//  [<ffffffff81554d70>] ? rest_init+0x80/0x80
+	//  [<ffffffff8118b1f8>] do_execve+0x18/0x20
+	//  [<ffffffff81554dc2>] kernel_init+0x52/0x180
+	//  [<ffffffff8157cd2c>] ret_from_fork+0x7c/0xb0
+	//
+	smapBlocklist := []string{
+		"3.8.13-16",
+		"3.8.13-26",
+		"3.8.13-35",
+		"3.8.13-44",
+		"3.8.13-55",
+		"3.8.13-68",
+		"3.8.13-98",
+	}
+
 	for i, k := range kernels {
 		// The latest uek kernels require gcc-11, which is
 		// only present in el8 with scl load, so not so
@@ -87,6 +110,14 @@ func (ol OracleLinux) Kernels() (kernels []distro.KernelInfo, err error) {
 		if strings.Contains(k.KernelVersion, "5.15.0") {
 			cnt := strings.Replace(k.ContainerName, "8", "9", -1)
 			kernels[i].ContainerName = cnt
+		}
+
+		for _, ver := range smapBlocklist {
+			if strings.Contains(k.KernelVersion, ver) {
+				kernels[i].CPU.Flags = append(
+					kernels[i].CPU.Flags, "smap=off",
+				)
+			}
 		}
 	}
 
