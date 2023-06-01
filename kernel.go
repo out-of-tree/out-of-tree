@@ -99,6 +99,10 @@ func (cmd *KernelCmd) GenKernel(km config.Target, pkg string) {
 
 	reinstall := false
 	for _, kinfo := range cmd.kcfg.Kernels {
+		if !km.Distro.Equal(kinfo.Distro) {
+			continue
+		}
+
 		var found bool
 		if kinfo.Distro.ID == distro.Debian { // FIXME
 			found = pkg == kinfo.Package
