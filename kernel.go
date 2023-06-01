@@ -276,7 +276,7 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 
 type KernelAutogenCmd struct{}
 
-func (cmd KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
+func (cmd *KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	ka, err := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
 	if err != nil {
 		return
