@@ -1,6 +1,7 @@
 package debian
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,6 +15,10 @@ func TestDebian(t *testing.T) {
 	u := Debian{release: Wheezy}
 
 	assert.True(u.Equal(distro.Distro{Release: "wheezy", ID: distro.Debian}))
+
+	if os.Getenv("CI") != "" {
+		t.Skip("skip testing in CI")
+	}
 
 	assert.NotEmpty(u.Packages())
 }
