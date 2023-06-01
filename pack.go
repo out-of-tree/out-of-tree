@@ -48,7 +48,8 @@ func (cmd *PackCmd) Run(g *Globals) (err error) {
 		}
 
 		if cmd.Autogen {
-			err = KernelAutogenCmd{}.Run(
+			autogen := KernelAutogenCmd{}
+			err = autogen.Run(
 				&KernelCmd{
 					NoDownload: cmd.NoDownload,
 					UseHost:    cmd.UseHost,
