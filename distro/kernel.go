@@ -36,4 +36,6 @@ type KernelInfo struct {
 
 	// Package name, not mandatory (yet)
 	Package string
+
+	Blocklisted bool
 }

@@ -887,6 +887,12 @@ func (cmd PewCmd) performCI(ka config.Artifact) (err error) {
 			return
 		}
 
+		if kernel.Blocklisted {
+			log.Debug().Str("kernel", kernel.KernelVersion).
+				Msgf("skip (blocklisted)")
+			continue
+		}
+
 		if supported {
 			found = true
 			max--
