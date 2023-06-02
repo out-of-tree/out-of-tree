@@ -2,6 +2,7 @@ package oraclelinux
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -102,6 +103,10 @@ func (ol OracleLinux) Kernels() (kernels []distro.KernelInfo, err error) {
 		"3.8.13-98",
 	}
 
+	// BUG: soft lockup - CPU#0 stuck for 61s!
+	blocklistr := regexp.MustCompile(
+		`2[.]6[.]32-300[.]3(2[.][2-3]|[3-9][.][0-9])`)
+
 	for i, k := range kernels {
 		// The latest uek kernels require gcc-11, which is
 		// only present in el8 with scl load, so not so
@@ -118,6 +123,10 @@ func (ol OracleLinux) Kernels() (kernels []distro.KernelInfo, err error) {
 					kernels[i].CPU.Flags, "smap=off",
 				)
 			}
+		}
+
+		if blocklistr.MatchString(k.KernelVersion) {
+			kernels[i].Blocklisted = true
 		}
 	}
 
