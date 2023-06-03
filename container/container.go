@@ -35,6 +35,8 @@ var Commands []config.DockerCommand
 
 var UseCache = true
 
+var Prune = true
+
 type Image struct {
 	Name   string
 	Distro distro.Distro
@@ -231,7 +233,16 @@ func (c Container) Build(image string, envs, runs []string) (err error) {
 	return
 }
 
+func (c Container) prune() error {
+	c.Log.Debug().Msg("remove dangling or unused images from local storage")
+	return exec.Command(Runtime, "image", "prune", "-f").Run()
+}
+
 func (c Container) build(imagePath string) (output string, err error) {
+	if Prune {
+		defer c.prune()
+	}
+
 	args := []string{"build"}
 	if !UseCache {
 		args = append(args, "--pull", "--no-cache")

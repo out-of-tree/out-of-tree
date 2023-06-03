@@ -31,6 +31,7 @@ type KernelCmd struct {
 	Threads    int  `help:"threads for parallel installation" default:"1"`
 	Update     bool `help:"update container"`
 	Max        int  `help:"maximum kernels to download" default:"100500"`
+	NoPrune    bool `help:"do not remove dangling or unused images from local storage after build"`
 
 	ContainerTimeout time.Duration `help:"container timeout"`
 
@@ -157,6 +158,9 @@ func (cmd *KernelCmd) Generate(g *Globals, km config.Target) (err error) {
 	if cmd.Update {
 		container.UseCache = false
 	}
+	if cmd.NoPrune {
+		container.Prune = false
+	}
 
 	cmd.kcfg, err = config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
@@ -246,6 +250,13 @@ type KernelListRemoteCmd struct {
 }
 
 func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
+	if kernelCmd.Update {
+		container.UseCache = false
+	}
+	if kernelCmd.NoPrune {
+		container.Prune = false
+	}
+
 	distroType, err := distro.NewID(cmd.Distro)
 	if err != nil {
 		return
