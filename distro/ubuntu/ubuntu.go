@@ -154,3 +154,8 @@ func (u Ubuntu) Install(pkgname string, headers bool) (err error) {
 
 	return
 }
+
+func (u Ubuntu) RootFS() string {
+	return fmt.Sprintf("out_of_tree_ubuntu_%s.img",
+		strings.Replace(u.release, ".", "__", -1))
+}

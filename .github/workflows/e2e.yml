@@ -40,7 +40,16 @@ jobs:
           { distro: Debian, release: 9 },
           { distro: Debian, release: 10 },
           { distro: Debian, release: 11 },
-          { distro: Debian, release: 12 }
+          { distro: Debian, release: 12 },
+          { distro: OpenSUSE, release: "42.1" },
+          { distro: OpenSUSE, release: "42.2" },
+          { distro: OpenSUSE, release: "42.3" },
+          { distro: OpenSUSE, release: "15.0" },
+          { distro: OpenSUSE, release: "15.1" },
+          { distro: OpenSUSE, release: "15.2" },
+          { distro: OpenSUSE, release: "15.3" },
+          { distro: OpenSUSE, release: "15.4" },
+          { distro: OpenSUSE, release: "15.5" }
           ]
 
     steps:
@@ -115,7 +124,7 @@ jobs:
         echo 'WorkingDirectory=/root/test' >> test.service
         echo 'TimeoutStopSec=1' >> test.service
         echo 'ExecStart=/usr/local/bin/out-of-tree kernel autogen --threads=4 --max=256 --shuffle' >> test.service
-        echo 'ExecStart=/usr/local/bin/out-of-tree pew --qemu-timeout=4m --threads=4 --include-internal-errors' >> test.service
+        echo 'ExecStart=/usr/local/bin/out-of-tree pew --qemu-timeout=10m --threads=4 --include-internal-errors' >> test.service
 
         scp test.service root@$IP:/etc/systemd/system/test.service
 

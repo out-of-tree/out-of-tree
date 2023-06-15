@@ -9,7 +9,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
-func TestDownloadQemuImage(t *testing.T) {
+func TestDownloadRootFS(t *testing.T) {
 	tmp, err := ioutil.TempDir("", "out-of-tree_")
 	if err != nil {
 		return
@@ -18,7 +18,7 @@ func TestDownloadQemuImage(t *testing.T) {
 
 	file := "out_of_tree_ubuntu_12__04.img"
 
-	err = DownloadQemuImage(tmp, file)
+	err = DownloadRootFS(tmp, file)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -15,8 +15,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/zcalusic/sysinfo"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
-	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
@@ -46,16 +44,12 @@ func GenHostKernels(download bool) (kernels []distro.KernelInfo, err error) {
 	}
 
 	// only for compatibility, docker is not really used
-	dii := container.Image{
-		Name: config.Target{
-			Distro: distro.Distro{
-				ID:      distroType,
-				Release: si.OS.Version,
-			},
-		}.DockerName(),
+	dist := distro.Distro{
+		ID:      distroType,
+		Release: si.OS.Version,
 	}
 
-	rootfs, err := GenRootfsImage(dii, download)
+	rootfs, err := GenRootfsImage(dist.RootFS(), download)
 	if err != nil {
 		return
 	}

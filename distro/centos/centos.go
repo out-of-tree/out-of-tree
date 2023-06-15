@@ -210,3 +210,7 @@ func (centos CentOS) Install(pkgname string, headers bool) (err error) {
 
 	return
 }
+
+func (centos CentOS) RootFS() string {
+	return fmt.Sprintf("out_of_tree_centos_%s.img", centos.release)
+}

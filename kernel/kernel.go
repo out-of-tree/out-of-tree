@@ -18,7 +18,6 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
-	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
@@ -71,15 +70,14 @@ func vsyscallAvailable() (available bool, err error) {
 	return
 }
 
-func GenRootfsImage(d container.Image, download bool) (rootfs string, err error) {
+func GenRootfsImage(imageFile string, download bool) (rootfs string, err error) {
 	imagesPath := config.Dir("images")
-	imageFile := d.Name + ".img"
 
 	rootfs = filepath.Join(imagesPath, imageFile)
 	if !fs.PathExists(rootfs) {
 		if download {
 			log.Info().Msgf("%v not available, start download", imageFile)
-			err = cache.DownloadQemuImage(imagesPath, imageFile)
+			err = cache.DownloadRootFS(imagesPath, imageFile)
 		}
 	}
 	return

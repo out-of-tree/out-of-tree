@@ -23,6 +23,7 @@ import (
 
 	_ "code.dumpstack.io/tools/out-of-tree/distro/centos"
 	_ "code.dumpstack.io/tools/out-of-tree/distro/debian"
+	_ "code.dumpstack.io/tools/out-of-tree/distro/opensuse"
 	_ "code.dumpstack.io/tools/out-of-tree/distro/oraclelinux"
 	_ "code.dumpstack.io/tools/out-of-tree/distro/ubuntu"
 

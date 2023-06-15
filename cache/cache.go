@@ -39,7 +39,7 @@ func unpackTar(archive, destination string) (err error) {
 	return
 }
 
-func DownloadQemuImage(path, file string) (err error) {
+func DownloadRootFS(path, file string) (err error) {
 	tmp, err := fs.TempDir()
 	if err != nil {
 		return

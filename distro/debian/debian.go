@@ -527,3 +527,7 @@ func (d Debian) cleanup(pkgname string) {
 		log.Warn().Err(err).Msg("cleanup")
 	}
 }
+
+func (d Debian) RootFS() string {
+	return fmt.Sprintf("out_of_tree_debian_%s.img", d.release.String())
+}

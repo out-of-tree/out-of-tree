@@ -216,3 +216,7 @@ func (ol OracleLinux) Install(pkgname string, headers bool) (err error) {
 
 	return
 }
+
+func (ol OracleLinux) RootFS() string {
+	return fmt.Sprintf("out_of_tree_oraclelinux_%s.img", ol.release)
+}

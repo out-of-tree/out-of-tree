@@ -18,10 +18,12 @@ const (
 	Debian
 	// OracleLinux https://www.oracle.com/linux/
 	OracleLinux
+	// OpenSUSE https://opensuse.org/
+	OpenSUSE
 )
 
 var IDs = []ID{
-	None, Ubuntu, CentOS, Debian, OracleLinux,
+	None, Ubuntu, CentOS, Debian, OracleLinux, OpenSUSE,
 }
 
 var nameStrings = [...]string{
@@ -30,6 +32,7 @@ var nameStrings = [...]string{
 	"CentOS",
 	"Debian",
 	"OracleLinux",
+	"openSUSE",
 }
 
 func NewID(name string) (id ID, err error) {
@@ -52,6 +55,8 @@ func (id *ID) UnmarshalTOML(data []byte) (err error) {
 		*id = Debian
 	} else if strings.EqualFold(name, "OracleLinux") {
 		*id = OracleLinux
+	} else if strings.EqualFold(name, "openSUSE") {
+		*id = OpenSUSE
 	} else if name != "" {
 		err = fmt.Errorf("distro %s is not supported", name)
 	} else {

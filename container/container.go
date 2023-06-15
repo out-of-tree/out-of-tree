@@ -410,7 +410,7 @@ func (c Container) Kernels() (kernels []distro.KernelInfo, err error) {
 			InitrdPath:  filepath.Join(boot, initrdFile),
 			ModulesPath: filepath.Join(libmodules, krel.Name()),
 
-			RootFS: config.File("images", c.name+".img"),
+			RootFS: config.File("images", c.dist.RootFS()),
 		}
 
 		kernels = append(kernels, ki)

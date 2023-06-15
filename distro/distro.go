@@ -14,6 +14,7 @@ type distribution interface {
 	Packages() (packages []string, err error)
 	Install(pkg string, headers bool) (err error)
 	Kernels() (kernels []KernelInfo, err error)
+	RootFS() string
 }
 
 func Register(d distribution) {
@@ -87,4 +88,14 @@ func (d Distro) Equal(to Distro) bool {
 		}
 	}
 	return false
+}
+
+func (d Distro) RootFS() string {
+	for _, dd := range distros {
+		if dd.Equal(d) {
+			return dd.RootFS()
+		}
+	}
+
+	return ""
 }

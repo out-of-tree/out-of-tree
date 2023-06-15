@@ -176,8 +176,7 @@ func (cmd *KernelCmd) Generate(g *Globals, km config.Target) (err error) {
 
 	log.Info().Msgf("Generating for target %v", km)
 
-	_, err = kernel.GenRootfsImage(container.Image{Name: km.DockerName()},
-		!cmd.NoDownload)
+	_, err = kernel.GenRootfsImage(km.Distro.RootFS(), !cmd.NoDownload)
 	if err != nil || cmd.shutdown {
 		return
 	}
@@ -267,7 +266,7 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 		Kernel: config.Kernel{Regex: ".*"},
 	}
 
-	_, err = kernel.GenRootfsImage(container.Image{Name: km.DockerName()}, false)
+	_, err = kernel.GenRootfsImage(km.Distro.RootFS(), false)
 	if err != nil {
 		return
 	}
