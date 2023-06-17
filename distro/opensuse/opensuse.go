@@ -215,11 +215,14 @@ func (suse OpenSUSE) Install(version string, headers bool) (err error) {
 	if !strings.HasPrefix(suse.release, "12") &&
 		!strings.HasPrefix(suse.release, "11") {
 
-		cmdf("dracut "+
-			"-a workaround "+
-			"--force-drivers '%s' "+
-			"-f /boot/initrd-$(ls /lib/modules) $(ls /lib/modules)",
-			modules)
+		format := "dracut "
+		if strings.HasPrefix(suse.release, "13") {
+			format += "-a workaround "
+		}
+		format += "--force-drivers '%s' "
+		format += "-f /boot/initrd-$(ls /lib/modules) $(ls /lib/modules)"
+
+		cmdf(format, modules)
 	} else {
 		cmdf("touch /etc/fstab")
 		cmdf("mkinitrd -m '%s'", modules)
