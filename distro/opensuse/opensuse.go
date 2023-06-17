@@ -183,8 +183,11 @@ func (suse OpenSUSE) Install(version string, headers bool) (err error) {
 		commands = append(commands, fmt.Sprintf(f, s...))
 	}
 
-	installcmd := "zypper --no-refresh -n install " +
-		"--replacefiles --no-recommends --force-resolution --capability"
+	installcmd := "zypper --no-refresh -n install "
+	if !strings.HasPrefix(suse.release, "12") {
+		installcmd += " --replacefiles"
+	}
+	installcmd += " --no-recommends --force-resolution --capability"
 	cmdf("%s kernel-default=%s", installcmd, version)
 	if headers {
 		cmdf("%s kernel-default-devel=%s", installcmd, version)
