@@ -11,6 +11,7 @@ import (
 
 func init() {
 	releases := []string{
+		"12.1", "12.2", "12.3",
 		"13.1", "13.2",
 		"42.1", "42.2", "42.3",
 		"15.0", "15.1", "15.2", "15.3", "15.4", "15.5",
@@ -40,7 +41,14 @@ func (suse OpenSUSE) Packages() (pkgs []string, err error) {
 	}
 
 	var name string
-	if strings.HasPrefix(suse.release, "13") {
+	if strings.HasPrefix(suse.release, "12") {
+		name = "opensuse:12"
+		cnturl := cache.ContainerURL("openSUSE-12.1")
+		err = container.Import(cnturl, name)
+		if err != nil {
+			return
+		}
+	} else if strings.HasPrefix(suse.release, "13") {
 		name = "opensuse:13"
 		cnturl := cache.ContainerURL("openSUSE-13.2")
 		err = container.Import(cnturl, name)
@@ -96,7 +104,9 @@ func (suse OpenSUSE) runs() (commands []string) {
 
 	var repourls []string
 
-	if strings.HasPrefix(suse.release, "13") {
+	if strings.HasPrefix(suse.release, "12") ||
+		strings.HasPrefix(suse.release, "13") {
+
 		dist := discontinued + "distribution/%s/repo/oss/"
 		update := discontinued + "update/%s/"
 		repourls = append(repourls,
@@ -143,7 +153,10 @@ func (suse OpenSUSE) runs() (commands []string) {
 
 	cmdf("zypper -n refresh")
 
-	params := "--no-recommends --force-resolution --replacefiles"
+	params := "--no-recommends --force-resolution"
+	if !strings.HasPrefix(suse.release, "12") {
+		params += " --replacefiles"
+	}
 
 	cmdf("zypper -n update %s", params)
 
@@ -154,7 +167,9 @@ func (suse OpenSUSE) runs() (commands []string) {
 		"&& zypper -n remove -U kernel-default kernel-default-devel",
 		params)
 
-	cmdf("zypper --no-refresh -n install %s kmod which", params)
+	if !strings.HasPrefix(suse.release, "12") {
+		cmdf("zypper --no-refresh -n install %s kmod which", params)
+	}
 
 	if strings.HasPrefix(suse.release, "13") {
 		cmdf("zypper --no-refresh -n install %s kernel-firmware", params)
