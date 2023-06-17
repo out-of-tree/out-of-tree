@@ -193,26 +193,37 @@ func (suse OpenSUSE) Install(version string, headers bool) (err error) {
 		cmdf("%s kernel-default-devel=%s", installcmd, version)
 	}
 
-	cmdf("mkdir /usr/lib/dracut/modules.d/42workaround")
-	wsetuppath := "/usr/lib/dracut/modules.d/42workaround/module-setup.sh"
+	if strings.HasPrefix(suse.release, "13") {
+		cmdf("mkdir /usr/lib/dracut/modules.d/42workaround")
+		wsetuppath := "/usr/lib/dracut/modules.d/42workaround/module-setup.sh"
 
-	cmdf("echo 'check() { return 0; }' >> %s", wsetuppath)
-	cmdf("echo 'depends() { return 0; }' >> %s", wsetuppath)
-	cmdf(`echo 'install() { `+
-		`inst_hook pre-mount 91 "$moddir/workaround.sh"; `+
-		`}' >> %s`, wsetuppath)
-	cmdf("echo 'installkernel() { instmods af_packet; }' >> %s", wsetuppath)
+		cmdf("echo 'check() { return 0; }' >> %s", wsetuppath)
+		cmdf("echo 'depends() { return 0; }' >> %s", wsetuppath)
+		cmdf(`echo 'install() { `+
+			`inst_hook pre-mount 91 "$moddir/workaround.sh"; `+
+			`}' >> %s`, wsetuppath)
+		cmdf("echo 'installkernel() { instmods af_packet; }' >> %s", wsetuppath)
 
-	wpath := "/usr/lib/dracut/modules.d/42workaround/workaround.sh"
+		wpath := "/usr/lib/dracut/modules.d/42workaround/workaround.sh"
 
-	cmdf("echo '#!/bin/sh' >> %s", wpath)
-	cmdf("echo 'modprobe af_packet' >> %s", wpath)
+		cmdf("echo '#!/bin/sh' >> %s", wpath)
+		cmdf("echo 'modprobe af_packet' >> %s", wpath)
+	}
 
-	cmdf("dracut " +
-		"-a workaround " +
-		"--add-drivers 'ata_piix libata' " +
-		"--force-drivers 'e1000 ext4 sd_mod rfkill af_packet' " +
-		"-f /boot/initrd-$(ls /lib/modules) $(ls /lib/modules)")
+	modules := "ata_piix libata e1000 ext4 sd_mod rfkill af_packet"
+
+	if !strings.HasPrefix(suse.release, "12") &&
+		!strings.HasPrefix(suse.release, "11") {
+
+		cmdf("dracut "+
+			"-a workaround "+
+			"--force-drivers '%s' "+
+			"-f /boot/initrd-$(ls /lib/modules) $(ls /lib/modules)",
+			modules)
+	} else {
+		cmdf("touch /etc/fstab")
+		cmdf("mkinitrd -m '%s'", modules)
+	}
 
 	cmdf("cp -r /boot /target/")
 	cmdf("cp -r /lib/modules /target/lib/")
