@@ -41,6 +41,8 @@ jobs:
           { distro: Debian, release: 10 },
           { distro: Debian, release: 11 },
           { distro: Debian, release: 12 },
+          { distro: OpenSUSE, release: "13.1" },
+          { distro: OpenSUSE, release: "13.2" },
           { distro: OpenSUSE, release: "42.1" },
           { distro: OpenSUSE, release: "42.2" },
           { distro: OpenSUSE, release: "42.3" },

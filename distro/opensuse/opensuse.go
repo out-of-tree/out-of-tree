@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 )
 
 func init() {
 	releases := []string{
+		"13.1", "13.2",
 		"42.1", "42.2", "42.3",
 		"15.0", "15.1", "15.2", "15.3", "15.4", "15.5",
 	}
@@ -38,7 +40,14 @@ func (suse OpenSUSE) Packages() (pkgs []string, err error) {
 	}
 
 	var name string
-	if strings.HasPrefix(suse.release, "42") {
+	if strings.HasPrefix(suse.release, "13") {
+		name = "opensuse:13"
+		cnturl := cache.ContainerURL("openSUSE-13.2")
+		err = container.Import(cnturl, name)
+		if err != nil {
+			return
+		}
+	} else if strings.HasPrefix(suse.release, "42") {
 		name = "opensuse/leap:42"
 	} else if strings.HasPrefix(suse.release, "15") {
 		name = "opensuse/leap:" + suse.release
@@ -87,7 +96,14 @@ func (suse OpenSUSE) runs() (commands []string) {
 
 	var repourls []string
 
-	if strings.HasPrefix(suse.release, "42") {
+	if strings.HasPrefix(suse.release, "13") {
+		dist := discontinued + "distribution/%s/repo/oss/"
+		update := discontinued + "update/%s/"
+		repourls = append(repourls,
+			fmt.Sprintf(dist, suse.release),
+			fmt.Sprintf(update, suse.release),
+		)
+	} else if strings.HasPrefix(suse.release, "42") {
 		dist := discontinued + "distribution/leap/%s/repo/oss/suse/"
 		update := discontinued + "update/leap/%s/oss/"
 		repourls = append(repourls,
@@ -126,9 +142,11 @@ func (suse OpenSUSE) runs() (commands []string) {
 	}
 
 	cmdf("zypper -n refresh")
-	cmdf("zypper -n update")
 
 	params := "--no-recommends --force-resolution --replacefiles"
+
+	cmdf("zypper -n update %s", params)
+
 	cmdf("zypper --no-refresh -n install %s -t pattern devel_kernel", params)
 
 	// Cache dependencies
@@ -137,6 +155,10 @@ func (suse OpenSUSE) runs() (commands []string) {
 		params)
 
 	cmdf("zypper --no-refresh -n install %s kmod which", params)
+
+	if strings.HasPrefix(suse.release, "13") {
+		cmdf("zypper --no-refresh -n install %s kernel-firmware", params)
+	}
 	return
 }
 
@@ -147,13 +169,29 @@ func (suse OpenSUSE) Install(version string, headers bool) (err error) {
 	}
 
 	installcmd := "zypper --no-refresh -n " +
-		"install --force-resolution --capability"
+		"install --no-recommends --force-resolution --capability"
 	cmdf("%s kernel-default=%s", installcmd, version)
 	if headers {
 		cmdf("%s kernel-default-devel=%s", installcmd, version)
 	}
 
+	cmdf("mkdir /usr/lib/dracut/modules.d/42workaround")
+	wsetuppath := "/usr/lib/dracut/modules.d/42workaround/module-setup.sh"
+
+	cmdf("echo 'check() { return 0; }' >> %s", wsetuppath)
+	cmdf("echo 'depends() { return 0; }' >> %s", wsetuppath)
+	cmdf(`echo 'install() { `+
+		`inst_hook pre-mount 91 "$moddir/workaround.sh"; `+
+		`}' >> %s`, wsetuppath)
+	cmdf("echo 'installkernel() { instmods af_packet; }' >> %s", wsetuppath)
+
+	wpath := "/usr/lib/dracut/modules.d/42workaround/workaround.sh"
+
+	cmdf("echo '#!/bin/sh' >> %s", wpath)
+	cmdf("echo 'modprobe af_packet' >> %s", wpath)
+
 	cmdf("dracut " +
+		"-a workaround " +
 		"--add-drivers 'ata_piix libata' " +
 		"--force-drivers 'e1000 ext4 sd_mod rfkill af_packet' " +
 		"-f /boot/initrd-$(ls /lib/modules) $(ls /lib/modules)")
