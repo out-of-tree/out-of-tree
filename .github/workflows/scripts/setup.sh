@@ -14,7 +14,9 @@ sudo systemd-run --wait rm -rf \
      /usr/share/swift \
      /var/lib/gems \
      /var/lib/mysql \
-     /var/lib/snapd
+     /var/lib/snapd \
+     /opt/hostedtoolcache/CodeQL \
+     /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
 
 sudo fstrim /
 
