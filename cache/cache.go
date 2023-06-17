@@ -118,3 +118,8 @@ func PackageURL(dt distro.ID, orig string) (found bool, fileurl string) {
 	found = true
 	return
 }
+
+func ContainerURL(name string) (path string) {
+	path, _ = url.JoinPath(URL, "containers", fmt.Sprintf("%s.tar.gz", name))
+	return
+}

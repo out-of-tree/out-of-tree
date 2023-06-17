@@ -79,6 +79,24 @@ func Images() (diis []Image, err error) {
 	return
 }
 
+func Import(path, name string) (err error) {
+	exist := Container{name: name}.Exist()
+	if exist && UseCache {
+		return
+	}
+
+	cmd := exec.Command(Runtime, "import", path, name)
+	log.Debug().Msgf("%v", cmd)
+
+	raw, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error().Err(err).Msg(string(raw))
+		return
+	}
+
+	return
+}
+
 type Volume struct {
 	Src, Dest string
 }
