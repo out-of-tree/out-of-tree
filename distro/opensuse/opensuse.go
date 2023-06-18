@@ -42,8 +42,17 @@ func (suse OpenSUSE) Packages() (pkgs []string, err error) {
 
 	var name string
 	if strings.HasPrefix(suse.release, "12") {
-		name = "opensuse:12"
-		cnturl := cache.ContainerURL("openSUSE-12.1")
+		var cnt string
+		switch suse.release {
+		case "12.1", "12.2":
+			name = "opensuse:12.1"
+			cnt = "openSUSE-12.1"
+		case "12.3":
+			name = "opensuse:12.3"
+			cnt = "openSUSE-12.3"
+		}
+
+		cnturl := cache.ContainerURL(cnt)
 		err = container.Import(cnturl, name)
 		if err != nil {
 			return
