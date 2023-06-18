@@ -187,6 +187,7 @@ func (suse OpenSUSE) runs() (commands []string) {
 	switch suse.release {
 	case "12.1", "12.2":
 		cmdf("zypper -n install %s -r dracut dracut", params)
+		cmdf("rm /etc/zypp/repos.d/dracut.repo")
 	}
 
 	if !strings.HasPrefix(suse.release, "12") {
