@@ -199,6 +199,9 @@ func (suse OpenSUSE) runs() (commands []string) {
 	if strings.HasPrefix(suse.release, "13") {
 		cmdf("zypper --no-refresh -n install %s kernel-firmware", params)
 	}
+
+	cmdf("rm -rf /boot/*")
+	cmdf("rm -rf /lib/modules/*")
 	return
 }
 
