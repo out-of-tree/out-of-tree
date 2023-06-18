@@ -164,7 +164,7 @@ jobs:
 
         ../out-of-tree --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}
         ../out-of-tree --log-level=debug kernel autogen --max=1 --shuffle
-        ../out-of-tree --log-level=debug pew --qemu-timeout=10m
+        ../out-of-tree --log-level=debug pew --qemu-timeout=10m --include-internal-errors
 
     - name: Archive logs
       if: always()
