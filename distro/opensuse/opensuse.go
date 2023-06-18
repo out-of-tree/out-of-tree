@@ -139,6 +139,23 @@ func (suse OpenSUSE) runs() (commands []string) {
 
 	cmdf("rm /etc/zypp/repos.d/*")
 
+	switch suse.release {
+	case "12.1", "12.2":
+		repourl := discontinued + "distribution/12.3/repo/oss/"
+		cmdf(`echo -e `+
+			`"[dracut]\n`+
+			`name=dracut\n`+
+			`enabled=1\n`+
+			`autorefresh=0\n`+
+			`gpgcheck=0\n`+
+			// higher number is lower priority
+			// default is 99
+			`priority=100\n`+
+			`baseurl=%s" > /etc/zypp/repos.d/dracut.repo`,
+			repourl,
+		)
+	}
+
 	for i, repourl := range repourls {
 		cmdf(`echo -e `+
 			`"[%d]\n`+
@@ -167,6 +184,11 @@ func (suse OpenSUSE) runs() (commands []string) {
 		"&& zypper -n remove -U kernel-default kernel-default-devel",
 		params)
 
+	switch suse.release {
+	case "12.1", "12.2":
+		cmdf("zypper -n install %s -r dracut dracut", params)
+	}
+
 	if !strings.HasPrefix(suse.release, "12") {
 		cmdf("zypper --no-refresh -n install %s kmod which", params)
 	}
@@ -193,7 +215,9 @@ func (suse OpenSUSE) Install(version string, headers bool) (err error) {
 		cmdf("%s kernel-default-devel=%s", installcmd, version)
 	}
 
-	if strings.HasPrefix(suse.release, "13") {
+	if strings.HasPrefix(suse.release, "13") ||
+		strings.HasPrefix(suse.release, "12") {
+
 		cmdf("mkdir /usr/lib/dracut/modules.d/42workaround")
 		wsetuppath := "/usr/lib/dracut/modules.d/42workaround/module-setup.sh"
 
@@ -202,31 +226,33 @@ func (suse OpenSUSE) Install(version string, headers bool) (err error) {
 		cmdf(`echo 'install() { `+
 			`inst_hook pre-mount 91 "$moddir/workaround.sh"; `+
 			`}' >> %s`, wsetuppath)
-		cmdf("echo 'installkernel() { instmods af_packet; }' >> %s", wsetuppath)
+		cmdf("echo 'installkernel() { "+
+			"instmods af_packet e1000; "+
+			"}' >> %s", wsetuppath)
 
 		wpath := "/usr/lib/dracut/modules.d/42workaround/workaround.sh"
 
 		cmdf("echo '#!/bin/sh' >> %s", wpath)
 		cmdf("echo 'modprobe af_packet' >> %s", wpath)
+		cmdf("echo 'modprobe e1000' >> %s", wpath)
 	}
 
 	modules := "ata_piix libata e1000 ext4 sd_mod rfkill af_packet"
 
-	if !strings.HasPrefix(suse.release, "12") &&
-		!strings.HasPrefix(suse.release, "11") {
+	format := "dracut --no-hostonly "
+	if strings.HasPrefix(suse.release, "13") ||
+		strings.HasPrefix(suse.release, "12") {
 
-		format := "dracut "
-		if strings.HasPrefix(suse.release, "13") {
-			format += "-a workaround "
-		}
-		format += "--force-drivers '%s' "
-		format += "-f /boot/initrd-$(ls /lib/modules) $(ls /lib/modules)"
-
-		cmdf(format, modules)
-	} else {
-		cmdf("touch /etc/fstab")
-		cmdf("mkinitrd -m '%s'", modules)
+		format += "-a workaround "
 	}
+	if strings.HasPrefix(suse.release, "12") {
+		format += "--add-drivers '%s' "
+	} else {
+		format += "--force-drivers '%s' "
+	}
+	format += "-f /boot/initrd-$(ls /lib/modules) $(ls /lib/modules)"
+
+	cmdf(format, modules)
 
 	cmdf("cp -r /boot /target/")
 	cmdf("cp -r /lib/modules /target/lib/")
