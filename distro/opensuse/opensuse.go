@@ -254,14 +254,14 @@ func (suse OpenSUSE) Install(version string, headers bool) (err error) {
 
 	modules := "ata_piix libata e1000 ext4 sd_mod rfkill af_packet"
 
-	format := "dracut --no-hostonly "
+	format := "dracut "
 	if strings.HasPrefix(suse.release, "13") ||
 		strings.HasPrefix(suse.release, "12") {
 
 		format += "-a workaround "
 	}
 	if strings.HasPrefix(suse.release, "12") {
-		format += "--add-drivers '%s' "
+		format += "--no-hostonly --add-drivers '%s' "
 	} else {
 		format += "--force-drivers '%s' "
 	}
