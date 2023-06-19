@@ -230,9 +230,7 @@ func (suse OpenSUSE) Install(version string, headers bool) (err error) {
 		cmdf("%s kernel-default-devel=%s", installcmd, version)
 	}
 
-	if strings.HasPrefix(suse.release, "13") ||
-		strings.HasPrefix(suse.release, "12") {
-
+	if !strings.HasPrefix(suse.release, "15") {
 		cmdf("mkdir /usr/lib/dracut/modules.d/42workaround")
 		wsetuppath := "/usr/lib/dracut/modules.d/42workaround/module-setup.sh"
 
@@ -255,9 +253,7 @@ func (suse OpenSUSE) Install(version string, headers bool) (err error) {
 	modules := "ata_piix libata e1000 ext4 sd_mod rfkill af_packet"
 
 	format := "dracut "
-	if strings.HasPrefix(suse.release, "13") ||
-		strings.HasPrefix(suse.release, "12") {
-
+	if !strings.HasPrefix(suse.release, "15") {
 		format += "-a workaround "
 	}
 	if strings.HasPrefix(suse.release, "12") {
