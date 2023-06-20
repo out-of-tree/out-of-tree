@@ -230,32 +230,29 @@ func (suse OpenSUSE) Install(version string, headers bool) (err error) {
 		cmdf("%s kernel-default-devel=%s", installcmd, version)
 	}
 
-	if !strings.HasPrefix(suse.release, "15") {
-		cmdf("mkdir /usr/lib/dracut/modules.d/42workaround")
-		wsetuppath := "/usr/lib/dracut/modules.d/42workaround/module-setup.sh"
+	cmdf("mkdir /usr/lib/dracut/modules.d/42workaround")
+	wsetuppath := "/usr/lib/dracut/modules.d/42workaround/module-setup.sh"
 
-		cmdf("echo 'check() { return 0; }' >> %s", wsetuppath)
-		cmdf("echo 'depends() { return 0; }' >> %s", wsetuppath)
-		cmdf(`echo 'install() { `+
-			`inst_hook pre-mount 91 "$moddir/workaround.sh"; `+
-			`}' >> %s`, wsetuppath)
-		cmdf("echo 'installkernel() { "+
-			"instmods af_packet e1000; "+
-			"}' >> %s", wsetuppath)
+	cmdf("echo 'check() { return 0; }' >> %s", wsetuppath)
+	cmdf("echo 'depends() { return 0; }' >> %s", wsetuppath)
+	cmdf(`echo 'install() { `+
+		`inst_hook pre-mount 91 "$moddir/workaround.sh"; `+
+		`}' >> %s`, wsetuppath)
+	cmdf("echo 'installkernel() { "+
+		"instmods af_packet e1000; "+
+		"}' >> %s", wsetuppath)
 
-		wpath := "/usr/lib/dracut/modules.d/42workaround/workaround.sh"
+	wpath := "/usr/lib/dracut/modules.d/42workaround/workaround.sh"
 
-		cmdf("echo '#!/bin/sh' >> %s", wpath)
-		cmdf("echo 'modprobe af_packet' >> %s", wpath)
-		cmdf("echo 'modprobe e1000' >> %s", wpath)
-	}
+	cmdf("echo '#!/bin/sh' >> %s", wpath)
+	cmdf("echo 'modprobe af_packet' >> %s", wpath)
+	cmdf("echo 'modprobe e1000' >> %s", wpath)
 
 	modules := "ata_piix libata e1000 ext4 sd_mod rfkill af_packet"
 
 	format := "dracut "
-	if !strings.HasPrefix(suse.release, "15") {
-		format += "-a workaround "
-	}
+	format += "-a workaround "
+
 	if strings.HasPrefix(suse.release, "12") {
 		format += "--no-hostonly --add-drivers '%s' "
 	} else {
