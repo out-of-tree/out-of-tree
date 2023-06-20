@@ -248,7 +248,10 @@ func (suse OpenSUSE) Install(version string, headers bool) (err error) {
 	cmdf("echo 'modprobe af_packet' >> %s", wpath)
 	cmdf("echo 'modprobe e1000' >> %s", wpath)
 
-	modules := "ata_piix libata e1000 ext4 sd_mod rfkill af_packet"
+	modules := "ata_piix e1000 rfkill af_packet"
+	if suse.release != "15.2" {
+		modules += " libata ext4 sd_mod"
+	}
 
 	format := "dracut "
 	format += "-a workaround "
