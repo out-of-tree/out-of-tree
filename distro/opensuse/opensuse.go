@@ -96,7 +96,17 @@ func (suse OpenSUSE) Kernels() (kernels []distro.KernelInfo, err error) {
 		return
 	}
 
-	return c.Kernels()
+	kernels, err = c.Kernels()
+	if err != nil {
+		return
+	}
+
+	for i := range kernels {
+		kernels[i].KernelRelease = strings.Replace(
+			kernels[i].KernelRelease, "-default", "", -1)
+	}
+
+	return
 }
 
 func (suse OpenSUSE) envs() (envs []string) {

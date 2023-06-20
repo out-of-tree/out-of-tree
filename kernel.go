@@ -107,6 +107,8 @@ func (cmd *KernelCmd) GenKernel(km config.Target, pkg string) {
 		var found bool
 		if kinfo.Distro.ID == distro.Debian { // FIXME
 			found = pkg == kinfo.Package
+		} else if kinfo.Distro.ID == distro.OpenSUSE {
+			found = strings.Contains(pkg, kinfo.KernelRelease)
 		} else {
 			found = strings.Contains(pkg, kinfo.KernelVersion)
 		}
