@@ -558,6 +558,13 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka config.Artifact
 		slog.Fatal().Msg("Unsupported artifact type")
 	}
 
+	_, err = q.Command("root", "echo")
+	if err != nil {
+		slog.Error().Err(err).Msg("after-test ssh reconnect")
+		res.Test.Ok = false
+		return
+	}
+
 	return
 }
 
