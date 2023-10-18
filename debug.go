@@ -185,9 +185,9 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 			return
 		}
 
-		remoteFile = "/tmp/exploit"
+		remoteFile = "/tmp/" + strings.Replace(ka.Name, " ", "_", -1)
 		if ka.Type == config.KernelModule {
-			remoteFile = "/tmp/module.ko"
+			remoteFile += ".ko"
 		}
 
 		err = q.CopyFile("user", outFile, remoteFile)

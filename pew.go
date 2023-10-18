@@ -268,7 +268,10 @@ func build(flog zerolog.Logger, tmp string, ka config.Artifact,
 	ki distro.KernelInfo, dockerTimeout time.Duration) (
 	outdir, outpath, output string, err error) {
 
-	target := fmt.Sprintf("%d", rand.Int())
+	target := strings.Replace(ka.Name, " ", "_", -1)
+	if target == "" {
+		target = fmt.Sprintf("%d", rand.Int())
+	}
 
 	outdir = tmp + "/source"
 
