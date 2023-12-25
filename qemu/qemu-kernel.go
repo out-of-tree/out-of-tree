@@ -188,17 +188,20 @@ func kvmExists() bool {
 	return true
 }
 
-func (q *System) panicWatcher() {
-	for {
+func (q *System) checkOopsPanic(s string) {
+	if strings.Contains(s, "Kernel panic") {
+		q.KernelPanic = true
+		q.Log.Warn().Msg("kernel panic")
 		time.Sleep(time.Second)
-		if strings.Contains(q.Stdout, "Kernel panic") {
-			q.KernelPanic = true
-			q.Log.Debug().Msg("kernel panic")
-			time.Sleep(time.Second)
-			// There is no reason to stay alive after kernel panic
-			q.Stop()
-			return
-		}
+		// There is no reason to stay alive after kernel panic
+		q.Stop()
+	} else if strings.Contains(s, "BUG") {
+		q.Log.Warn().Msg(s)
+		time.Sleep(time.Second)
+		// consider BUG() as non-recoverable state
+		q.Stop()
+	} else if strings.Contains(s, "WARNING") {
+		q.Log.Warn().Msg(s)
 	}
 }
 
@@ -307,6 +310,7 @@ func (q *System) Start() (err error) {
 			m := scanner.Text()
 			q.Stdout += m + "\n"
 			q.Log.Trace().Str("stdout", m).Msg("qemu")
+			go q.checkOopsPanic(m)
 		}
 	}()
 
@@ -329,8 +333,6 @@ func (q *System) Start() (err error) {
 	if q.Died {
 		err = errors.New("qemu died immediately: " + string(q.Stderr))
 	}
-
-	go q.panicWatcher()
 
 	if q.Timeout != 0 {
 		go func() {
