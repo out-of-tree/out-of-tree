@@ -6,9 +6,7 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"math/rand"
-	"net/url"
 	"os"
 	"os/exec"
 	"runtime/debug"
@@ -28,31 +26,24 @@ import (
 	_ "code.dumpstack.io/tools/out-of-tree/distro/ubuntu"
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
+	"code.dumpstack.io/tools/out-of-tree/cmd"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
-type Globals struct {
-	Config config.OutOfTree `help:"path to out-of-tree configuration" default:"~/.out-of-tree/out-of-tree.toml"`
-
-	WorkDir string `help:"path to work directory" default:"./" type:"path"`
-
-	CacheURL url.URL
-}
-
 type CLI struct {
-	Globals
+	cmd.Globals
 
-	Pew       PewCmd       `cmd:"" help:"build, run, and test module/exploit"`
-	Kernel    KernelCmd    `cmd:"" help:"manipulate kernels"`
-	Debug     DebugCmd     `cmd:"" help:"debug environment"`
-	Log       LogCmd       `cmd:"" help:"query logs"`
-	Pack      PackCmd      `cmd:"" help:"exploit pack test"`
-	Gen       GenCmd       `cmd:"" help:"generate .out-of-tree.toml skeleton"`
-	Image     ImageCmd     `cmd:"" help:"manage images"`
-	Container ContainerCmd `cmd:"" help:"manage containers"`
-	Distro    DistroCmd    `cmd:"" help:"distro-related helpers"`
+	Pew       cmd.PewCmd       `cmd:"" help:"build, run, and test module/exploit"`
+	Kernel    cmd.KernelCmd    `cmd:"" help:"manipulate kernels"`
+	Debug     cmd.DebugCmd     `cmd:"" help:"debug environment"`
+	Log       cmd.LogCmd       `cmd:"" help:"query logs"`
+	Pack      cmd.PackCmd      `cmd:"" help:"exploit pack test"`
+	Gen       cmd.GenCmd       `cmd:"" help:"generate .out-of-tree.toml skeleton"`
+	Image     cmd.ImageCmd     `cmd:"" help:"manage images"`
+	Container cmd.ContainerCmd `cmd:"" help:"manage containers"`
+	Distro    cmd.DistroCmd    `cmd:"" help:"distro-related helpers"`
 
 	Version VersionFlag `name:"version" help:"print version information and quit"`
 
@@ -92,22 +83,6 @@ func (v VersionFlag) BeforeApply(app *kong.Kong, vars kong.Vars) error {
 	return nil
 }
 
-type LevelWriter struct {
-	io.Writer
-	Level zerolog.Level
-}
-
-func (lw *LevelWriter) WriteLevel(l zerolog.Level, p []byte) (n int, err error) {
-	if l >= lw.Level {
-		return lw.Writer.Write(p)
-	}
-	return len(p), nil
-}
-
-var consoleWriter, fileWriter LevelWriter
-
-var loglevel zerolog.Level
-
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -126,34 +101,34 @@ func main() {
 
 	switch cli.LogLevel {
 	case "trace":
-		loglevel = zerolog.TraceLevel
+		cmd.LogLevel = zerolog.TraceLevel
 	case "debug":
-		loglevel = zerolog.DebugLevel
+		cmd.LogLevel = zerolog.DebugLevel
 	case "info":
-		loglevel = zerolog.InfoLevel
+		cmd.LogLevel = zerolog.InfoLevel
 	case "warn":
-		loglevel = zerolog.WarnLevel
+		cmd.LogLevel = zerolog.WarnLevel
 	case "error":
-		loglevel = zerolog.ErrorLevel
+		cmd.LogLevel = zerolog.ErrorLevel
 	}
 
-	consoleWriter = LevelWriter{Writer: zerolog.NewConsoleWriter(
+	cmd.ConsoleWriter = cmd.LevelWriter{Writer: zerolog.NewConsoleWriter(
 		func(w *zerolog.ConsoleWriter) {
 			w.Out = os.Stderr
 		},
 	),
-		Level: loglevel,
+		Level: cmd.LogLevel,
 	}
 
-	fileWriter = LevelWriter{Writer: &lumberjack.Logger{
+	cmd.FileWriter = cmd.LevelWriter{Writer: &lumberjack.Logger{
 		Filename: config.File("logs/out-of-tree.log"),
 	},
 		Level: zerolog.TraceLevel,
 	}
 
 	log.Logger = log.Output(zerolog.MultiLevelWriter(
-		&consoleWriter,
-		&fileWriter,
+		&cmd.ConsoleWriter,
+		&cmd.FileWriter,
 	))
 
 	log.Trace().Msg("start out-of-tree")

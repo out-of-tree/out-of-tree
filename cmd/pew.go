@@ -2,7 +2,7 @@
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
-package main
+package cmd
 
 import (
 	"bufio"
@@ -29,6 +29,22 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
+
+type LevelWriter struct {
+	io.Writer
+	Level zerolog.Level
+}
+
+func (lw *LevelWriter) WriteLevel(l zerolog.Level, p []byte) (n int, err error) {
+	if l >= lw.Level {
+		return lw.Writer.Write(p)
+	}
+	return len(p), nil
+}
+
+var ConsoleWriter, FileWriter LevelWriter
+
+var LogLevel zerolog.Level
 
 type PewCmd struct {
 	Max     int64         `help:"test no more than X kernels" default:"100500"`
@@ -649,8 +665,8 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 	defer f.Close()
 
 	slog := zerolog.New(zerolog.MultiLevelWriter(
-		&consoleWriter,
-		&fileWriter,
+		&ConsoleWriter,
+		&FileWriter,
 		&zerolog.ConsoleWriter{
 			Out: f,
 			FieldsExclude: []string{
@@ -662,7 +678,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		},
 	))
 
-	switch loglevel {
+	switch LogLevel {
 	case zerolog.TraceLevel, zerolog.DebugLevel:
 		slog = slog.With().Caller().Logger()
 	}

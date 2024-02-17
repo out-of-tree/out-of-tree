@@ -2,7 +2,7 @@
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
-package main
+package cmd
 
 import (
 	"database/sql"
