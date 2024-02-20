@@ -2,8 +2,6 @@ module code.dumpstack.io/tools/out-of-tree
 
 go 1.21
 
-toolchain go1.21.6
-
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/alecthomas/kong v0.7.1
