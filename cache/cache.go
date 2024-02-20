@@ -55,10 +55,10 @@ func DownloadRootFS(path, file string) (err error) {
 
 	resp, err := grab.Get(tmp, fileurl)
 	if err != nil {
-		err = fmt.Errorf("Cannot download %s. It looks like you need "+
+		err = fmt.Errorf("cannot download %s. It looks like you need "+
 			"to generate it manually and place it "+
-			"to ~/.out-of-tree/images/. "+
-			"Check documentation for additional information.",
+			"to ~/.out-of-tree/images/; "+
+			"check documentation for additional information",
 			fileurl)
 		return
 	}

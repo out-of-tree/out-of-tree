@@ -240,7 +240,7 @@ func firstSupported(kcfg config.KernelConfig, ka config.Artifact,
 		}
 	}
 
-	err = errors.New("No supported kernel found")
+	err = errors.New("no supported kernel found")
 	return
 }
 

@@ -55,7 +55,7 @@ func (cmd *ImageEditCmd) Run(g *Globals) (err error) {
 	}
 
 	if len(kcfg.Kernels) == 0 {
-		return errors.New("No kernels found")
+		return errors.New("no kernels found")
 	}
 
 	ki := distro.KernelInfo{}

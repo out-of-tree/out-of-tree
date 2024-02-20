@@ -371,7 +371,7 @@ func openDatabase(path string) (db *sql.DB, err error) {
 	}
 
 	if version != currentDatabaseVersion {
-		err = fmt.Errorf("Database is not supported (%d instead of %d)",
+		err = fmt.Errorf("database is not supported (%d instead of %d)",
 			version, currentDatabaseVersion)
 		return
 	}

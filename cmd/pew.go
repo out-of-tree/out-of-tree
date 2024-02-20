@@ -940,7 +940,7 @@ func (cmd PewCmd) performCI(ka config.Artifact) (err error) {
 	swg.Wait()
 
 	if !found {
-		err = errors.New("No supported kernels found")
+		err = errors.New("no supported kernels found")
 	}
 
 	return
@@ -949,7 +949,7 @@ func (cmd PewCmd) performCI(ka config.Artifact) (err error) {
 func kernelMask(kernel string) (km config.Target, err error) {
 	parts := strings.Split(kernel, ":")
 	if len(parts) != 2 {
-		err = errors.New("Kernel is not 'distroType:regex'")
+		err = errors.New("kernel is not 'distroType:regex'")
 		return
 	}
 

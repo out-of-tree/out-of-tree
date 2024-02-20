@@ -235,7 +235,7 @@ func (cmd *KernelListCmd) Run(g *Globals) (err error) {
 	}
 
 	if len(kcfg.Kernels) == 0 {
-		return errors.New("No kernels found")
+		return errors.New("no kernels found")
 	}
 
 	for _, k := range kcfg.Kernels {
@@ -298,7 +298,7 @@ func (cmd *KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 
 	for _, sk := range ka.Targets {
 		if sk.Distro.Release == "" {
-			err = errors.New("Please set distro_release")
+			err = errors.New("please set distro_release")
 			return
 		}
 
