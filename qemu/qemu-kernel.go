@@ -299,6 +299,7 @@ func (q *System) Start() (err error) {
 		return
 	}
 
+	q.Log.Debug().Msg("start qemu")
 	err = q.cmd.Start()
 	if err != nil {
 		return
@@ -326,6 +327,7 @@ func (q *System) Start() (err error) {
 	go func() {
 		q.exitErr = q.cmd.Wait()
 		q.Died = true
+		q.Log.Debug().Msg("qemu died")
 	}()
 
 	time.Sleep(time.Second / 10) // wait for immediately die
@@ -347,6 +349,8 @@ func (q *System) Start() (err error) {
 
 // Stop qemu process
 func (q *System) Stop() {
+	q.Log.Debug().Msg("stop qemu process")
+
 	// 1  00/01   01  01  SOH  (Ctrl-A)  START OF HEADING
 	fmt.Fprintf(q.pipe.stdin, "%cx", 1)
 	// wait for die
@@ -359,6 +363,8 @@ func (q *System) Stop() {
 }
 
 func (q *System) WaitForSSH(timeout time.Duration) error {
+	q.Log.Debug().Msg("wait for ssh")
+
 	for start := time.Now(); time.Since(start) < timeout; {
 		time.Sleep(time.Second / 4)
 
@@ -368,18 +374,21 @@ func (q *System) WaitForSSH(timeout time.Duration) error {
 
 		client, err := q.ssh("root")
 		if err != nil {
+			q.Log.Debug().Err(err).Msg("")
 			continue
 		}
 
 		session, err := client.NewSession()
 		if err != nil {
 			client.Close()
+			q.Log.Debug().Err(err).Msg("")
 			continue
 		}
 
 		_, err = session.CombinedOutput("echo")
 		if err != nil {
 			client.Close()
+			q.Log.Debug().Err(err).Msg("")
 			continue
 		}
 

@@ -178,8 +178,8 @@ func TestSystemCopyFile(t *testing.T) {
 	shaRemote = strings.Split(shaRemote, " ")[0]
 
 	if shaLocal != shaRemote {
-		t.Fatal(fmt.Sprintf("Broken file (%s instead of %s)",
-			shaRemote, shaLocal))
+		t.Fatalf("Broken file (%s instead of %s)",
+			shaRemote, shaLocal)
 	}
 }
 
