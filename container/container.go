@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -22,7 +21,6 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/distro"
-	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 var Runtime = "docker"
@@ -377,6 +375,48 @@ func (c Container) Run(workdir string, cmds []string) (out string, err error) {
 	return
 }
 
+func FindKernel(entries []os.DirEntry, kname string) (name string, err error) {
+	for _, e := range entries {
+		var fi os.FileInfo
+		fi, err = e.Info()
+		if err != nil {
+			return
+		}
+
+		if strings.HasPrefix(fi.Name(), "vmlinuz") {
+			if strings.Contains(fi.Name(), kname) {
+				name = fi.Name()
+				return
+			}
+		}
+	}
+
+	err = errors.New("cannot find kernel")
+	return
+}
+
+func FindInitrd(entries []os.DirEntry, kname string) (name string, err error) {
+	for _, e := range entries {
+		var fi os.FileInfo
+		fi, err = e.Info()
+		if err != nil {
+			return
+		}
+
+		if strings.HasPrefix(fi.Name(), "initrd") ||
+			strings.HasPrefix(fi.Name(), "initramfs") {
+
+			if strings.Contains(fi.Name(), kname) {
+				name = fi.Name()
+				return
+			}
+		}
+	}
+
+	err = errors.New("cannot find kernel")
+	return
+}
+
 func (c Container) Kernels() (kernels []distro.KernelInfo, err error) {
 	if !c.Exist() {
 		return
@@ -392,27 +432,33 @@ func (c Container) Kernels() (kernels []distro.KernelInfo, err error) {
 		}
 	}
 
-	moddirs, err := ioutil.ReadDir(libmodules)
+	moddirs, err := os.ReadDir(libmodules)
 	if err != nil {
 		return
 	}
 
-	bootfiles, err := ioutil.ReadDir(boot)
+	bootfiles, err := os.ReadDir(boot)
 	if err != nil {
 		return
 	}
 
-	for _, krel := range moddirs {
+	for _, e := range moddirs {
+		var krel os.FileInfo
+		krel, err = e.Info()
+		if err != nil {
+			return
+		}
+
 		c.Log.Debug().Msgf("generate config entry for %s", krel.Name())
 
 		var kernelFile, initrdFile string
-		kernelFile, err = fs.FindKernel(bootfiles, krel.Name())
+		kernelFile, err = FindKernel(bootfiles, krel.Name())
 		if err != nil {
 			c.Log.Warn().Msgf("cannot find kernel %s", krel.Name())
 			continue
 		}
 
-		initrdFile, err = fs.FindInitrd(bootfiles, krel.Name())
+		initrdFile, err = FindInitrd(bootfiles, krel.Name())
 		if err != nil {
 			c.Log.Warn().Msgf("cannot find initrd %s", krel.Name())
 			continue

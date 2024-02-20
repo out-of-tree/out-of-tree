@@ -8,13 +8,14 @@
 package kernel
 
 import (
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/zcalusic/sysinfo"
 
+	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
@@ -38,12 +39,11 @@ func GenHostKernels(download bool) (kernels []distro.KernelInfo, err error) {
 	}
 
 	kernelsBase := "/boot/"
-	bootfiles, err := ioutil.ReadDir(kernelsBase)
+	bootfiles, err := os.ReadDir(kernelsBase)
 	if err != nil {
 		return
 	}
 
-	// only for compatibility, docker is not really used
 	dist := distro.Distro{
 		ID:      distroType,
 		Release: si.OS.Version,
@@ -58,13 +58,13 @@ func GenHostKernels(download bool) (kernels []distro.KernelInfo, err error) {
 		log.Debug().Msgf("generate config entry for %s", krel)
 
 		var kernelFile, initrdFile string
-		kernelFile, err = fs.FindKernel(bootfiles, krel)
+		kernelFile, err = container.FindKernel(bootfiles, krel)
 		if err != nil {
 			log.Warn().Msgf("cannot find kernel %s", krel)
 			continue
 		}
 
-		initrdFile, err = fs.FindInitrd(bootfiles, krel)
+		initrdFile, err = container.FindInitrd(bootfiles, krel)
 		if err != nil {
 			log.Warn().Msgf("cannot find initrd %s", krel)
 			continue
