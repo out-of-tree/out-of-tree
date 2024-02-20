@@ -282,8 +282,6 @@ func (q *System) Args() (qemuArgs []string) {
 
 // Start qemu process
 func (q *System) Start() (err error) {
-	rand.Seed(time.Now().UnixNano()) // Are you sure?
-
 	q.cmd = exec.Command(q.Executable(), q.Args()...)
 	q.Log.Debug().Msgf("%v", q.cmd)
 

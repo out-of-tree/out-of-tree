@@ -6,13 +6,11 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"os/exec"
 	"runtime"
 	"runtime/debug"
 	"strings"
-	"time"
 
 	"github.com/natefinch/lumberjack"
 	"github.com/rs/zerolog"
@@ -99,8 +97,6 @@ func (v VersionFlag) BeforeApply(app *kong.Kong, vars kong.Vars) error {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
-
 	cli := CLI{}
 	ctx := kong.Parse(&cli,
 		kong.Name("out-of-tree"),

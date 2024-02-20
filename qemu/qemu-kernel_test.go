@@ -15,10 +15,6 @@ import (
 	"time"
 )
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
 func TestSystemNew_InvalidKernelPath(t *testing.T) {
 	kernel := Kernel{Name: "Invalid", KernelPath: "/invalid/path"}
 	if _, err := NewSystem(X86x64, kernel, "/bin/sh"); err == nil {
