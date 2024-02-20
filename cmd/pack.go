@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"code.dumpstack.io/tools/out-of-tree/fs"
@@ -35,7 +35,7 @@ func (cmd *PackCmd) Run(g *Globals) (err error) {
 	tag := fmt.Sprintf("pack_run_%d", time.Now().Unix())
 	log.Print("Tag:", tag)
 
-	files, err := ioutil.ReadDir(g.WorkDir)
+	files, err := os.ReadDir(g.WorkDir)
 	if err != nil {
 		return
 	}

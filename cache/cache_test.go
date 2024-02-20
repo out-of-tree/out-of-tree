@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestDownloadRootFS(t *testing.T) {
-	tmp, err := ioutil.TempDir("", "out-of-tree_")
+	tmp, err := os.MkdirTemp("", "out-of-tree_")
 	if err != nil {
 		return
 	}
