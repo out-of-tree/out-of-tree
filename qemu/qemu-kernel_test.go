@@ -7,7 +7,6 @@ package qemu
 import (
 	"crypto/sha512"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net"
 	"os"
@@ -159,7 +158,7 @@ func TestSystemCopyFile(t *testing.T) {
 
 	localPath := "/bin/sh"
 
-	content, err := ioutil.ReadFile(localPath)
+	content, err := os.ReadFile(localPath)
 	if err != nil {
 		return
 	}
@@ -193,7 +192,7 @@ func TestSystemCopyAndRun(t *testing.T) {
 	randStr := fmt.Sprintf("%d", rand.Int())
 	content := []byte("#!/bin/sh\n echo -n " + randStr + "\n")
 
-	tmpfile, err := ioutil.TempFile("", "executable")
+	tmpfile, err := os.CreateTemp("", "executable")
 	if err != nil {
 		t.Fatal(err)
 	}
