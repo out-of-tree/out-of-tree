@@ -9,8 +9,9 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"runtime"
 	"runtime/debug"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/natefinch/lumberjack"
@@ -52,22 +53,36 @@ type CLI struct {
 	ContainerRuntime string `enum:"podman,docker" default:"podman"`
 }
 
+func last(s []string) string {
+	return s[len(s)-1]
+}
+
+func debugLevel(pc uintptr, file string, line int) string {
+	function := runtime.FuncForPC(pc).Name()
+	if strings.Contains(function, ".") {
+		function = last(strings.Split(function, "."))
+	}
+	return function
+}
+
+func traceLevel(pc uintptr, file string, line int) string {
+	function := runtime.FuncForPC(pc).Name()
+	if strings.Contains(function, "/") {
+		function = last(strings.Split(function, "/"))
+	}
+	return fmt.Sprintf("%s:%s:%d", file, function, line)
+}
+
 type LogLevelFlag string
 
 func (loglevel LogLevelFlag) AfterApply() error {
 	switch loglevel {
-	case "debug", "trace":
-		zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
-			short := file
-			for i := len(file) - 1; i > 0; i-- {
-				if file[i] == '/' {
-					short = file[i+1:]
-					break
-				}
-			}
-			file = short
-			return file + ":" + strconv.Itoa(line)
-		}
+	case "debug":
+		zerolog.CallerMarshalFunc = debugLevel
+		log.Logger = log.With().Caller().Logger()
+
+	case "trace":
+		zerolog.CallerMarshalFunc = traceLevel
 		log.Logger = log.With().Caller().Logger()
 	}
 	return nil
