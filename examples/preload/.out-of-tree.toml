@@ -1,4 +1,4 @@
-name = "out-of-tree preload"
+name = "preload_example"
 type = "module"
 
 [[targets]]

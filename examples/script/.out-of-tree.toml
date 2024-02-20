@@ -1,6 +1,6 @@
 # out-of-tree configuration file
 # docs at https://out-of-tree.io
-name = "out-of-tree script example"
+name = "script_example"
 type = "script"
 
 script = "script.sh"
