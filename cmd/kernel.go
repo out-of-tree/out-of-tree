@@ -15,7 +15,9 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog/log"
 
+	"code.dumpstack.io/tools/out-of-tree/artifact"
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/kernel"
@@ -83,7 +85,7 @@ func (cmd KernelCmd) UpdateConfig() (err error) {
 		return
 	}
 
-	err = os.WriteFile(config.File("kernels.toml"), buf, os.ModePerm)
+	err = os.WriteFile(dotfiles.File("kernels.toml"), buf, os.ModePerm)
 	if err != nil {
 		return
 	}
@@ -92,7 +94,7 @@ func (cmd KernelCmd) UpdateConfig() (err error) {
 	return
 }
 
-func (cmd *KernelCmd) GenKernel(km config.Target, pkg string) {
+func (cmd *KernelCmd) GenKernel(km artifact.Target, pkg string) {
 	flog := log.With().
 		Str("kernel", pkg).
 		Str("distro", km.Distro.String()).
@@ -156,7 +158,7 @@ func (cmd *KernelCmd) GenKernel(km config.Target, pkg string) {
 	}
 }
 
-func (cmd *KernelCmd) Generate(g *Globals, km config.Target) (err error) {
+func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
 	if cmd.Update {
 		container.UseCache = false
 	}
@@ -263,9 +265,9 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 		return
 	}
 
-	km := config.Target{
+	km := artifact.Target{
 		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
-		Kernel: config.Kernel{Regex: ".*"},
+		Kernel: artifact.Kernel{Regex: ".*"},
 	}
 
 	_, err = kernel.GenRootfsImage(km.Distro.RootFS(), false)
@@ -289,7 +291,7 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 type KernelAutogenCmd struct{}
 
 func (cmd *KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
-	ka, err := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
+	ka, err := artifact.Artifact{}.Read(g.WorkDir + "/.out-of-tree.toml")
 	if err != nil {
 		return
 	}
@@ -340,9 +342,9 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			continue
 		}
 
-		target := config.Target{
+		target := artifact.Target{
 			Distro: dist,
-			Kernel: config.Kernel{Regex: ".*"},
+			Kernel: artifact.Kernel{Regex: ".*"},
 		}
 
 		err = kernelCmd.Generate(g, target)
@@ -368,9 +370,9 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 
 	kernel.SetSigintHandler(&kernelCmd.shutdown)
 
-	km := config.Target{
+	km := artifact.Target{
 		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
-		Kernel: config.Kernel{Regex: cmd.Kernel},
+		Kernel: artifact.Kernel{Regex: cmd.Kernel},
 	}
 	err = kernelCmd.Generate(g, km)
 	if err != nil {

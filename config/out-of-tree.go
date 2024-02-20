@@ -9,17 +9,14 @@ import (
 	"os"
 	"time"
 
+	"code.dumpstack.io/tools/out-of-tree/artifact"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 
 	"github.com/alecthomas/kong"
 	"github.com/mitchellh/go-homedir"
 	"github.com/naoina/toml"
 )
-
-type DockerCommand struct {
-	Distro  distro.Distro
-	Command string
-}
 
 type OutOfTree struct {
 	// Directory for all files if not explicitly specified
@@ -31,16 +28,16 @@ type OutOfTree struct {
 	Database string
 
 	Qemu struct {
-		Timeout Duration
+		Timeout artifact.Duration
 	}
 
 	Docker struct {
-		Timeout  Duration
+		Timeout  artifact.Duration
 		Registry string
 
 		// Commands that will be executed before
 		// the base layer of Dockerfile
-		Commands []DockerCommand
+		Commands []distro.Command
 	}
 }
 
@@ -82,21 +79,21 @@ func ReadOutOfTreeConf(path string) (c OutOfTree, err error) {
 	}
 
 	if c.Directory != "" {
-		Directory = c.Directory
+		dotfiles.Directory = c.Directory
 	} else {
-		c.Directory = Dir("")
+		c.Directory = dotfiles.Dir("")
 	}
 
 	if c.Kernels == "" {
-		c.Kernels = File("kernels.toml")
+		c.Kernels = dotfiles.File("kernels.toml")
 	}
 
 	if c.UserKernels == "" {
-		c.UserKernels = File("kernels.user.toml")
+		c.UserKernels = dotfiles.File("kernels.user.toml")
 	}
 
 	if c.Database == "" {
-		c.Database = File("db.sqlite")
+		c.Database = dotfiles.File("db.sqlite")
 	}
 
 	if c.Qemu.Timeout.Duration == 0 {

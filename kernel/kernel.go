@@ -5,23 +5,21 @@
 package kernel
 
 import (
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"regexp"
-	"runtime"
-	"strings"
 
 	"github.com/rs/zerolog/log"
 
+	"code.dumpstack.io/tools/out-of-tree/artifact"
 	"code.dumpstack.io/tools/out-of-tree/cache"
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
-func MatchPackages(km config.Target) (packages []string, err error) {
+func MatchPackages(km artifact.Target) (packages []string, err error) {
 	pkgs, err := km.Distro.Packages()
 	if err != nil {
 		return
@@ -52,26 +50,8 @@ func MatchPackages(km config.Target) (packages []string, err error) {
 	return
 }
 
-func vsyscallAvailable() (available bool, err error) {
-	if runtime.GOOS != "linux" {
-		// Docker for non-Linux systems is not using the host
-		// kernel but uses kernel inside a virtual machine, so
-		// it builds by the Docker team with vsyscall support.
-		available = true
-		return
-	}
-
-	buf, err := ioutil.ReadFile("/proc/self/maps")
-	if err != nil {
-		return
-	}
-
-	available = strings.Contains(string(buf), "[vsyscall]")
-	return
-}
-
 func GenRootfsImage(imageFile string, download bool) (rootfs string, err error) {
-	imagesPath := config.Dir("images")
+	imagesPath := dotfiles.Dir("images")
 
 	rootfs = filepath.Join(imagesPath, imageFile)
 	if !fs.PathExists(rootfs) {
@@ -97,7 +77,7 @@ func SetSigintHandler(variable *bool) {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		counter := 0
-		for _ = range c {
+		for range c {
 			if counter == 0 {
 				*variable = true
 				log.Warn().Msg("shutdown requested, finishing work")

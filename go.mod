@@ -1,6 +1,8 @@
 module code.dumpstack.io/tools/out-of-tree
 
-go 1.19
+go 1.21
+
+toolchain go1.21.6
 
 require (
 	github.com/Masterminds/semver v1.5.0
@@ -8,6 +10,7 @@ require (
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-git/go-git/v5 v5.6.1
+	github.com/google/uuid v1.6.0
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/naoina/toml v0.1.1
@@ -52,5 +55,6 @@ require (
 	golang.org/x/sys v0.8.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0 // indirect
 )

@@ -27,7 +27,7 @@ pkgs.buildGoApplication rec {
 
   postFixup = ''
     wrapProgram $out/bin/out-of-tree \
-      --prefix PATH : "${lib.makeBinPath [ pkgs.qemu pkgs.podman ]}"
+      --prefix PATH : "${lib.makeBinPath [ pkgs.qemu pkgs.podman pkgs.openssl ]}"
   '';
 
   meta = with lib; {

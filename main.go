@@ -26,7 +26,7 @@ import (
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/cmd"
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 )
@@ -43,6 +43,8 @@ type CLI struct {
 	Image     cmd.ImageCmd     `cmd:"" help:"manage images"`
 	Container cmd.ContainerCmd `cmd:"" help:"manage containers"`
 	Distro    cmd.DistroCmd    `cmd:"" help:"distro-related helpers"`
+
+	Daemon cmd.DaemonCmd `cmd:"" help:"run daemon"`
 
 	Version VersionFlag `name:"version" help:"print version information and quit"`
 
@@ -132,7 +134,7 @@ func main() {
 	}
 
 	cmd.FileWriter = cmd.LevelWriter{Writer: &lumberjack.Logger{
-		Filename: config.File("logs/out-of-tree.log"),
+		Filename: dotfiles.File("logs/out-of-tree.log"),
 	},
 		Level: zerolog.TraceLevel,
 	}
@@ -151,7 +153,7 @@ func main() {
 		log.Debug().Msgf("%v", buildInfo.Settings)
 	}
 
-	path := config.Dir()
+	path := dotfiles.Dir()
 	yes, err := fs.CaseInsensitive(path)
 	if err != nil {
 		log.Fatal().Err(err).Msg(path)

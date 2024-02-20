@@ -12,8 +12,6 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot/mr"
 )
 
-const timeLayout = "20060102T150405Z"
-
 const URL = "https://snapshot.debian.org"
 
 func SourcePackageVersions(name string) (versions []string, err error) {

@@ -15,7 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gopkg.in/logrusorgru/aurora.v2"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/artifact"
 )
 
 type LogCmd struct {
@@ -40,7 +40,7 @@ func (cmd *LogQueryCmd) Run(g *Globals) (err error) {
 
 	var les []logEntry
 
-	ka, kaErr := config.ReadArtifactConfig(g.WorkDir + "/.out-of-tree.toml")
+	ka, kaErr := artifact.Artifact{}.Read(g.WorkDir + "/.out-of-tree.toml")
 	if kaErr == nil {
 		log.Print(".out-of-tree.toml found, filter by artifact name")
 		les, err = getAllArtifactLogs(db, cmd.Tag, cmd.Num, ka)
@@ -119,7 +119,7 @@ func (cmd *LogDumpCmd) Run(g *Globals) (err error) {
 	fmt.Println()
 
 	fmt.Println("Build ok:", l.Build.Ok)
-	if l.Type == config.KernelModule {
+	if l.Type == artifact.KernelModule {
 		fmt.Println("Insmod ok:", l.Run.Ok)
 	}
 	fmt.Println("Test ok:", l.Test.Ok)
@@ -128,7 +128,7 @@ func (cmd *LogDumpCmd) Run(g *Globals) (err error) {
 	fmt.Printf("Build output:\n%s\n", l.Build.Output)
 	fmt.Println()
 
-	if l.Type == config.KernelModule {
+	if l.Type == artifact.KernelModule {
 		fmt.Printf("Insmod output:\n%s\n", l.Run.Output)
 		fmt.Println()
 	}
@@ -232,7 +232,7 @@ func logLogEntry(l logEntry) {
 	var status aurora.Value
 	if l.InternalErrorString != "" {
 		status = genOkFailCentered("INTERNAL", false)
-	} else if l.Type == config.KernelExploit {
+	} else if l.Type == artifact.KernelExploit {
 		if l.Build.Ok {
 			status = genOkFailCentered("LPE", l.Test.Ok)
 		} else {
@@ -273,7 +273,7 @@ func getStats(db *sql.DB, path, tag string) (
 
 	var les []logEntry
 
-	ka, kaErr := config.ReadArtifactConfig(path + "/.out-of-tree.toml")
+	ka, kaErr := artifact.Artifact{}.Read(path + "/.out-of-tree.toml")
 	if kaErr == nil {
 		les, err = getAllArtifactLogs(db, tag, -1, ka)
 	} else {

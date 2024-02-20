@@ -83,10 +83,7 @@ func (suse OpenSUSE) Packages() (pkgs []string, err error) {
 		return
 	}
 
-	for _, pkg := range strings.Fields(output) {
-		pkgs = append(pkgs, pkg)
-	}
-
+	pkgs = append(pkgs, strings.Fields(output)...)
 	return
 }
 

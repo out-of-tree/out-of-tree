@@ -9,7 +9,7 @@ import (
 
 	"github.com/naoina/toml"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/artifact"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 )
 
@@ -20,30 +20,30 @@ type GenCmd struct {
 func (cmd *GenCmd) Run(g *Globals) (err error) {
 	switch cmd.Type {
 	case "module":
-		err = genConfig(config.KernelModule)
+		err = genConfig(artifact.KernelModule)
 	case "exploit":
-		err = genConfig(config.KernelExploit)
+		err = genConfig(artifact.KernelExploit)
 	}
 	return
 }
 
-func genConfig(at config.ArtifactType) (err error) {
-	a := config.Artifact{
+func genConfig(at artifact.ArtifactType) (err error) {
+	a := artifact.Artifact{
 		Name: "Put name here",
 		Type: at,
 	}
-	a.Targets = append(a.Targets, config.Target{
+	a.Targets = append(a.Targets, artifact.Target{
 		Distro: distro.Distro{ID: distro.Ubuntu, Release: "18.04"},
-		Kernel: config.Kernel{Regex: ".*"},
+		Kernel: artifact.Kernel{Regex: ".*"},
 	})
-	a.Targets = append(a.Targets, config.Target{
+	a.Targets = append(a.Targets, artifact.Target{
 		Distro: distro.Distro{ID: distro.Debian, Release: "8"},
-		Kernel: config.Kernel{Regex: ".*"},
+		Kernel: artifact.Kernel{Regex: ".*"},
 	})
-	a.Preload = append(a.Preload, config.PreloadModule{
+	a.Preload = append(a.Preload, artifact.PreloadModule{
 		Repo: "Repo name (e.g. https://github.com/openwall/lkrg)",
 	})
-	a.Patches = append(a.Patches, config.Patch{
+	a.Patches = append(a.Patches, artifact.Patch{
 		Path: "/path/to/profiling.patch",
 	})
 

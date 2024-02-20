@@ -99,3 +99,8 @@ func (d Distro) RootFS() string {
 
 	return ""
 }
+
+type Command struct {
+	Distro  Distro
+	Command string
+}

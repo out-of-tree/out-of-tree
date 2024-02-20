@@ -6,7 +6,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 )
@@ -47,14 +47,12 @@ func (centos CentOS) Packages() (pkgs []string, err error) {
 		"| grep -v src " +
 		"| cut -d ' ' -f 1"
 
-	output, err := c.Run(config.Dir("tmp"), []string{cmd})
+	output, err := c.Run(dotfiles.Dir("tmp"), []string{cmd})
 	if err != nil {
 		return
 	}
 
-	for _, pkg := range strings.Fields(output) {
-		pkgs = append(pkgs, pkg)
-	}
+	pkgs = append(pkgs, strings.Fields(output)...)
 	return
 }
 

@@ -11,7 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot/metasnap"
 	"code.dumpstack.io/tools/out-of-tree/fs"
@@ -406,7 +406,7 @@ func GetKernelsWithLimit(limit int, mode GetKernelsMode) (kernels []DebianKernel
 	err error) {
 
 	if CachePath == "" {
-		CachePath = config.File("debian.cache")
+		CachePath = dotfiles.File("debian.cache")
 		log.Debug().Msgf("Use default kernels cache path: %s", CachePath)
 
 		if !fs.PathExists(CachePath) {

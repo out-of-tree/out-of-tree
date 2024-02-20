@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 )
@@ -51,15 +51,12 @@ func (u Ubuntu) Packages() (pkgs []string, err error) {
 		"--names-only '^linux-image-[0-9\\.\\-]*-generic$' " +
 		"| awk '{ print $1 }'"
 
-	output, err := c.Run(config.Dir("tmp"), []string{cmd})
+	output, err := c.Run(dotfiles.Dir("tmp"), []string{cmd})
 	if err != nil {
 		return
 	}
 
-	for _, pkg := range strings.Fields(output) {
-		pkgs = append(pkgs, pkg)
-	}
-
+	pkgs = append(pkgs, strings.Fields(output)...)
 	return
 }
 

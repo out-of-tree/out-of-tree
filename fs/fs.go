@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 )
 
 // CaseInsensitive check
@@ -51,7 +51,7 @@ func PathExists(path string) bool {
 
 // TempDir that exist relative to config directory
 func TempDir() (string, error) {
-	return os.MkdirTemp(config.Dir("tmp"), "")
+	return os.MkdirTemp(dotfiles.Dir("tmp"), "")
 }
 
 func FindBySubstring(dir, substring string) (k string, err error) {

@@ -1,4 +1,4 @@
-package config
+package dotfiles
 
 import (
 	"os"

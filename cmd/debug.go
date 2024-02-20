@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gopkg.in/logrusorgru/aurora.v2"
 
+	"code.dumpstack.io/tools/out-of-tree/artifact"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/fs"
@@ -53,7 +54,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 	} else {
 		configPath = cmd.ArtifactConfig
 	}
-	ka, err := config.ReadArtifactConfig(configPath)
+	ka, err := artifact.Artifact{}.Read(configPath)
 	if err != nil {
 		return
 	}
@@ -158,14 +159,14 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 
 	if ka.StandardModules {
 		// Module depends on one of the standard modules
-		err = copyStandardModules(q, ki)
+		err = artifact.CopyStandardModules(q, ki)
 		if err != nil {
 			log.Print(err)
 			return
 		}
 	}
 
-	err = preloadModules(q, ka, ki, g.Config.Docker.Timeout.Duration)
+	err = artifact.PreloadModules(q, ka, ki, g.Config.Docker.Timeout.Duration)
 	if err != nil {
 		log.Print(err)
 		return
@@ -173,20 +174,20 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 
 	var buildDir, outFile, output, remoteFile string
 
-	if ka.Type == config.Script {
+	if ka.Type == artifact.Script {
 		err = q.CopyFile("root", ka.Script, ka.Script)
 		if err != nil {
 			return
 		}
 	} else {
-		buildDir, outFile, output, err = build(log.Logger, tmp, ka, ki, g.Config.Docker.Timeout.Duration)
+		buildDir, outFile, output, err = artifact.Build(log.Logger, tmp, ka, ki, g.Config.Docker.Timeout.Duration)
 		if err != nil {
 			log.Print(err, output)
 			return
 		}
 
 		remoteFile = "/tmp/" + strings.Replace(ka.Name, " ", "_", -1)
-		if ka.Type == config.KernelModule {
+		if ka.Type == artifact.KernelModule {
 			remoteFile += ".ko"
 		}
 
@@ -222,7 +223,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 	return
 }
 
-func firstSupported(kcfg config.KernelConfig, ka config.Artifact,
+func firstSupported(kcfg config.KernelConfig, ka artifact.Artifact,
 	kernel string) (ki distro.KernelInfo, err error) {
 
 	km, err := kernelMask(kernel)
@@ -230,7 +231,7 @@ func firstSupported(kcfg config.KernelConfig, ka config.Artifact,
 		return
 	}
 
-	ka.Targets = []config.Target{km}
+	ka.Targets = []artifact.Target{km}
 
 	for _, ki = range kcfg.Kernels {
 		var supported bool

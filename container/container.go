@@ -19,7 +19,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 )
 
@@ -29,7 +29,7 @@ var Registry = ""
 
 var Timeout time.Duration
 
-var Commands []config.DockerCommand
+var Commands []distro.Command
 
 var UseCache = true
 
@@ -123,17 +123,17 @@ func New(dist distro.Distro) (c Container, err error) {
 	c.dist = dist
 
 	c.Volumes = append(c.Volumes, Volume{
-		Src:  config.Dir("volumes", c.name, "lib", "modules"),
+		Src:  dotfiles.Dir("volumes", c.name, "lib", "modules"),
 		Dest: "/lib/modules",
 	})
 
 	c.Volumes = append(c.Volumes, Volume{
-		Src:  config.Dir("volumes", c.name, "usr", "src"),
+		Src:  dotfiles.Dir("volumes", c.name, "usr", "src"),
 		Dest: "/usr/src",
 	})
 
 	c.Volumes = append(c.Volumes, Volume{
-		Src:  config.Dir("volumes", c.name, "boot"),
+		Src:  dotfiles.Dir("volumes", c.name, "boot"),
 		Dest: "/boot",
 	})
 
@@ -194,7 +194,7 @@ func (c Container) Exist() (yes bool) {
 }
 
 func (c Container) Build(image string, envs, runs []string) (err error) {
-	cdir := config.Dir("containers", c.name)
+	cdir := dotfiles.Dir("containers", c.name)
 	cfile := filepath.Join(cdir, "Dockerfile")
 
 	cf := "FROM "
@@ -474,7 +474,7 @@ func (c Container) Kernels() (kernels []distro.KernelInfo, err error) {
 			InitrdPath:  filepath.Join(boot, initrdFile),
 			ModulesPath: filepath.Join(libmodules, krel.Name()),
 
-			RootFS: config.File("images", c.dist.RootFS()),
+			RootFS: dotfiles.File("images", c.dist.RootFS()),
 		}
 
 		kernels = append(kernels, ki)
@@ -483,7 +483,7 @@ func (c Container) Kernels() (kernels []distro.KernelInfo, err error) {
 	for _, cmd := range []string{
 		"find /boot -type f -exec chmod a+r {} \\;",
 	} {
-		_, err = c.Run(config.Dir("tmp"), []string{cmd})
+		_, err = c.Run(dotfiles.Dir("tmp"), []string{cmd})
 		if err != nil {
 			return
 		}

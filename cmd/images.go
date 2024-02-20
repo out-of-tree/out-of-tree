@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
@@ -26,7 +27,7 @@ type ImageCmd struct {
 type ImageListCmd struct{}
 
 func (cmd *ImageListCmd) Run(g *Globals) (err error) {
-	entries, err := os.ReadDir(config.Dir("images"))
+	entries, err := os.ReadDir(dotfiles.Dir("images"))
 	if err != nil {
 		return
 	}
@@ -44,7 +45,7 @@ type ImageEditCmd struct {
 }
 
 func (cmd *ImageEditCmd) Run(g *Globals) (err error) {
-	image := filepath.Join(config.Dir("images"), cmd.Name)
+	image := filepath.Join(dotfiles.Dir("images"), cmd.Name)
 	if !fs.PathExists(image) {
 		fmt.Println("image does not exist")
 	}

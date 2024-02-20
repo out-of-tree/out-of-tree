@@ -2,7 +2,7 @@
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
-package cmd
+package artifact
 
 import (
 	"crypto/sha1"
@@ -15,13 +15,12 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/rs/zerolog/log"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/distro"
-	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
 
-func preloadModules(q *qemu.System, ka config.Artifact, ki distro.KernelInfo,
+func PreloadModules(q *qemu.System, ka Artifact, ki distro.KernelInfo,
 	dockerTimeout time.Duration) (err error) {
 
 	for _, pm := range ka.Preload {
@@ -33,7 +32,7 @@ func preloadModules(q *qemu.System, ka config.Artifact, ki distro.KernelInfo,
 	return
 }
 
-func preload(q *qemu.System, ki distro.KernelInfo, pm config.PreloadModule,
+func preload(q *qemu.System, ki distro.KernelInfo, pm PreloadModule,
 	dockerTimeout time.Duration) (err error) {
 
 	var workPath, cache string
@@ -46,7 +45,8 @@ func preload(q *qemu.System, ki distro.KernelInfo, pm config.PreloadModule,
 			return
 		}
 	} else {
-		errors.New("No repo/path in preload entry")
+		err = errors.New("no repo/path in preload entry")
+		return
 	}
 
 	err = buildAndInsmod(workPath, q, ki, dockerTimeout, cache)
@@ -61,29 +61,29 @@ func preload(q *qemu.System, ki distro.KernelInfo, pm config.PreloadModule,
 func buildAndInsmod(workPath string, q *qemu.System, ki distro.KernelInfo,
 	dockerTimeout time.Duration, cache string) (err error) {
 
-	tmp, err := fs.TempDir()
+	tmp, err := tempDir()
 	if err != nil {
 		return
 	}
 	defer os.RemoveAll(tmp)
 
-	var artifact string
-	if fs.PathExists(cache) {
-		artifact = cache
+	var af string
+	if pathExists(cache) {
+		af = cache
 	} else {
-		artifact, err = buildPreload(workPath, tmp, ki, dockerTimeout)
+		af, err = buildPreload(workPath, tmp, ki, dockerTimeout)
 		if err != nil {
 			return
 		}
 		if cache != "" {
-			err = copyFile(artifact, cache)
+			err = CopyFile(af, cache)
 			if err != nil {
 				return
 			}
 		}
 	}
 
-	output, err := q.CopyAndInsmod(artifact)
+	output, err := q.CopyAndInsmod(af)
 	if err != nil {
 		log.Print(output)
 		return
@@ -92,37 +92,48 @@ func buildAndInsmod(workPath string, q *qemu.System, ki distro.KernelInfo,
 }
 
 func buildPreload(workPath, tmp string, ki distro.KernelInfo,
-	dockerTimeout time.Duration) (artifact string, err error) {
+	dockerTimeout time.Duration) (af string, err error) {
 
-	ka, err := config.ReadArtifactConfig(workPath + "/.out-of-tree.toml")
+	ka, err := Artifact{}.Read(workPath + "/.out-of-tree.toml")
 	if err != nil {
 		log.Warn().Err(err).Msg("preload")
 	}
 
 	ka.SourcePath = workPath
 
-	km := config.Target{
+	km := Target{
 		Distro: ki.Distro,
-		Kernel: config.Kernel{Regex: ki.KernelRelease},
+		Kernel: Kernel{Regex: ki.KernelRelease},
 	}
-	ka.Targets = []config.Target{km}
+	ka.Targets = []Target{km}
 
 	if ka.Docker.Timeout.Duration != 0 {
 		dockerTimeout = ka.Docker.Timeout.Duration
 	}
 
-	_, artifact, _, err = build(log.Logger, tmp, ka, ki, dockerTimeout)
+	_, af, _, err = Build(log.Logger, tmp, ka, ki, dockerTimeout)
 	return
+}
+
+func pathExists(path string) bool {
+	if _, err := os.Stat(path); err != nil {
+		return false
+	}
+	return true
+}
+
+func tempDir() (string, error) {
+	return os.MkdirTemp(dotfiles.Dir("tmp"), "")
 }
 
 func cloneOrPull(repo string, ki distro.KernelInfo) (workPath, cache string,
 	err error) {
 
-	base := config.Dir("preload")
+	base := dotfiles.Dir("preload")
 	workPath = filepath.Join(base, "/repos/", sha1sum(repo))
 
 	var r *git.Repository
-	if fs.PathExists(workPath) {
+	if pathExists(workPath) {
 		r, err = git.PlainOpen(workPath)
 		if err != nil {
 			return

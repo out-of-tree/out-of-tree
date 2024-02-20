@@ -1,7 +1,6 @@
-package config
+package dotfiles
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,7 +17,7 @@ func TestDirectory(t *testing.T) {
 }
 
 func TestDir(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "out-of-tree_")
+	tmpdir, err := os.MkdirTemp("", "out-of-tree_")
 	if err != nil {
 		return
 	}
@@ -64,7 +63,7 @@ func TestDir(t *testing.T) {
 }
 
 func TestFile(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "out-of-tree_")
+	tmpdir, err := os.MkdirTemp("", "out-of-tree_")
 	if err != nil {
 		return
 	}

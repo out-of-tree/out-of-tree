@@ -12,7 +12,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/artifact"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/qemu"
 )
@@ -28,9 +28,9 @@ type logEntry struct {
 	Timestamp time.Time
 
 	qemu.System
-	config.Artifact
+	artifact.Artifact
 	distro.KernelInfo
-	phasesResult
+	artifact.Result
 }
 
 func createLogTable(db *sql.DB) (err error) {
@@ -123,8 +123,8 @@ func getVersion(db *sql.DB) (version int, err error) {
 	return
 }
 
-func addToLog(db *sql.DB, q *qemu.System, ka config.Artifact,
-	ki distro.KernelInfo, res *phasesResult, tag string) (err error) {
+func addToLog(db *sql.DB, q *qemu.System, ka artifact.Artifact,
+	ki distro.KernelInfo, res *artifact.Result, tag string) (err error) {
 
 	stmt, err := db.Prepare("INSERT INTO log (name, type, tag, " +
 		"distro_type, distro_release, kernel_release, " +
@@ -201,7 +201,7 @@ func getAllLogs(db *sql.DB, tag string, num int) (les []logEntry, err error) {
 	return
 }
 
-func getAllArtifactLogs(db *sql.DB, tag string, num int, ka config.Artifact) (
+func getAllArtifactLogs(db *sql.DB, tag string, num int, ka artifact.Artifact) (
 	les []logEntry, err error) {
 
 	stmt, err := db.Prepare("SELECT id, time, name, type, tag, " +

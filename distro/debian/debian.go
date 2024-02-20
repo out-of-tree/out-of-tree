@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/cache"
-	"code.dumpstack.io/tools/out-of-tree/config"
+	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro"
 	"code.dumpstack.io/tools/out-of-tree/distro/debian/snapshot"
@@ -329,8 +329,8 @@ func (d Debian) Kernels() (kernels []distro.KernelInfo, err error) {
 		return
 	}
 
-	cpath := config.Dir("volumes", c.Name())
-	rootfs := config.File("images", c.Name()+".img")
+	cpath := dotfiles.Dir("volumes", c.Name())
+	rootfs := dotfiles.File("images", c.Name()+".img")
 
 	files, err := os.ReadDir(cpath)
 	if err != nil {
@@ -413,17 +413,17 @@ func (d Debian) volumes(pkgname string) (volumes []container.Volume) {
 	pkgdir := filepath.Join("volumes", c.Name(), pkgname)
 
 	volumes = append(volumes, container.Volume{
-		Src:  config.Dir(pkgdir, "/lib/modules"),
+		Src:  dotfiles.Dir(pkgdir, "/lib/modules"),
 		Dest: "/lib/modules",
 	})
 
 	volumes = append(volumes, container.Volume{
-		Src:  config.Dir(pkgdir, "/usr/src"),
+		Src:  dotfiles.Dir(pkgdir, "/usr/src"),
 		Dest: "/usr/src",
 	})
 
 	volumes = append(volumes, container.Volume{
-		Src:  config.Dir(pkgdir, "/boot"),
+		Src:  dotfiles.Dir(pkgdir, "/boot"),
 		Dest: "/boot",
 	})
 
@@ -518,7 +518,7 @@ func (d Debian) cleanup(pkgname string) {
 		return
 	}
 
-	pkgdir := config.Dir(filepath.Join("volumes", c.Name(), pkgname))
+	pkgdir := dotfiles.Dir(filepath.Join("volumes", c.Name(), pkgname))
 
 	log.Debug().Msgf("cleanup %s", pkgdir)
 
