@@ -152,7 +152,7 @@ func getRandomPort(ip string) (addr string) {
 	return fmt.Sprintf("%s:%d", ip, port)
 }
 
-func getFreeAddrPort() (addrPort string) {
+func GetFreeAddrPort() (addrPort string) {
 	timeout := time.Now().Add(time.Second)
 	for {
 		if runtime.GOOS == "linux" {
@@ -233,7 +233,7 @@ func (q System) Executable() string {
 
 func (q *System) Args() (qemuArgs []string) {
 	if q.SSH.AddrPort == "" {
-		q.SSH.AddrPort = getFreeAddrPort()
+		q.SSH.AddrPort = GetFreeAddrPort()
 	}
 	hostfwd := fmt.Sprintf("hostfwd=tcp:%s-:22", q.SSH.AddrPort)
 	qemuArgs = []string{"-nographic",

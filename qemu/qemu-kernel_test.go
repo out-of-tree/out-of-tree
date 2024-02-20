@@ -63,7 +63,7 @@ func TestSystemStart(t *testing.T) {
 }
 
 func TestGetFreeAddrPort(t *testing.T) {
-	addrPort := getFreeAddrPort()
+	addrPort := GetFreeAddrPort()
 	ln, err := net.Listen("tcp", addrPort)
 	if err != nil {
 		t.Fatal(err)
