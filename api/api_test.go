@@ -10,7 +10,7 @@ func TestReq(t *testing.T) {
 	req := Req{}
 
 	req.Command = ListRepos
-	req.SetData(Job{ID: 999, RepoName: "test"})
+	req.SetData(&Job{ID: 999, RepoName: "test"})
 
 	bytes := req.Marshal()
 
@@ -23,19 +23,21 @@ func TestReq(t *testing.T) {
 	err = req2.GetData(&job)
 	assert.Nil(t, err)
 
-	assert.Equal(t, req2.Type, "api.Job")
+	assert.Equal(t, req2.Type, "*api.Job")
 }
 
 func TestResp(t *testing.T) {
 	resp := Resp{}
 
 	resp.Error = "abracadabra"
-	resp.SetData([]Repo{Repo{}, Repo{}})
+	resp.SetData(&[]Repo{{}, {}})
 
 	bytes := resp.Marshal()
 
 	resp2, err := Resp{}.Unmarshal(bytes)
 	assert.Nil(t, err)
+
+	resp2.Err = nil // non-marshallable
 
 	assert.Equal(t, resp, resp2)
 
@@ -43,5 +45,5 @@ func TestResp(t *testing.T) {
 	err = resp2.GetData(&repos)
 	assert.Nil(t, err)
 
-	assert.Equal(t, resp2.Type, "[]api.Repo")
+	assert.Equal(t, resp2.Type, "*[]api.Repo")
 }
