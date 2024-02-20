@@ -114,6 +114,9 @@ jobs:
         echo '[[targets]]' >> examples/kernel-module/.out-of-tree.toml
         echo 'distro = { id = "${{ matrix.os.distro }}", release = "${{ matrix.os.release }}" }' >> examples/kernel-module/.out-of-tree.toml
         echo 'kernel = { regex = ".*" }' >> examples/kernel-module/.out-of-tree.toml
+        echo '[qemu]' >> examples/kernel-module/.out-of-tree.toml
+        echo 'timeout = "10m"' >> examples/kernel-module/.out-of-tree.toml
+        echo 'after_start_timeout = "10s"' >> examples/kernel-module/.out-of-tree.toml
 
         echo 'modprobe uio || modprobe 9p || modprobe xfs' >> examples/kernel-module/test.sh
 
