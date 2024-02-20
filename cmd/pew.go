@@ -229,11 +229,13 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 	if cmd.QemuTimeout != 0 {
 		log.Info().Msgf("Set qemu timeout to %s", cmd.QemuTimeout)
 		g.Config.Qemu.Timeout.Duration = cmd.QemuTimeout
+		ka.Qemu.Timeout.Duration = cmd.QemuTimeout
 	}
 
 	if cmd.DockerTimeout != 0 {
 		log.Info().Msgf("Set docker timeout to %s", cmd.DockerTimeout)
 		g.Config.Docker.Timeout.Duration = cmd.DockerTimeout
+		ka.Docker.Timeout.Duration = cmd.DockerTimeout
 	}
 
 	if cmd.Tag == "" {
