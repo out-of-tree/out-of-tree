@@ -152,7 +152,7 @@ jobs:
 
     - name: Archive logs
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-end-to-end-${{ matrix.os.distro }}-${{ matrix.os.release }}-logs
         path: logs

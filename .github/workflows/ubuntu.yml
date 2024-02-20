@@ -80,7 +80,7 @@ jobs:
 
     - name: Archive logs
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-end-to-end-examples-${{ matrix.example.dir }}-logs
         path: ~/.out-of-tree/logs
@@ -168,7 +168,7 @@ jobs:
 
     - name: Archive logs
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-end-to-end-${{ matrix.type }}-${{ matrix.os.distro }}-${{ matrix.os.release }}-logs
         path: ~/.out-of-tree/logs
