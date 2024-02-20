@@ -361,7 +361,7 @@ func (q *System) Stop() {
 }
 
 func (q *System) WaitForSSH(timeout time.Duration) error {
-	q.Log.Debug().Msg("wait for ssh")
+	q.Log.Debug().Msgf("wait for ssh for %v", timeout)
 
 	for start := time.Now(); time.Since(start) < timeout; {
 		time.Sleep(time.Second / 4)
