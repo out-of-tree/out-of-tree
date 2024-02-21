@@ -16,6 +16,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/artifact"
+	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/container"
@@ -24,17 +25,18 @@ import (
 )
 
 type KernelCmd struct {
-	NoDownload bool `help:"do not download qemu image while kernel generation"`
-	UseHost    bool `help:"also use host kernels"`
-	Force      bool `help:"force reinstall kernel"`
-	NoHeaders  bool `help:"do not install kernel headers"`
-	Shuffle    bool `help:"randomize kernels installation order"`
-	Retries    int  `help:"amount of tries for each kernel" default:"2"`
-	Threads    int  `help:"threads for parallel installation" default:"1"`
-	Update     bool `help:"update container"`
-	Max        int  `help:"maximum kernels to download" default:"100500"`
-	NoPrune    bool `help:"do not remove dangling or unused images from local storage after build"`
-	NoCfgRegen bool `help:"do not update kernels.toml"`
+	NoDownload     bool `help:"do not download qemu image while kernel generation"`
+	UseHost        bool `help:"also use host kernels"`
+	Force          bool `help:"force reinstall kernel"`
+	NoHeaders      bool `help:"do not install kernel headers"`
+	Shuffle        bool `help:"randomize kernels installation order"`
+	Retries        int  `help:"amount of tries for each kernel" default:"2"`
+	Threads        int  `help:"threads for parallel installation" default:"1"`
+	Update         bool `help:"update container"`
+	ContainerCache bool `help:"try prebuilt container images first" default:"true" negatable:""`
+	Max            int  `help:"maximum kernels to download" default:"100500"`
+	NoPrune        bool `help:"do not remove dangling or unused images from local storage after build"`
+	NoCfgRegen     bool `help:"do not update kernels.toml"`
 
 	ContainerTimeout time.Duration `help:"container timeout"`
 
@@ -197,6 +199,19 @@ func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
 	_, err = kernel.GenRootfsImage(km.Distro.RootFS(), !cmd.NoDownload)
 	if err != nil || cmd.shutdown {
 		return
+	}
+
+	c, err := container.New(km.Distro)
+	if err != nil || cmd.shutdown {
+		return
+	}
+
+	if cmd.ContainerCache {
+		path := cache.ContainerURL(c.Name())
+		err = container.Import(path, c.Name())
+		if err != nil || cmd.shutdown {
+			return
+		}
 	}
 
 	pkgs, err := kernel.MatchPackages(km)
