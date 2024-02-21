@@ -95,6 +95,26 @@ func Import(path, name string) (err error) {
 	return
 }
 
+func Save(name, path string) (err error) {
+	exist := Container{name: name}.Exist()
+	if !exist {
+		err = errors.New("container does not exist")
+		log.Error().Err(err).Msg("")
+		return
+	}
+
+	cmd := exec.Command(Runtime, "save", name, path)
+	log.Debug().Msgf("%v", cmd)
+
+	raw, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error().Err(err).Msg(string(raw))
+		return
+	}
+
+	return
+}
+
 type Volume struct {
 	Src, Dest string
 }
