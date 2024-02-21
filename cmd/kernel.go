@@ -62,6 +62,7 @@ func (cmd KernelCmd) UpdateConfig() (err error) {
 
 	if cmd.NoCfgRegen {
 		log.Info().Msgf("kernels.toml is not updated")
+		return
 	}
 
 	log.Info().Msgf("updating kernels.toml")
