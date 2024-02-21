@@ -132,53 +132,53 @@ jobs:
           ]
 
     steps:
-    - name: Maximize build space
-    - uses: easimon/maximize-build-space@master
-      with:
-        remove-dotnet: 'true'
-        remove-android: 'true'
-        remove-haskell: 'true'
-        remove-codeql: 'true'
-        remove-docker-images: 'true'
+      - name: Maximize build space
+      - uses: easimon/maximize-build-space@master
+        with:
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-docker-images: 'true'
 
-    - name: Checkout
-    - uses: actions/checkout@v1
+      - name: Checkout
+      - uses: actions/checkout@v1
 
-    - name: Setup
-      run: .github/workflows/scripts/setup.sh
+      - name: Setup
+        run: .github/workflows/scripts/setup.sh
 
-    - name: Build
-      run: go build
+      - name: Build
+        run: go build
 
-    - name: Install dependencies for tests
-      run: |
-        sudo apt-get update
-        sudo apt-get install qemu-system-x86
+      - name: Install dependencies for tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install qemu-system-x86
 
-    - name: End-to-End Testing ${{ matrix.type }} [${{ matrix.os.distro }} ${{ matrix.os.release }}]
-      shell: bash
-      run: |
-        mkdir test
-        cd test
+      - name: End-to-End Testing ${{ matrix.type }} [${{ matrix.os.distro }} ${{ matrix.os.release }}]
+        shell: bash
+        run: |
+          mkdir test
+          cd test
 
-        echo 'name = "test"' >> .out-of-tree.toml
-        echo 'type = "${{ matrix.type }}"' >> .out-of-tree.toml
-        echo 'script = "script.sh"' >> .out-of-tree.toml
-        echo '[[targets]]' >> .out-of-tree.toml
-        echo 'distro = { id = "${{ matrix.os.distro }}", release = "${{ matrix.os.release }}" }' >> .out-of-tree.toml
-        echo 'kernel = { regex = ".*" }' >> .out-of-tree.toml
+          echo 'name = "test"' >> .out-of-tree.toml
+          echo 'type = "${{ matrix.type }}"' >> .out-of-tree.toml
+          echo 'script = "script.sh"' >> .out-of-tree.toml
+          echo '[[targets]]' >> .out-of-tree.toml
+          echo 'distro = { id = "${{ matrix.os.distro }}", release = "${{ matrix.os.release }}" }' >> .out-of-tree.toml
+          echo 'kernel = { regex = ".*" }' >> .out-of-tree.toml
 
-        echo -e '#!/bin/sh\necho ok' >> script.sh
+          echo -e '#!/bin/sh\necho ok' >> script.sh
 
-        cp ../examples/kernel-module/{module.c,Makefile,test.sh} .
+          cp ../examples/kernel-module/{module.c,Makefile,test.sh} .
 
-        ../out-of-tree --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}
-        ../out-of-tree --log-level=debug kernel autogen --max=1 --shuffle
-        ../out-of-tree --log-level=debug pew --qemu-timeout=20m --include-internal-errors
+          ../out-of-tree --log-level=debug kernel list-remote --distro=${{ matrix.os.distro }} --ver=${{ matrix.os.release }}
+          ../out-of-tree --log-level=debug kernel autogen --max=1 --shuffle
+          ../out-of-tree --log-level=debug pew --qemu-timeout=20m --include-internal-errors
 
-    - name: Archive logs
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-end-to-end-${{ matrix.type }}-${{ matrix.os.distro }}-${{ matrix.os.release }}-logs
-        path: ~/.out-of-tree/logs
+      - name: Archive logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-end-to-end-${{ matrix.type }}-${{ matrix.os.distro }}-${{ matrix.os.release }}-logs
+          path: ~/.out-of-tree/logs
