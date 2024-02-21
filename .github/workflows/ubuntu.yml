@@ -132,13 +132,29 @@ jobs:
           ]
 
     steps:
-      - uses: easimon/maximize-build-space@master
+      - name: Backup docker files
+        run: |
+          echo "backup moby/buildkit image"
+          sudo docker image save -o ${GITHUB_WORKSPACE}/images.tar moby/buildkit
+          echo "Back up /var/lib/docker folder structure and other files"
+          sudo rsync -aPq /var/lib/docker/ ${GITHUB_WORKSPACE}/docker
+
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
         with:
+          overprovision-lvm: 'true'
           remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-          remove-docker-images: 'true'
+          # instead of using default value to mount to build path,
+          # /var/lib/docker/ is really the place we need more spaces.
+          build-mount-path: '/var/lib/docker/'
+
+      - name: Restore docker files
+        run: |
+          sudo rsync -aPq ${GITHUB_WORKSPACE}/docker/ /var/lib/docker
+          sudo rm -rf ${GITHUB_WORKSPACE}/docker
+          sudo ls ${GITHUB_WORKSPACE} -l
+          sudo docker image load -i ${GITHUB_WORKSPACE}/images.tar
+          sudo rm ${GITHUB_WORKSPACE}/images.tar
 
       - uses: actions/checkout@v1
 
