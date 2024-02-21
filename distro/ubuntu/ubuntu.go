@@ -99,6 +99,11 @@ func (u Ubuntu) runs() (commands []string) {
 		return
 	}
 
+	if u.release == "22.04" {
+		cmdf("apt-get install -y gcc-12")
+		return
+	}
+
 	cmdf("apt-get install -y libseccomp-dev")
 
 	// Install and remove a single kernel and headers.
