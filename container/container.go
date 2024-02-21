@@ -88,7 +88,7 @@ func Import(path, name string) (err error) {
 
 	raw, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Error().Err(err).Msg(string(raw))
+		log.Debug().Err(err).Msg(string(raw))
 		return
 	}
 
