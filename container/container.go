@@ -242,7 +242,6 @@ func (c Container) Build(image string, envs, runs []string) (err error) {
 		if err != nil {
 			return
 		}
-		buf = []byte(cf)
 	}
 
 	if string(buf) == cf && c.Exist() && UseCache {
