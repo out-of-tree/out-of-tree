@@ -77,6 +77,24 @@ func Images() (diis []Image, err error) {
 	return
 }
 
+func Load(path string) (err error) {
+	exist := Container{name: name}.Exist()
+	if exist && UseCache {
+		return
+	}
+
+	cmd := exec.Command(Runtime, "load", "-i", path)
+	log.Debug().Msgf("%v", cmd)
+
+	raw, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Debug().Err(err).Msg(string(raw))
+		return
+	}
+
+	return
+}
+
 func Import(path, name string) (err error) {
 	exist := Container{name: name}.Exist()
 	if exist && UseCache {

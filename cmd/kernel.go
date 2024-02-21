@@ -175,7 +175,7 @@ func (cmd *KernelCmd) fetchContainerCache(c container.Container) {
 	}
 
 	path := cache.ContainerURL(c.Name())
-	err := container.Import(path, c.Name())
+	err := container.Load(path, c.Name())
 	if err == nil {
 		log.Info().Msgf("container %s -> %s", path, c.Name())
 	}
