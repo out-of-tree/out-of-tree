@@ -321,6 +321,7 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 	var cTest string
 
 	if ka.Type == Script {
+		result.BuildDir = ka.SourcePath
 		result.Build.Ok = true
 		cTest = ka.Script
 	} else if cBinary == "" {
