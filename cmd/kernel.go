@@ -208,11 +208,12 @@ func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
 
 	if cmd.ContainerCache {
 		path := cache.ContainerURL(c.Name())
-		log.Debug().Msgf("import container %v from %v",
-			c.Name(), path)
 		err = container.Import(path, c.Name())
-		if err != nil || cmd.shutdown {
-			return
+		if err != nil {
+			err = nil
+		} else {
+			log.Info().Msgf("container %s -> %s",
+				path, c.Name())
 		}
 	}
 
