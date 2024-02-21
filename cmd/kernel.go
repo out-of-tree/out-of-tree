@@ -206,7 +206,7 @@ func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
 		return
 	}
 
-	if cmd.ContainerCache {
+	if !c.Exist() && cmd.ContainerCache {
 		path := cache.ContainerURL(c.Name())
 		err = container.Import(path, c.Name())
 		if err != nil {
