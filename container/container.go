@@ -77,13 +77,13 @@ func Images() (diis []Image, err error) {
 	return
 }
 
-func Load(path string, name string) (err error) {
+func Load(localpath string, name string) (err error) {
 	exist := Container{name: name}.Exist()
 	if exist && UseCache {
 		return
 	}
 
-	cmd := exec.Command(Runtime, "load", "-i", path)
+	cmd := exec.Command(Runtime, "load", "-i", localpath)
 	log.Debug().Msgf("%v", cmd)
 
 	raw, err := cmd.CombinedOutput()

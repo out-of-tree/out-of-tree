@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cavaliergopher/grab/v3"
 	"github.com/naoina/toml"
 	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog/log"
@@ -21,6 +22,7 @@ import (
 	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/kernel"
 )
 
@@ -174,10 +176,22 @@ func (cmd *KernelCmd) fetchContainerCache(c container.Container) {
 		return
 	}
 
-	path := cache.ContainerURL(c.Name())
-	err := container.Load(path, c.Name())
+	tmp, err := fs.TempDir()
+	if err != nil {
+		return
+	}
+	defer os.RemoveAll(tmp)
+
+	resp, err := grab.Get(tmp, cache.ContainerURL(c.Name()))
+	if err != nil {
+		return
+	}
+
+	defer os.Remove(resp.Filename)
+
+	err = container.Load(resp.Filename, c.Name())
 	if err == nil {
-		log.Info().Msgf("container %s -> %s", path, c.Name())
+		log.Info().Msgf("use prebuilt container %s", c.Name())
 	}
 }
 
