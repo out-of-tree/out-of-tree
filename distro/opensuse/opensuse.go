@@ -70,9 +70,11 @@ func (suse OpenSUSE) Packages() (pkgs []string, err error) {
 		name = "opensuse/leap:" + suse.release
 	}
 
-	err = c.Build(name, suse.envs(), suse.runs())
-	if err != nil {
-		return
+	if !c.Exist() {
+		err = c.Build(name, suse.envs(), suse.runs())
+		if err != nil {
+			return
+		}
 	}
 
 	cmd := "zypper search -s --match-exact kernel-default | grep x86_64 " +

@@ -42,9 +42,11 @@ func (u Ubuntu) Packages() (pkgs []string, err error) {
 		return
 	}
 
-	err = c.Build("ubuntu:"+u.release, u.envs(), u.runs())
-	if err != nil {
-		return
+	if !c.Exist() {
+		err = c.Build("ubuntu:"+u.release, u.envs(), u.runs())
+		if err != nil {
+			return
+		}
 	}
 
 	cmd := "apt-cache search " +

@@ -54,9 +54,11 @@ func (d Debian) Packages() (packages []string, err error) {
 		return
 	}
 
-	err = c.Build(d.image(), d.envs(), d.runs())
-	if err != nil {
-		return
+	if !c.Exist() {
+		err = c.Build(d.image(), d.envs(), d.runs())
+		if err != nil {
+			return
+		}
 	}
 
 	kernels, err := GetKernels()

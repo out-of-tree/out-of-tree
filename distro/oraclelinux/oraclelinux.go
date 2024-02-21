@@ -38,9 +38,12 @@ func (ol OracleLinux) Packages() (pkgs []string, err error) {
 		return
 	}
 
-	err = c.Build("oraclelinux:"+ol.release, ol.envs(), ol.runs())
-	if err != nil {
-		return
+	if !c.Exist() {
+		err = c.Build("oraclelinux:"+ol.release,
+			ol.envs(), ol.runs())
+		if err != nil {
+			return
+		}
 	}
 
 	if ol.release == "8" {
