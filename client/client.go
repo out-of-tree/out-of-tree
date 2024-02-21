@@ -198,7 +198,7 @@ func (c Client) PushRepo(repo api.Repo) (err error) {
 	remote := fmt.Sprintf("git://%s/%s", addr, repo.Name)
 	log.Debug().Msgf("git proxy remote: %v", remote)
 
-	raw, err := exec.Command("git", "--work-tree", repo.Path, "push", remote).
+	raw, err := exec.Command("git", "--work-tree", repo.Path, "push", "--force", remote).
 		CombinedOutput()
 	if err != nil {
 		return
