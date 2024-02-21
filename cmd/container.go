@@ -56,7 +56,7 @@ func (cmd ContainerSaveCmd) Run(containerCmd *ContainerCmd) (err error) {
 		nlog := log.With().Str("name", name).Logger()
 
 		output := filepath.Join(cmd.OutDir, name+".tar")
-		nlog.Info().Msgf("saving to %v")
+		nlog.Info().Msgf("saving to %v", output)
 
 		err = container.Save(name, output)
 		if err != nil {

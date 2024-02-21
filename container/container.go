@@ -103,7 +103,7 @@ func Save(name, path string) (err error) {
 		return
 	}
 
-	cmd := exec.Command(Runtime, "save", name, path)
+	cmd := exec.Command(Runtime, "save", name, "-o", path)
 	log.Debug().Msgf("%v", cmd)
 
 	raw, err := cmd.CombinedOutput()
