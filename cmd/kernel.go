@@ -159,6 +159,14 @@ func (cmd *KernelCmd) GenKernel(km artifact.Target, pkg string) {
 }
 
 func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
+	defer func() {
+		if err != nil {
+			log.Warn().Err(err).Msg("")
+		} else {
+			log.Debug().Err(err).Msg("")
+		}
+	}()
+
 	if cmd.Update {
 		container.UseCache = false
 	}
@@ -349,7 +357,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 
 		err = kernelCmd.Generate(g, target)
 		if err != nil {
-			return
+			continue
 		}
 	}
 
