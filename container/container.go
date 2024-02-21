@@ -77,7 +77,7 @@ func Images() (diis []Image, err error) {
 	return
 }
 
-func Load(path string) (err error) {
+func Load(path string, name string) (err error) {
 	exist := Container{name: name}.Exist()
 	if exist && UseCache {
 		return
