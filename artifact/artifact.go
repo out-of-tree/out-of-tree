@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -323,6 +324,7 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 	if ka.Type == Script {
 		result.BuildDir = ka.SourcePath
 		result.Build.Ok = true
+		ka.Script = filepath.Join(ka.SourcePath, ka.Script)
 		cTest = ka.Script
 	} else if cBinary == "" {
 		// TODO: build should return structure
