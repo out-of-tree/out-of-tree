@@ -34,6 +34,7 @@ type KernelCmd struct {
 	Update     bool `help:"update container"`
 	Max        int  `help:"maximum kernels to download" default:"100500"`
 	NoPrune    bool `help:"do not remove dangling or unused images from local storage after build"`
+	NoCfgRegen bool `help:"do not update kernels.toml"`
 
 	ContainerTimeout time.Duration `help:"container timeout"`
 
@@ -57,6 +58,10 @@ func (cmd KernelCmd) UpdateConfig() (err error) {
 	if cmd.stats.success != cmd.stats.overall {
 		log.Warn().Msgf("%d kernels failed to install",
 			cmd.stats.overall-cmd.stats.success)
+	}
+
+	if cmd.NoCfgRegen {
+		log.Info().Msgf("kernels.toml is not updated")
 	}
 
 	log.Info().Msgf("updating kernels.toml")
