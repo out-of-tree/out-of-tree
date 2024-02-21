@@ -553,7 +553,10 @@ func (q *System) scpWithRetry(user, localPath, remotePath string, recursive bool
 			break
 		}
 
-		q.Log.Warn().Err(err).Msg("scp: failed")
+		q.Log.Debug().Err(err).Msgf(
+			"scp[%v] (r: %v) %v -> %v: failed",
+			user, recursive, localPath, remotePath)
+
 		time.Sleep(q.SSH.RetryTimeout)
 		q.Log.Warn().Msgf("scp: %d retries left", retries)
 	}
