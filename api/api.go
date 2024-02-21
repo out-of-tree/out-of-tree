@@ -101,10 +101,10 @@ func (r *Req) GetData(data any) (err error) {
 }
 
 func (r Req) Encode(conn net.Conn) {
-	log.Trace().Msgf("encode %v", spew.Sdump(r))
+	log.Debug().Msgf("encode %v", r.Command)
 	err := json.NewEncoder(conn).Encode(&r)
 	if err != nil {
-		log.Fatal().Err(err).Msgf("encode %v", r)
+		log.Fatal().Msgf("encode %v", r.Command)
 	}
 }
 
@@ -164,10 +164,10 @@ func (r *Resp) Encode(conn net.Conn) {
 	if r.Err != nil && r.Err != ErrInvalid && r.Error == "" {
 		r.Error = fmt.Sprintf("%v", r.Err)
 	}
-	log.Trace().Msgf("encode %v", spew.Sdump(r))
+	log.Debug().Msgf("encode %v", r.UUID)
 	err := json.NewEncoder(conn).Encode(r)
 	if err != nil {
-		log.Fatal().Err(err).Msgf("encode %v", r)
+		log.Fatal().Msgf("encode %v", r.UUID)
 	}
 }
 
