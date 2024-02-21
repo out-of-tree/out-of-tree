@@ -77,7 +77,7 @@ jobs:
         --size s-4vcpu-8gb-intel
         --tag-name=github-actions
         --image almalinux-9-x64
-        --ssh-keys='b4:4c:66:7d:be:19:25:43:1c:e0:02:61:9f:49:12:94'
+        --ssh-keys='b4:4c:66:7d:be:19:25:43:1c:e0:02:61:9f:49:12:94,37:46:77:a8:4a:96:3b:20:16:46:35:04:95:ca:0c:5c'
         --wait
         --region fra1
         ga-out-of-tree-e2e-${{ matrix.os.distro }}-${{ matrix.os.release }}-$GITHUB_SHA
