@@ -132,7 +132,6 @@ jobs:
           ]
 
     steps:
-      - name: Maximize build space
       - uses: easimon/maximize-build-space@master
         with:
           remove-dotnet: 'true'
@@ -141,7 +140,6 @@ jobs:
           remove-codeql: 'true'
           remove-docker-images: 'true'
 
-      - name: Checkout
       - uses: actions/checkout@v1
 
       - name: Setup
