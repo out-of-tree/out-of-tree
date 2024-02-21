@@ -133,7 +133,7 @@ jobs:
 
     steps:
     - name: Maximize build space
-      uses: easimon/maximize-build-space@master
+    - uses: easimon/maximize-build-space@master
       with:
         remove-dotnet: 'true'
         remove-android: 'true'
