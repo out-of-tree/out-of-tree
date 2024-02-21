@@ -166,6 +166,21 @@ func (cmd *KernelCmd) GenKernel(km artifact.Target, pkg string) {
 	}
 }
 
+func (cmd *KernelCmd) fetchContainerCache(c container.Container) {
+	if !cmd.ContainerCache {
+		return
+	}
+	if c.Exist() {
+		return
+	}
+
+	path := cache.ContainerURL(c.Name())
+	err := container.Import(path, c.Name())
+	if err == nil {
+		log.Info().Msgf("container %s -> %s", path, c.Name())
+	}
+}
+
 func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
 	defer func() {
 		if err != nil {
@@ -206,16 +221,7 @@ func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
 		return
 	}
 
-	if !c.Exist() && cmd.ContainerCache {
-		path := cache.ContainerURL(c.Name())
-		err = container.Import(path, c.Name())
-		if err != nil {
-			err = nil
-		} else {
-			log.Info().Msgf("container %s -> %s",
-				path, c.Name())
-		}
-	}
+	cmd.fetchContainerCache(c)
 
 	pkgs, err := kernel.MatchPackages(km)
 	if err != nil || cmd.shutdown {
@@ -309,6 +315,13 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 
 	container.Registry = g.Config.Docker.Registry
 	container.Commands = g.Config.Docker.Commands
+
+	c, err := container.New(km.Distro)
+	if err != nil {
+		return
+	}
+
+	kernelCmd.fetchContainerCache(c)
 
 	pkgs, err := kernel.MatchPackages(km)
 	// error check skipped on purpose
