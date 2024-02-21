@@ -134,8 +134,6 @@ jobs:
         echo 'TimeoutStopSec=1' >> test.service
         echo 'ExecStart=/usr/local/bin/out-of-tree kernel autogen --threads=4 --max=256 --shuffle' >> test.service
         echo 'ExecStart=/usr/local/bin/out-of-tree pew --qemu-timeout=10m --threads=4 --include-internal-errors' >> test.service
-        echo 'ExecStart=/usr/local/bin/out-of-tree container save' >> test.service
-        echo "ExecStart=/usr/bin/s3cmd put --acl-public *.tar.gz s3://out-of-tree/1.0.0/containers/ --host=fra1.digitaloceanspaces.com --host-bucket='%(bucket)s.fra1.digitaloceanspaces.com' --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}" >> test.service
 
         scp test.service root@$IP:/etc/systemd/system/test.service
 
@@ -154,7 +152,10 @@ jobs:
 
         scp -r root@$IP:.out-of-tree/logs .
 
-        ssh root@$IP systemctl is-active test
+        ssh root@$IP systemctl is-active test || exit 1
+
+        ssh root@$IP "/usr/local/bin/out-of-tree container save"
+        ssh root@$IP "s3cmd put --acl-public *.tar.gz s3://out-of-tree/1.0.0/containers/ --host=fra1.digitaloceanspaces.com --host-bucket='%(bucket)s.fra1.digitaloceanspaces.com' --access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} --secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
 
     - name: Archive logs
       if: always()
