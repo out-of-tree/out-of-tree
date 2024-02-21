@@ -53,14 +53,14 @@ func (suse OpenSUSE) Packages() (pkgs []string, err error) {
 		}
 
 		cnturl := cache.ContainerURL(cnt)
-		err = container.Load(cnturl, name)
+		err = container.Import(cnturl, name)
 		if err != nil {
 			return
 		}
 	} else if strings.HasPrefix(suse.release, "13") {
 		name = "opensuse:13"
 		cnturl := cache.ContainerURL("openSUSE-13.2")
-		err = container.Load(cnturl, name)
+		err = container.Import(cnturl, name)
 		if err != nil {
 			return
 		}
