@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
+    - uses: actions/setup-go@v5
 
     - name: Build
       run: go build
@@ -30,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
+    - uses: actions/setup-go@v5
 
     - name: Install dependencies for tests
       run: |
@@ -60,6 +62,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - uses: actions/setup-go@v5
 
     - name: Setup
       run: .github/workflows/scripts/setup.sh
@@ -163,6 +166,7 @@ jobs:
           sudo rm ${GITHUB_WORKSPACE}/images.tar
 
       - uses: actions/checkout@v1
+      - uses: actions/setup-go@v5
 
       - name: Setup
         run: .github/workflows/scripts/setup.sh
