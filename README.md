@@ -1,5 +1,5 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/aba4aad2046b4d1a9a99cf98e22c018b)](https://app.codacy.com/app/jollheef/out-of-tree?utm_source=github.com&utm_medium=referral&utm_content=jollheef/out-of-tree&utm_campaign=Badge_Grade_Dashboard)
-[![Go Report Card](https://goreportcard.com/badge/code.dumpstack.io/tools/out-of-tree)](https://goreportcard.com/report/code.dumpstack.io/tools/out-of-tree)
+[![Ubuntu](https://github.com/out-of-tree/out-of-tree/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/out-of-tree/out-of-tree/actions/workflows/ubuntu.yml)
+[![E2E](https://github.com/out-of-tree/out-of-tree/actions/workflows/e2e.yml/badge.svg)](https://github.com/out-of-tree/out-of-tree/actions/workflows/e2e.yml)
 [![Documentation Status](https://readthedocs.org/projects/out-of-tree/badge/?version=latest)](https://out-of-tree.readthedocs.io/en/latest/?badge=latest)
 
 # [out-of-tree](https://out-of-tree.io)

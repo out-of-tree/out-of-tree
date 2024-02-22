@@ -5,9 +5,11 @@ on:
   push:
     paths-ignore:
       - ".github/workflows/images-*"
-      - ".github/workflows/debian-cache.yml"
       - ".github/workflows/e2e.yml"
+      - ".github/workflows/macos.yml"
+      - ".github/workflows/debian-cache.yml"
       - "docs/**"
+      - ".readthedocs.yaml"
       - "README.md"
   pull_request:
 

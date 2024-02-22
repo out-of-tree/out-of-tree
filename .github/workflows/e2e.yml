@@ -8,6 +8,9 @@ on:
       - ".github/workflows/ubuntu.yml"
       - ".github/workflows/macos.yml"
       - ".github/workflows/debian-cache.yml"
+      - "docs/**"
+      - ".readthedocs.yaml"
+      - "README.md"
 
 concurrency:
   group: ${{ github.workflow_ref }}
