@@ -40,7 +40,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: debian-cache-logs
+        name: debian-metadata-cache-logs
         path: ~/.out-of-tree/logs
 
     - name: Upload cache
@@ -113,5 +113,5 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: debian-cache-logs
+        name: debian-packages-cache-logs
         path: ~/.out-of-tree/logs
