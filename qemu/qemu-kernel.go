@@ -37,6 +37,13 @@ const (
 	unsupported = "unsupported" // for test purposes
 )
 
+const (
+	DefaultCPUs            = 1
+	DefaultMemory          = 512 // megabytes
+	DefaultSSHRetries      = 4
+	DefaultSSHRetryTimeout = time.Second / 4
+)
+
 // Kernel describe kernel parameters for qemu
 type Kernel struct {
 	Name       string
@@ -123,11 +130,10 @@ func NewSystem(arch arch, kernel Kernel, drivePath string) (q *System, err error
 	}
 	q.drivePath = drivePath
 
-	// Default values
-	q.Cpus = 1
-	q.Memory = 512 // megabytes
-	q.SSH.Retries = 4
-	q.SSH.RetryTimeout = time.Second / 4
+	q.Cpus = DefaultCPUs
+	q.Memory = DefaultMemory
+	q.SSH.Retries = DefaultSSHRetries
+	q.SSH.RetryTimeout = DefaultSSHRetryTimeout
 
 	return
 }
