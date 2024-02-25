@@ -11,30 +11,13 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/client"
-	"code.dumpstack.io/tools/out-of-tree/daemon"
 )
 
-type DaemonCmd struct {
+type daemonCmd struct {
 	Addr string `default:":63527"`
-
-	Serve DaemonServeCmd `cmd:"" help:"start daemon"`
 
 	Job  DaemonJobCmd  `cmd:"" aliases:"jobs" help:"manage jobs"`
 	Repo DaemonRepoCmd `cmd:"" aliases:"repos" help:"manage repositories"`
-}
-
-type DaemonServeCmd struct{}
-
-func (cmd *DaemonServeCmd) Run(dm *DaemonCmd, g *Globals) (err error) {
-	d, err := daemon.Init(g.Config.Kernels)
-	if err != nil {
-		log.Fatal().Err(err).Msg("")
-	}
-	defer d.Kill()
-
-	go d.Daemon()
-	d.Listen(dm.Addr)
-	return
 }
 
 type DaemonJobCmd struct {

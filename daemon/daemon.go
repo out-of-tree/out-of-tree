@@ -6,9 +6,11 @@ import (
 	"io"
 	"net"
 	"os/exec"
+	"runtime"
 	"sync"
 	"time"
 
+	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/api"
@@ -18,6 +20,9 @@ import (
 )
 
 type Daemon struct {
+	Threads   int
+	Resources *Resources
+
 	db           *sql.DB
 	kernelConfig string
 
@@ -27,7 +32,11 @@ type Daemon struct {
 
 func Init(kernelConfig string) (d *Daemon, err error) {
 	d = &Daemon{}
+	d.Threads = runtime.NumCPU()
+	d.Resources = NewResources()
+
 	d.kernelConfig = kernelConfig
+
 	d.wg.Add(1) // matches with db.Close()
 	d.db, err = db.OpenDatabase(dotfiles.File("daemon/daemon.db"))
 	if err != nil {
@@ -50,28 +59,49 @@ func (d *Daemon) Daemon() {
 		log.Fatal().Msg("db is not initialized")
 	}
 
-	log.Info().Msg("start daemon loop")
+	swg := sizedwaitgroup.New(d.Threads)
+	log.Info().Int("threads", d.Threads).Msg("start")
 
 	for !d.shutdown {
 		d.wg.Add(1)
 
 		jobs, err := db.Jobs(d.db)
-		if err != nil {
+		if err != nil && !d.shutdown {
 			log.Error().Err(err).Msg("")
+			d.wg.Done()
 			time.Sleep(time.Minute)
 			continue
 		}
 
 		for _, job := range jobs {
-			err = newPjob(job, d.db).Process()
-			if err != nil {
-				log.Error().Err(err).Msgf("%v", job)
+			if d.shutdown {
+				break
 			}
+
+			pj := newJobProcessor(job, d.db)
+
+			if job.Status == api.StatusNew {
+				pj.SetStatus(api.StatusWaiting)
+				continue
+			}
+
+			if job.Status != api.StatusWaiting {
+				continue
+			}
+
+			swg.Add()
+			go func(pj jobProcessor) {
+				defer swg.Done()
+				pj.Process(d.Resources)
+				time.Sleep(time.Second)
+			}(pj)
 		}
 
 		d.wg.Done()
 		time.Sleep(time.Second)
 	}
+
+	swg.Wait()
 }
 
 func handler(conn net.Conn, e cmdenv) {
@@ -139,10 +169,10 @@ func (d *Daemon) Listen(addr string) {
 
 		go io.Copy(logWriter{log: log.Logger}, stderr)
 
-		log.Info().Msgf("start %v", git)
+		log.Debug().Msgf("start %v", git)
 		git.Start()
 		defer func() {
-			log.Info().Msgf("stop %v", git)
+			log.Debug().Msgf("stop %v", git)
 		}()
 
 		err = git.Wait()
@@ -186,7 +216,8 @@ func (d *Daemon) Listen(addr string) {
 		log.Fatal().Err(err).Msg("listen")
 	}
 
-	log.Info().Msgf("listen on %v", addr)
+	log.Info().Str("addr", ":9418").Msg("git")
+	log.Info().Str("addr", addr).Msg("daemon")
 
 	for {
 		conn, err := l.Accept()
@@ -197,7 +228,7 @@ func (d *Daemon) Listen(addr string) {
 
 		e := cmdenv{
 			DB:           d.db,
-			WG:           d.wg,
+			WG:           &d.wg,
 			Conn:         conn,
 			KernelConfig: d.kernelConfig,
 		}

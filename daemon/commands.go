@@ -29,7 +29,7 @@ type cmdenv struct {
 
 	DB *sql.DB
 
-	WG sync.WaitGroup
+	WG *sync.WaitGroup
 
 	KernelConfig string
 }
