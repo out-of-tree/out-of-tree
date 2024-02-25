@@ -91,6 +91,8 @@ type PewCmd struct {
 	Kcfg            config.KernelConfig `kong:"-" json:"-"`
 	TimeoutDeadline time.Time           `kong:"-" json:"-"`
 
+	Watch bool `help:"watch job status"`
+
 	repoName string
 	commit   string
 
@@ -316,6 +318,8 @@ func (cmd PewCmd) watchJob(swg *sizedwaitgroup.SizedWaitGroup,
 func (cmd PewCmd) remote(swg *sizedwaitgroup.SizedWaitGroup,
 	ka artifact.Artifact, ki distro.KernelInfo) {
 
+	defer swg.Done()
+
 	slog := log.With().
 		Str("distro_type", ki.Distro.ID.String()).
 		Str("distro_release", ki.Distro.Release).
@@ -337,14 +341,15 @@ func (cmd PewCmd) remote(swg *sizedwaitgroup.SizedWaitGroup,
 	slog = slog.With().Str("uuid", uuid).Logger()
 	if err != nil {
 		slog.Error().Err(err).Msg("cannot add job")
-		swg.Done() // FIXME
 		return
 	}
 
 	slog.Info().Msg("add")
 
-	// FIXME dummy (almost)
-	go cmd.watchJob(swg, slog, uuid)
+	if cmd.Watch {
+		// FIXME dummy (almost)
+		go cmd.watchJob(swg, slog, uuid)
+	}
 }
 
 func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
