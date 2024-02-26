@@ -85,8 +85,8 @@ func (c Client) request(cmd api.Command, data any) (resp api.Resp, err error) {
 	return
 }
 
-func (c Client) Jobs() (jobs []api.Job, err error) {
-	resp, _ := c.request(api.ListJobs, nil)
+func (c Client) Jobs(params api.ListJobsParams) (jobs []api.Job, err error) {
+	resp, _ := c.request(api.ListJobs, &params)
 
 	err = resp.GetData(&jobs)
 	if err != nil {

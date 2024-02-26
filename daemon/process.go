@@ -28,12 +28,15 @@ type jobProcessor struct {
 func newJobProcessor(job api.Job, db *sql.DB) (pj jobProcessor) {
 	pj.job = job
 	pj.db = db
-	pj.log = log.With().Str("uuid", job.UUID).Logger()
+	pj.log = log.With().
+		Str("uuid", job.UUID).
+		Str("group", job.Group).
+		Logger()
 	return
 }
 
 func (pj jobProcessor) Update() (err error) {
-	err = db.UpdateJob(pj.db, pj.job)
+	err = db.UpdateJob(pj.db, &pj.job)
 	if err != nil {
 		pj.log.Error().Err(err).Msgf("update job %v", pj.job)
 	}

@@ -44,13 +44,16 @@ const (
 )
 
 type Job struct {
-	ID   int64
+	ID int64
+
+	// Job UUID
 	UUID string
+	// Group UUID
+	Group string
 
 	RepoName string
 	Commit   string
 
-	Params   string
 	Artifact artifact.Artifact
 	Target   distro.KernelInfo
 
@@ -59,6 +62,21 @@ type Job struct {
 
 func (job *Job) GenUUID() {
 	job.UUID = uuid.New().String()
+}
+
+// ListJobsParams is the parameters for ListJobs command
+type ListJobsParams struct {
+	// Group UUID
+	Group string
+
+	// Repo name
+	Repo string
+
+	// Commit hash
+	Commit string
+
+	// Status of the job
+	Status Status
 }
 
 type Repo struct {

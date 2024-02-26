@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/google/uuid"
 	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -98,6 +99,9 @@ type PewCmd struct {
 
 	useRemote  bool
 	remoteAddr string
+
+	// UUID of the job set
+	groupUUID string
 }
 
 func (cmd *PewCmd) getRepoName(worktree string, ka artifact.Artifact) {
@@ -149,6 +153,8 @@ func (cmd *PewCmd) syncRepo(worktree string, ka artifact.Artifact) (err error) {
 }
 
 func (cmd *PewCmd) Run(g *Globals) (err error) {
+	cmd.groupUUID = uuid.New().String()
+	log.Info().Str("group", cmd.groupUUID).Msg("")
 	cmd.useRemote = g.Remote
 	cmd.remoteAddr = g.RemoteAddr
 
@@ -326,10 +332,8 @@ func (cmd PewCmd) remote(swg *sizedwaitgroup.SizedWaitGroup,
 		Str("kernel", ki.KernelRelease).
 		Logger()
 
-	log.Trace().Msgf("artifact: %v", spew.Sdump(ka))
-	log.Trace().Msgf("kernelinfo: %v", spew.Sdump(ki))
-
 	job := api.Job{}
+	job.Group = cmd.groupUUID
 	job.RepoName = cmd.repoName
 	job.Commit = cmd.commit
 

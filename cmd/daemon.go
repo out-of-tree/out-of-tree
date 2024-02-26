@@ -10,6 +10,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"code.dumpstack.io/tools/out-of-tree/api"
 	"code.dumpstack.io/tools/out-of-tree/client"
 )
 
@@ -26,11 +27,24 @@ type DaemonJobCmd struct {
 	Log    DaemonJobsLogsCmd   `cmd:"" help:"job logs"`
 }
 
-type DaemonJobsListCmd struct{}
+type DaemonJobsListCmd struct {
+	Group  string `help:"group uuid"`
+	Repo   string `help:"repo name"`
+	Commit string `help:"commit sha"`
+	Status string `help:"job status"`
+}
 
 func (cmd *DaemonJobsListCmd) Run(dm *DaemonCmd, g *Globals) (err error) {
 	c := client.Client{RemoteAddr: g.RemoteAddr}
-	jobs, err := c.Jobs()
+
+	params := api.ListJobsParams{
+		Group:  cmd.Group,
+		Repo:   cmd.Repo,
+		Commit: cmd.Commit,
+		Status: api.Status(cmd.Status),
+	}
+
+	jobs, err := c.Jobs(params)
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return

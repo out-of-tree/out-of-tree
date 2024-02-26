@@ -1,49 +1,32 @@
 package db
 
 import (
-	"database/sql"
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
 	"code.dumpstack.io/tools/out-of-tree/api"
 )
 
-func testCreateJobTable(t *testing.T) (file *os.File, db *sql.DB) {
-	file, err := os.CreateTemp("", "temp-sqlite.db")
-	assert.Nil(t, err)
-	// defer os.Remove(file.Name())
-
-	db, err = sql.Open("sqlite3", file.Name())
-	assert.Nil(t, err)
-	// defer db.Close()
-
-	db.SetMaxOpenConns(1)
-
-	err = createJobTable(db)
-	assert.Nil(t, err)
-
-	return
-}
-
 func TestJobTable(t *testing.T) {
-	file, db := testCreateJobTable(t)
-	defer db.Close()
+	file, db := tmpdb(t)
 	defer os.Remove(file.Name())
+	defer db.Close()
 
 	job := api.Job{
 		RepoName: "testname",
 		Commit:   "test",
-		Params:   "none",
+		Group:    uuid.New().String(),
 	}
 
 	err := AddJob(db, &job)
 	assert.Nil(t, err)
 
-	job.Params = "changed"
+	job.Group = uuid.New().String()
 
-	err = UpdateJob(db, job)
+	err = UpdateJob(db, &job)
 	assert.Nil(t, err)
 
 	jobs, err := Jobs(db)
@@ -51,5 +34,5 @@ func TestJobTable(t *testing.T) {
 
 	assert.Equal(t, 1, len(jobs))
 
-	assert.Equal(t, job.Params, jobs[0].Params)
+	assert.Equal(t, job.Group, jobs[0].Group)
 }

@@ -49,7 +49,7 @@ func command(req *api.Req, resp *api.Resp, e cmdenv) (err error) {
 	case api.AddJob:
 		err = addJob(req, resp, e)
 	case api.ListJobs:
-		err = listJobs(resp, e)
+		err = listJobs(req, resp, e)
 	case api.AddRepo:
 		err = addRepo(req, resp, e)
 	case api.ListRepos:
@@ -96,13 +96,37 @@ func rawMode(req *api.Req, e cmdenv) (err error) {
 	return
 }
 
-func listJobs(resp *api.Resp, e cmdenv) (err error) {
+func listJobs(req *api.Req, resp *api.Resp, e cmdenv) (err error) {
+	var params api.ListJobsParams
+	err = req.GetData(&params)
+	if err != nil {
+		return
+	}
+
 	jobs, err := db.Jobs(e.DB)
 	if err != nil {
 		return
 	}
 
-	resp.SetData(&jobs)
+	var result []api.Job
+	for _, j := range jobs {
+		if params.Group != "" && j.Group != params.Group {
+			continue
+		}
+		if params.Repo != "" && j.RepoName != params.Repo {
+			continue
+		}
+		if params.Commit != "" && j.Commit != params.Commit {
+			continue
+		}
+		if params.Status != "" && j.Status != params.Status {
+			continue
+		}
+
+		result = append(result, j)
+	}
+
+	resp.SetData(&result)
 	return
 }
 
