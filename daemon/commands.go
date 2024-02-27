@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
@@ -122,6 +123,18 @@ func listJobs(req *api.Req, resp *api.Resp, e cmdenv) (err error) {
 		if params.Status != "" && j.Status != params.Status {
 			continue
 		}
+		if params.Time.After != 0 {
+			if time.Unix(params.Time.After, 0).
+				After(j.Created) {
+				continue
+			}
+		}
+		if params.Time.Before != 0 {
+			if time.Unix(params.Time.Before, 0).
+				Before(j.Created) {
+				continue
+			}
+		}
 
 		result = append(result, j)
 	}
@@ -138,6 +151,8 @@ func addJob(req *api.Req, resp *api.Resp, e cmdenv) (err error) {
 	}
 
 	job.GenUUID()
+
+	job.Created = time.Now()
 
 	var repos []api.Repo
 	repos, err = db.Repos(e.DB)

@@ -26,6 +26,8 @@ func TestJobTable(t *testing.T) {
 
 	job.Group = uuid.New().String()
 
+	job.Status = api.StatusSuccess
+
 	err = UpdateJob(db, &job)
 	assert.Nil(t, err)
 
@@ -35,4 +37,14 @@ func TestJobTable(t *testing.T) {
 	assert.Equal(t, 1, len(jobs))
 
 	assert.Equal(t, job.Group, jobs[0].Group)
+
+	job, err = Job(db, job.UUID)
+	assert.Nil(t, err)
+
+	assert.Equal(t, api.StatusSuccess, job.Status)
+
+	st, err := JobStatus(db, job.UUID)
+	assert.Nil(t, err)
+
+	assert.Equal(t, job.Status, st)
 }

@@ -7,6 +7,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -28,10 +29,12 @@ type DaemonJobCmd struct {
 }
 
 type DaemonJobsListCmd struct {
-	Group  string `help:"group uuid"`
-	Repo   string `help:"repo name"`
-	Commit string `help:"commit sha"`
-	Status string `help:"job status"`
+	Group  string    `help:"group uuid"`
+	Repo   string    `help:"repo name"`
+	Commit string    `help:"commit sha"`
+	Status string    `help:"job status"`
+	After  time.Time `help:"created after" format:"2006-01-02 15:04:05"`
+	Before time.Time `help:"created before" format:"2006-01-02 15:04:05"`
 }
 
 func (cmd *DaemonJobsListCmd) Run(dm *DaemonCmd, g *Globals) (err error) {
@@ -42,6 +45,14 @@ func (cmd *DaemonJobsListCmd) Run(dm *DaemonCmd, g *Globals) (err error) {
 		Repo:   cmd.Repo,
 		Commit: cmd.Commit,
 		Status: api.Status(cmd.Status),
+	}
+
+	if !cmd.After.IsZero() {
+		params.Time.After = cmd.After.Unix()
+	}
+
+	if !cmd.Before.IsZero() {
+		params.Time.Before = cmd.Before.Unix()
 	}
 
 	jobs, err := c.Jobs(params)

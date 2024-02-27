@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -76,7 +77,10 @@ func (pj *jobProcessor) Process(res *Resources) (err error) {
 	log.Info().Msgf("process job %v", pj.job.UUID)
 
 	pj.SetStatus(api.StatusRunning)
+	pj.job.Started = time.Now()
+
 	defer func() {
+		pj.job.Finished = time.Now()
 		if err != nil {
 			pj.SetStatus(api.StatusFailure)
 		} else {

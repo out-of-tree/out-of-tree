@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"reflect"
+	"time"
 
 	"code.dumpstack.io/tools/out-of-tree/artifact"
 	"code.dumpstack.io/tools/out-of-tree/distro"
@@ -57,6 +58,10 @@ type Job struct {
 	Artifact artifact.Artifact
 	Target   distro.KernelInfo
 
+	Created  time.Time
+	Started  time.Time
+	Finished time.Time
+
 	Status Status
 }
 
@@ -77,6 +82,12 @@ type ListJobsParams struct {
 
 	// Status of the job
 	Status Status
+
+	// Time range (unix timestamps)
+	Time struct {
+		After  int64
+		Before int64
+	}
 }
 
 type Repo struct {

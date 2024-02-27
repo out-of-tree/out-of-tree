@@ -62,6 +62,8 @@ func (d *Daemon) Daemon() {
 	swg := sizedwaitgroup.New(d.Threads)
 	log.Info().Int("threads", d.Threads).Msg("start")
 
+	first := true
+
 	for !d.shutdown {
 		d.wg.Add(1)
 
@@ -80,6 +82,11 @@ func (d *Daemon) Daemon() {
 
 			pj := newJobProcessor(job, d.db)
 
+			if first && job.Status == api.StatusRunning {
+				pj.SetStatus(api.StatusWaiting)
+				continue
+			}
+
 			if job.Status == api.StatusNew {
 				pj.SetStatus(api.StatusWaiting)
 				continue
@@ -96,6 +103,8 @@ func (d *Daemon) Daemon() {
 				time.Sleep(time.Second)
 			}(pj)
 		}
+
+		first = false
 
 		d.wg.Done()
 		time.Sleep(time.Second)
