@@ -1,8 +1,9 @@
 package db
 
 import (
+	"bytes"
 	"database/sql"
-	"encoding/json"
+	"encoding/gob"
 	"time"
 
 	"code.dumpstack.io/tools/out-of-tree/api"
@@ -37,8 +38,19 @@ func AddJob(db *sql.DB, job *api.Job) (err error) {
 
 	defer stmt.Close()
 
-	config := api.Marshal(job.Artifact)
-	target := api.Marshal(job.Target)
+	var abuf bytes.Buffer
+	err = gob.NewEncoder(&abuf).Encode(job.Artifact)
+	if err != nil {
+		return
+	}
+	config := abuf.Bytes()
+
+	var tbuf bytes.Buffer
+	err = gob.NewEncoder(&tbuf).Encode(job.Target)
+	if err != nil {
+		return
+	}
+	target := tbuf.Bytes()
 
 	res, err := stmt.Exec(time.Now().Unix(), job.UUID, job.Group,
 		job.RepoName, job.Commit, config, target,
@@ -65,8 +77,19 @@ func UpdateJob(db *sql.DB, job *api.Job) (err error) {
 	}
 	defer stmt.Close()
 
-	config := api.Marshal(job.Artifact)
-	target := api.Marshal(job.Target)
+	var abuf bytes.Buffer
+	err = gob.NewEncoder(&abuf).Encode(job.Artifact)
+	if err != nil {
+		return
+	}
+	config := abuf.Bytes()
+
+	var tbuf bytes.Buffer
+	err = gob.NewEncoder(&tbuf).Encode(job.Target)
+	if err != nil {
+		return
+	}
+	target := tbuf.Bytes()
 
 	_, err = stmt.Exec(time.Now().Unix(), job.UUID, job.Group,
 		job.RepoName, job.Commit,
@@ -86,12 +109,14 @@ func scanJob(scan func(dest ...any) error) (job api.Job, err error) {
 		return
 	}
 
-	err = json.Unmarshal(config, &job.Artifact)
+	abuf := bytes.NewBuffer(config)
+	err = gob.NewDecoder(abuf).Decode(&job.Artifact)
 	if err != nil {
 		return
 	}
 
-	err = json.Unmarshal(target, &job.Target)
+	tbuf := bytes.NewBuffer(target)
+	err = gob.NewDecoder(tbuf).Decode(&job.Target)
 	if err != nil {
 		return
 	}
