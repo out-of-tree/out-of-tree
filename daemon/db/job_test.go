@@ -31,7 +31,7 @@ func TestJobTable(t *testing.T) {
 	err = UpdateJob(db, &job)
 	assert.Nil(t, err)
 
-	jobs, err := Jobs(db)
+	jobs, err := Jobs(db, "")
 	assert.Nil(t, err)
 
 	assert.Equal(t, 1, len(jobs))

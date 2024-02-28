@@ -67,7 +67,7 @@ func (d *Daemon) Daemon() {
 	for !d.shutdown {
 		d.wg.Add(1)
 
-		jobs, err := db.Jobs(d.db)
+		jobs, err := db.Jobs(d.db, "")
 		if err != nil && !d.shutdown {
 			log.Error().Err(err).Msg("")
 			d.wg.Done()

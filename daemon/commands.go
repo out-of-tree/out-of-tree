@@ -104,7 +104,7 @@ func listJobs(req *api.Req, resp *api.Resp, e cmdenv) (err error) {
 		return
 	}
 
-	jobs, err := db.Jobs(e.DB)
+	jobs, err := db.Jobs(e.DB, "updated >= ?", params.UpdatedAfter)
 	if err != nil {
 		return
 	}
@@ -122,18 +122,6 @@ func listJobs(req *api.Req, resp *api.Resp, e cmdenv) (err error) {
 		}
 		if params.Status != "" && j.Status != params.Status {
 			continue
-		}
-		if params.Time.After != 0 {
-			if time.Unix(params.Time.After, 0).
-				After(j.Created) {
-				continue
-			}
-		}
-		if params.Time.Before != 0 {
-			if time.Unix(params.Time.Before, 0).
-				Before(j.Created) {
-				continue
-			}
 		}
 
 		result = append(result, j)

@@ -33,8 +33,7 @@ type DaemonJobsListCmd struct {
 	Repo   string    `help:"repo name"`
 	Commit string    `help:"commit sha"`
 	Status string    `help:"job status"`
-	After  time.Time `help:"created after" format:"2006-01-02 15:04:05"`
-	Before time.Time `help:"created before" format:"2006-01-02 15:04:05"`
+	After  time.Time `help:"updated after" format:"2006-01-02 15:04:05"`
 }
 
 func (cmd *DaemonJobsListCmd) Run(dm *DaemonCmd, g *Globals) (err error) {
@@ -48,11 +47,7 @@ func (cmd *DaemonJobsListCmd) Run(dm *DaemonCmd, g *Globals) (err error) {
 	}
 
 	if !cmd.After.IsZero() {
-		params.Time.After = cmd.After.Unix()
-	}
-
-	if !cmd.Before.IsZero() {
-		params.Time.Before = cmd.Before.Unix()
+		params.UpdatedAfter = cmd.After.Unix()
 	}
 
 	jobs, err := c.Jobs(params)

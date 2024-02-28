@@ -12,6 +12,7 @@ func createJobTable(db *sql.DB) (err error) {
 	_, err = db.Exec(`
 	CREATE TABLE IF NOT EXISTS job (
 		id		INTEGER PRIMARY KEY,
+		updated		INT,
 		uuid		TEXT,
 		group_uuid	TEXT,
 		repo		TEXT,
@@ -27,9 +28,9 @@ func createJobTable(db *sql.DB) (err error) {
 }
 
 func AddJob(db *sql.DB, job *api.Job) (err error) {
-	stmt, err := db.Prepare(`INSERT INTO job (uuid, group_uuid, repo, "commit", ` +
+	stmt, err := db.Prepare(`INSERT INTO job (updated, uuid, group_uuid, repo, "commit", ` +
 		`config, target, created, started, finished) ` +
-		`VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`)
+		`VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`)
 	if err != nil {
 		return
 	}
@@ -39,7 +40,7 @@ func AddJob(db *sql.DB, job *api.Job) (err error) {
 	config := api.Marshal(job.Artifact)
 	target := api.Marshal(job.Target)
 
-	res, err := stmt.Exec(job.UUID, job.Group,
+	res, err := stmt.Exec(time.Now().Unix(), job.UUID, job.Group,
 		job.RepoName, job.Commit, config, target,
 		job.Created.Unix(), job.Started.Unix(),
 		job.Finished.Unix(),
@@ -54,11 +55,11 @@ func AddJob(db *sql.DB, job *api.Job) (err error) {
 
 func UpdateJob(db *sql.DB, job *api.Job) (err error) {
 	stmt, err := db.Prepare(`UPDATE job ` +
-		`SET uuid=$1, group_uuid=$2, repo=$3, ` +
-		`"commit"=$4, config=$5, target=$6, ` +
-		`created=$7, started=$8, finished=$9, ` +
-		`status=$10 ` +
-		`WHERE id=$11`)
+		`SET updated=$1, uuid=$2, group_uuid=$3, repo=$4, ` +
+		`"commit"=$5, config=$6, target=$7, ` +
+		`created=$8, started=$9, finished=$10, ` +
+		`status=$11 ` +
+		`WHERE id=$12`)
 	if err != nil {
 		return
 	}
@@ -67,7 +68,7 @@ func UpdateJob(db *sql.DB, job *api.Job) (err error) {
 	config := api.Marshal(job.Artifact)
 	target := api.Marshal(job.Target)
 
-	_, err = stmt.Exec(job.UUID, job.Group,
+	_, err = stmt.Exec(time.Now().Unix(), job.UUID, job.Group,
 		job.RepoName, job.Commit,
 		config, target,
 		job.Created.Unix(), job.Started.Unix(),
@@ -77,8 +78,8 @@ func UpdateJob(db *sql.DB, job *api.Job) (err error) {
 
 func scanJob(scan func(dest ...any) error) (job api.Job, err error) {
 	var config, target []byte
-	var created, started, finished int64
-	err = scan(&job.ID, &job.UUID, &job.Group,
+	var updated, created, started, finished int64
+	err = scan(&job.ID, &updated, &job.UUID, &job.Group,
 		&job.RepoName, &job.Commit, &config, &target,
 		&created, &started, &finished, &job.Status)
 	if err != nil {
@@ -95,23 +96,28 @@ func scanJob(scan func(dest ...any) error) (job api.Job, err error) {
 		return
 	}
 
+	job.UpdatedAt = time.Unix(updated, 0)
 	job.Created = time.Unix(created, 0)
 	job.Started = time.Unix(started, 0)
 	job.Finished = time.Unix(finished, 0)
 	return
 }
 
-func Jobs(db *sql.DB) (jobs []api.Job, err error) {
-	stmt, err := db.Prepare(`SELECT id, uuid, group_uuid, ` +
+func Jobs(db *sql.DB, where string, args ...any) (jobs []api.Job, err error) {
+	q := `SELECT id, updated, uuid, group_uuid, ` +
 		`repo, "commit", config, target, created, ` +
-		`started, finished, status FROM job`)
+		`started, finished, status FROM job`
+	if len(where) != 0 {
+		q += ` WHERE ` + where
+	}
+	stmt, err := db.Prepare(q)
 	if err != nil {
 		return
 	}
 
 	defer stmt.Close()
 
-	rows, err := stmt.Query()
+	rows, err := stmt.Query(args...)
 	if err != nil {
 		return
 	}
@@ -130,7 +136,8 @@ func Jobs(db *sql.DB) (jobs []api.Job, err error) {
 }
 
 func Job(db *sql.DB, uuid string) (job api.Job, err error) {
-	stmt, err := db.Prepare(`SELECT id, uuid, group_uuid, ` +
+	stmt, err := db.Prepare(`SELECT id, updated, uuid, ` +
+		`group_uuid, ` +
 		`repo, "commit", config, target, ` +
 		`created, started, finished, status ` +
 		`FROM job WHERE uuid=$1`)

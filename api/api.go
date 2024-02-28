@@ -47,6 +47,8 @@ const (
 type Job struct {
 	ID int64
 
+	UpdatedAt time.Time
+
 	// Job UUID
 	UUID string
 	// Group UUID
@@ -83,11 +85,7 @@ type ListJobsParams struct {
 	// Status of the job
 	Status Status
 
-	// Time range (unix timestamps)
-	Time struct {
-		After  int64
-		Before int64
-	}
+	UpdatedAfter int64
 }
 
 type Repo struct {
