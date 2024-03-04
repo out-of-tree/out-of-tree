@@ -18,6 +18,7 @@ func createJobTable(db *sql.DB) (err error) {
 		group_uuid	TEXT,
 		repo		TEXT,
 		"commit"	TEXT,
+		description	TEXT,
 		config		TEXT,
 		target		TEXT,
 		created		INT,
@@ -30,8 +31,8 @@ func createJobTable(db *sql.DB) (err error) {
 
 func AddJob(db *sql.DB, job *api.Job) (err error) {
 	stmt, err := db.Prepare(`INSERT INTO job (updated, uuid, group_uuid, repo, "commit", ` +
-		`config, target, created, started, finished) ` +
-		`VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`)
+		`description, config, target, created, started, finished) ` +
+		`VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`)
 	if err != nil {
 		return
 	}
@@ -53,7 +54,7 @@ func AddJob(db *sql.DB, job *api.Job) (err error) {
 	target := tbuf.Bytes()
 
 	res, err := stmt.Exec(time.Now().Unix(), job.UUID, job.Group,
-		job.RepoName, job.Commit, config, target,
+		job.RepoName, job.Commit, job.Description, config, target,
 		job.Created.Unix(), job.Started.Unix(),
 		job.Finished.Unix(),
 	)
@@ -68,10 +69,10 @@ func AddJob(db *sql.DB, job *api.Job) (err error) {
 func UpdateJob(db *sql.DB, job *api.Job) (err error) {
 	stmt, err := db.Prepare(`UPDATE job ` +
 		`SET updated=$1, uuid=$2, group_uuid=$3, repo=$4, ` +
-		`"commit"=$5, config=$6, target=$7, ` +
-		`created=$8, started=$9, finished=$10, ` +
-		`status=$11 ` +
-		`WHERE id=$12`)
+		`"commit"=$5, description=$6, config=$7, target=$8, ` +
+		`created=$9, started=$10, finished=$11, ` +
+		`status=$12 ` +
+		`WHERE id=$13`)
 	if err != nil {
 		return
 	}
@@ -92,7 +93,7 @@ func UpdateJob(db *sql.DB, job *api.Job) (err error) {
 	target := tbuf.Bytes()
 
 	_, err = stmt.Exec(time.Now().Unix(), job.UUID, job.Group,
-		job.RepoName, job.Commit,
+		job.RepoName, job.Commit, job.Description,
 		config, target,
 		job.Created.Unix(), job.Started.Unix(),
 		job.Finished.Unix(), job.Status, job.ID)
@@ -103,7 +104,8 @@ func scanJob(scan func(dest ...any) error) (job api.Job, err error) {
 	var config, target []byte
 	var updated, created, started, finished int64
 	err = scan(&job.ID, &updated, &job.UUID, &job.Group,
-		&job.RepoName, &job.Commit, &config, &target,
+		&job.RepoName, &job.Commit, &job.Description,
+		&config, &target,
 		&created, &started, &finished, &job.Status)
 	if err != nil {
 		return
@@ -130,7 +132,7 @@ func scanJob(scan func(dest ...any) error) (job api.Job, err error) {
 
 func Jobs(db *sql.DB, where string, args ...any) (jobs []api.Job, err error) {
 	q := `SELECT id, updated, uuid, group_uuid, ` +
-		`repo, "commit", config, target, created, ` +
+		`repo, "commit", description, config, target, created, ` +
 		`started, finished, status FROM job`
 	if len(where) != 0 {
 		q += ` WHERE ` + where
@@ -163,7 +165,7 @@ func Jobs(db *sql.DB, where string, args ...any) (jobs []api.Job, err error) {
 func Job(db *sql.DB, uuid string) (job api.Job, err error) {
 	stmt, err := db.Prepare(`SELECT id, updated, uuid, ` +
 		`group_uuid, ` +
-		`repo, "commit", config, target, ` +
+		`repo, "commit", description, config, target, ` +
 		`created, started, finished, status ` +
 		`FROM job WHERE uuid=$1`)
 	if err != nil {
