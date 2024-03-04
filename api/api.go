@@ -56,6 +56,8 @@ type Job struct {
 	RepoName string
 	Commit   string
 
+	Description string
+
 	Artifact artifact.Artifact
 	Target   distro.KernelInfo
 
