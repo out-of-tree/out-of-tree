@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -112,7 +113,11 @@ func Build(flog zerolog.Logger, tmp string, ka Artifact,
 
 	outdir = tmp + "/source"
 
-	err = copy.Copy(ka.SourcePath, outdir)
+	if len(ka.SourceFiles) == 0 {
+		err = copy.Copy(ka.SourcePath, outdir)
+	} else {
+		err = CopyFiles(ka.SourcePath, ka.SourceFiles, outdir)
+	}
 	if err != nil {
 		return
 	}
@@ -224,6 +229,35 @@ type Result struct {
 
 	InternalError       error
 	InternalErrorString string
+}
+
+func CopyFiles(path string, files []string, dest string) (err error) {
+	err = os.MkdirAll(dest, os.ModePerm)
+	if err != nil {
+		return
+	}
+
+	for _, sf := range files {
+		if sf[0] == '/' {
+			err = CopyFile(sf, filepath.Join(dest, filepath.Base(sf)))
+			if err != nil {
+				return
+			}
+			continue
+		}
+
+		err = os.MkdirAll(filepath.Join(dest, filepath.Dir(sf)), os.ModePerm)
+		if err != nil {
+			return
+		}
+
+		err = CopyFile(filepath.Join(path, sf), filepath.Join(dest, sf))
+		if err != nil {
+			return
+		}
+	}
+
+	return
 }
 
 func CopyFile(sourcePath, destinationPath string) (err error) {

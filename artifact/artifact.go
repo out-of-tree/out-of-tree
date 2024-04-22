@@ -132,11 +132,15 @@ type Patch struct {
 
 // Artifact is for .out-of-tree.toml
 type Artifact struct {
-	Name       string
-	Type       ArtifactType
-	TestFiles  []FileTransfer
-	SourcePath string
-	Targets    []Target
+	Name string
+	Type ArtifactType
+
+	SourcePath  string
+	SourceFiles []string
+
+	TestFiles []FileTransfer
+
+	Targets []Target
 
 	Script string
 
