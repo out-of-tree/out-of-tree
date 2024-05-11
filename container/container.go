@@ -92,6 +92,15 @@ func Load(localpath string, name string) (err error) {
 		return
 	}
 
+	cmd = exec.Command(Runtime, "tag", "localhost/"+name, name)
+	log.Debug().Msgf("%v", cmd)
+
+	raw, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Debug().Err(err).Msg(string(raw))
+		return
+	}
+
 	return
 }
 
