@@ -31,6 +31,7 @@ jobs:
           { distro: Ubuntu, release: 18.04 },
           { distro: Ubuntu, release: 20.04 },
           { distro: Ubuntu, release: 22.04 },
+          { distro: Ubuntu, release: 24.04 },
           { distro: CentOS, release: 6 },
           { distro: CentOS, release: 7 },
           { distro: CentOS, release: 8 },

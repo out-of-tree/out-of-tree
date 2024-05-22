@@ -13,5 +13,5 @@ sed -i '/PermitRootLogin/d' $TMPDIR/etc/ssh/sshd_config
 echo PermitRootLogin yes >> $TMPDIR/etc/ssh/sshd_config
 
 echo '#!/bin/sh' > $TMPDIR/etc/rc.local
-echo 'dhclient' >> $TMPDIR/etc/rc.local
+echo 'dhclient || dhcpcd' >> $TMPDIR/etc/rc.local
 chmod +x $TMPDIR/etc/rc.local
