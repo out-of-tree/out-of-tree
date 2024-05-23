@@ -3,6 +3,9 @@ name: E2E
 on:
   workflow_dispatch:
   push:
+    branches:
+      - master
+      - dev
     paths-ignore:
       - ".github/workflows/images-*"
       - ".github/workflows/ubuntu.yml"
