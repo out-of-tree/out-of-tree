@@ -336,12 +336,13 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka Artifact,
 			slog.Error().Err(err).Msg(res.Test.Output)
 			return
 		}
-		slog.Info().Msgf("\n%v\n", res.Test.Output)
 		res.Run.Ok = true
 		res.Test.Ok = true
 	default:
 		slog.Fatal().Msg("Unsupported artifact type")
 	}
+
+	slog.Info().Msgf("\n%v\n", res.Test.Output)
 
 	_, err = q.Command("root", "echo")
 	if err != nil {
