@@ -34,7 +34,7 @@ func GenHostKernels(download bool) (kernels []distro.KernelInfo, err error) {
 
 	rawOutput, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Print(string(rawOutput), err)
+		log.Error().Err(err).Msg(string(rawOutput))
 		return
 	}
 
@@ -86,7 +86,7 @@ func GenHostKernels(download bool) (kernels []distro.KernelInfo, err error) {
 		}
 
 		vmlinux := "/usr/lib/debug/boot/vmlinux-" + krel
-		log.Print("vmlinux", vmlinux)
+		log.Info().Msgf("vmlinux %s", vmlinux)
 		if fs.PathExists(vmlinux) {
 			ki.VmlinuxPath = vmlinux
 		}

@@ -42,7 +42,7 @@ func (cmd *LogQueryCmd) Run(g *Globals) (err error) {
 
 	ka, kaErr := artifact.Artifact{}.Read(g.WorkDir + "/.out-of-tree.toml")
 	if kaErr == nil {
-		log.Print(".out-of-tree.toml found, filter by artifact name")
+		log.Debug().Msg(".out-of-tree.toml found, filter by artifact name")
 		les, err = getAllArtifactLogs(db, cmd.Tag, cmd.Num, ka)
 	} else {
 		les, err = getAllLogs(db, cmd.Tag, cmd.Num)

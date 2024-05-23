@@ -263,7 +263,7 @@ func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
 		}
 
 		if cmd.stats.success >= cmd.Max {
-			log.Print("Max is reached")
+			log.Info().Msg("Max is reached")
 			swg.Done()
 			break
 		}

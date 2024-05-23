@@ -45,7 +45,7 @@ type DebugCmd struct {
 func (cmd *DebugCmd) Run(g *Globals) (err error) {
 	kcfg, err := config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
-		log.Print(err)
+		log.Error().Err(err).Msg("read kernel config")
 	}
 
 	var configPath string
@@ -161,14 +161,14 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 		// Module depends on one of the standard modules
 		err = artifact.CopyStandardModules(q, ki)
 		if err != nil {
-			log.Print(err)
+			log.Error().Err(err).Msg("copy standard modules")
 			return
 		}
 	}
 
 	err = artifact.PreloadModules(q, ka, ki, g.Config.Docker.Timeout.Duration)
 	if err != nil {
-		log.Print(err)
+		log.Error().Err(err).Msg("preload modules")
 		return
 	}
 
@@ -182,7 +182,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 	} else {
 		buildDir, outFile, output, err = artifact.Build(log.Logger, tmp, ka, ki, g.Config.Docker.Timeout.Duration)
 		if err != nil {
-			log.Print(err, output)
+			log.Error().Err(err).Msg(output)
 			return
 		}
 
@@ -206,7 +206,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 		}
 		err = q.CopyFile(f.User, f.Local, f.Remote)
 		if err != nil {
-			log.Print("error copy err:", err, f.Local, f.Remote)
+			log.Error().Err(err).Msgf("copy %s -> %s", f.Local, f.Remote)
 			return
 		}
 	}

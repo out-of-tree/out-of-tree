@@ -37,7 +37,7 @@ func preload(q *qemu.System, ki distro.KernelInfo, pm PreloadModule,
 
 	var workPath, cache string
 	if pm.Path != "" {
-		log.Print("Use non-git path for preload module (no cache)")
+		log.Debug().Msg("Use non-git path for preload module (no cache)")
 		workPath = pm.Path
 	} else if pm.Repo != "" {
 		workPath, cache, err = cloneOrPull(pm.Repo, ki)
@@ -85,7 +85,7 @@ func buildAndInsmod(workPath string, q *qemu.System, ki distro.KernelInfo,
 
 	output, err := q.CopyAndInsmod(af)
 	if err != nil {
-		log.Print(output)
+		log.Error().Err(err).Msg(output)
 		return
 	}
 	return
@@ -147,7 +147,7 @@ func cloneOrPull(repo string, ki distro.KernelInfo) (workPath, cache string,
 
 		err = w.Pull(&git.PullOptions{})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
-			log.Print(repo, "pull error:", err)
+			log.Error().Err(err).Msgf("pull %s error", repo)
 		}
 	} else {
 		r, err = git.PlainClone(workPath, false, &git.CloneOptions{URL: repo})

@@ -33,7 +33,7 @@ type PackCmd struct {
 
 func (cmd *PackCmd) Run(g *Globals) (err error) {
 	tag := fmt.Sprintf("pack_run_%d", time.Now().Unix())
-	log.Print("Tag:", tag)
+	log.Info().Msgf("Tag: %s", tag)
 
 	files, err := os.ReadDir(g.WorkDir)
 	if err != nil {
@@ -65,7 +65,7 @@ func (cmd *PackCmd) Run(g *Globals) (err error) {
 			}
 		}
 
-		log.Print(f.Name())
+		log.Info().Msg(f.Name())
 
 		pew := PewCmd{
 			Max:           cmd.KernelRuns,
