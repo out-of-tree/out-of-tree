@@ -16,11 +16,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cavaliergopher/grab/v3"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/distro"
+	"code.dumpstack.io/tools/out-of-tree/fs"
 )
 
 var Runtime = "docker"
@@ -32,6 +35,8 @@ var Timeout time.Duration
 var Commands []distro.Command
 
 var UseCache = true
+
+var UsePrebuilt = true
 
 var Prune = true
 
@@ -240,6 +245,33 @@ func (c Container) Exist() (yes bool) {
 	return
 }
 
+func (c Container) loadPrebuilt() (err error) {
+	if c.Exist() && UseCache {
+		return
+	}
+
+	tmp, err := fs.TempDir()
+	if err != nil {
+		return
+	}
+	defer os.RemoveAll(tmp)
+
+	log.Info().Msgf("download prebuilt container %s", c.Name())
+	resp, err := grab.Get(tmp, cache.ContainerURL(c.Name()))
+	if err != nil {
+		return
+	}
+
+	defer os.Remove(resp.Filename)
+
+	err = Load(resp.Filename, c.Name())
+	if err == nil {
+		log.Info().Msgf("use prebuilt container %s", c.Name())
+	}
+
+	return
+}
+
 func (c Container) Build(image string, envs, runs []string) (err error) {
 	if c.Exist() && UseCache {
 		return
@@ -290,10 +322,17 @@ func (c Container) Build(image string, envs, runs []string) (err error) {
 		c.Log.Info().Msg("build")
 	}
 
-	output, err := c.build(cdir)
-	if err != nil {
-		c.Log.Error().Err(err).Msg(output)
-		return
+	if UsePrebuilt {
+		err = c.loadPrebuilt()
+	}
+
+	if err != nil || !UsePrebuilt {
+		var output string
+		output, err = c.build(cdir)
+		if err != nil {
+			c.Log.Error().Err(err).Msg(output)
+			return
+		}
 	}
 
 	c.Log.Info().Msg("success")

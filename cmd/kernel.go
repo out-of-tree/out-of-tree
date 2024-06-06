@@ -11,18 +11,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cavaliergopher/grab/v3"
 	"github.com/naoina/toml"
 	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/artifact"
-	"code.dumpstack.io/tools/out-of-tree/cache"
 	"code.dumpstack.io/tools/out-of-tree/config"
 	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/container"
 	"code.dumpstack.io/tools/out-of-tree/distro"
-	"code.dumpstack.io/tools/out-of-tree/fs"
 	"code.dumpstack.io/tools/out-of-tree/kernel"
 )
 
@@ -168,33 +165,6 @@ func (cmd *KernelCmd) GenKernel(km artifact.Target, pkg string) {
 	}
 }
 
-func (cmd *KernelCmd) fetchPrebuiltContainer(c container.Container) {
-	if !cmd.PrebuiltContainers {
-		return
-	}
-	if c.Exist() && container.UseCache {
-		return
-	}
-
-	tmp, err := fs.TempDir()
-	if err != nil {
-		return
-	}
-	defer os.RemoveAll(tmp)
-
-	resp, err := grab.Get(tmp, cache.ContainerURL(c.Name()))
-	if err != nil {
-		return
-	}
-
-	defer os.Remove(resp.Filename)
-
-	err = container.Load(resp.Filename, c.Name())
-	if err == nil {
-		log.Info().Msgf("use prebuilt container %s", c.Name())
-	}
-}
-
 func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
 	defer func() {
 		if err != nil {
@@ -210,6 +180,8 @@ func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
 	if cmd.NoPrune {
 		container.Prune = false
 	}
+
+	container.UsePrebuilt = cmd.PrebuiltContainers
 
 	cmd.kcfg, err = config.ReadKernelConfig(g.Config.Kernels)
 	if err != nil {
@@ -229,13 +201,6 @@ func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
 	if err != nil || cmd.shutdown {
 		return
 	}
-
-	c, err := container.New(km.Distro)
-	if err != nil || cmd.shutdown {
-		return
-	}
-
-	cmd.fetchPrebuiltContainer(c)
 
 	pkgs, err := kernel.MatchPackages(km)
 	if err != nil || cmd.shutdown {
@@ -312,6 +277,8 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 		container.Prune = false
 	}
 
+	container.UsePrebuilt = kernelCmd.PrebuiltContainers
+
 	distroType, err := distro.NewID(cmd.Distro)
 	if err != nil {
 		return
@@ -329,13 +296,6 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 
 	container.Registry = g.Config.Docker.Registry
 	container.Commands = g.Config.Docker.Commands
-
-	c, err := container.New(km.Distro)
-	if err != nil {
-		return
-	}
-
-	kernelCmd.fetchPrebuiltContainer(c)
 
 	pkgs, err := kernel.MatchPackages(km)
 	// error check skipped on purpose
