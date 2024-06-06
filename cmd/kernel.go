@@ -27,18 +27,18 @@ import (
 )
 
 type KernelCmd struct {
-	NoDownload     bool `help:"do not download qemu image while kernel generation"`
-	UseHost        bool `help:"also use host kernels"`
-	Force          bool `help:"force reinstall kernel"`
-	NoHeaders      bool `help:"do not install kernel headers"`
-	Shuffle        bool `help:"randomize kernels installation order"`
-	Retries        int  `help:"amount of tries for each kernel" default:"2"`
-	Threads        int  `help:"threads for parallel installation" default:"1"`
-	Update         bool `help:"update container"`
-	ContainerCache bool `help:"try prebuilt container images first" default:"true" negatable:""`
-	Max            int  `help:"maximum kernels to download" default:"100500"`
-	NoPrune        bool `help:"do not remove dangling or unused images from local storage after build"`
-	NoCfgRegen     bool `help:"do not update kernels.toml"`
+	NoDownload         bool `help:"do not download qemu image while kernel generation"`
+	UseHost            bool `help:"also use host kernels"`
+	Force              bool `help:"force reinstall kernel"`
+	NoHeaders          bool `help:"do not install kernel headers"`
+	Shuffle            bool `help:"randomize kernels installation order"`
+	Retries            int  `help:"amount of tries for each kernel" default:"2"`
+	Threads            int  `help:"threads for parallel installation" default:"1"`
+	Update             bool `help:"update container"`
+	PrebuiltContainers bool `help:"try prebuilt container images first" default:"true" negatable:""`
+	Max                int  `help:"maximum kernels to download" default:"100500"`
+	NoPrune            bool `help:"do not remove dangling or unused images from local storage after build"`
+	NoCfgRegen         bool `help:"do not update kernels.toml"`
 
 	ContainerTimeout time.Duration `help:"container timeout"`
 
@@ -168,8 +168,8 @@ func (cmd *KernelCmd) GenKernel(km artifact.Target, pkg string) {
 	}
 }
 
-func (cmd *KernelCmd) fetchContainerCache(c container.Container) {
-	if !cmd.ContainerCache {
+func (cmd *KernelCmd) fetchPrebuiltContainer(c container.Container) {
+	if !cmd.PrebuiltContainers {
 		return
 	}
 	if c.Exist() && container.UseCache {
@@ -235,7 +235,7 @@ func (cmd *KernelCmd) Generate(g *Globals, km artifact.Target) (err error) {
 		return
 	}
 
-	cmd.fetchContainerCache(c)
+	cmd.fetchPrebuiltContainer(c)
 
 	pkgs, err := kernel.MatchPackages(km)
 	if err != nil || cmd.shutdown {
@@ -335,7 +335,7 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 		return
 	}
 
-	kernelCmd.fetchContainerCache(c)
+	kernelCmd.fetchPrebuiltContainer(c)
 
 	pkgs, err := kernel.MatchPackages(km)
 	// error check skipped on purpose

@@ -139,7 +139,7 @@ jobs:
         echo 'Type=oneshot' >> test.service
         echo 'WorkingDirectory=/root/test' >> test.service
         echo 'TimeoutStopSec=1' >> test.service
-        echo 'ExecStart=/usr/local/bin/out-of-tree kernel --no-container-cache autogen --threads=8 --max=64 --shuffle' >> test.service
+        echo 'ExecStart=/usr/local/bin/out-of-tree kernel --no-prebuilt-containers autogen --threads=8 --max=64 --shuffle' >> test.service
         echo 'ExecStart=/usr/local/bin/out-of-tree pew --qemu-timeout=10m --threads=4 --include-internal-errors' >> test.service
 
         scp test.service root@$IP:/etc/systemd/system/test.service
