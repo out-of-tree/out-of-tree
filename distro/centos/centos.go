@@ -37,12 +37,9 @@ func (centos CentOS) Packages() (pkgs []string, err error) {
 		return
 	}
 
-	if !c.Exist() {
-		err = c.Build("centos:"+centos.release,
-			centos.envs(), centos.runs())
-		if err != nil {
-			return
-		}
+	err = c.Build("centos:"+centos.release, centos.envs(), centos.runs())
+	if err != nil {
+		return
 	}
 
 	cmd := "yum search kernel --showduplicates 2>/dev/null " +

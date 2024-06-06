@@ -241,6 +241,10 @@ func (c Container) Exist() (yes bool) {
 }
 
 func (c Container) Build(image string, envs, runs []string) (err error) {
+	if c.Exist() && UseCache {
+		return
+	}
+
 	cdir := dotfiles.Dir("containers", c.name)
 	cfile := filepath.Join(cdir, "Dockerfile")
 

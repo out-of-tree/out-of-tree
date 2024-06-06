@@ -172,7 +172,7 @@ func (cmd *KernelCmd) fetchContainerCache(c container.Container) {
 	if !cmd.ContainerCache {
 		return
 	}
-	if c.Exist() {
+	if c.Exist() && container.UseCache {
 		return
 	}
 
