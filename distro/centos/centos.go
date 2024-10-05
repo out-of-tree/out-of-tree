@@ -121,6 +121,7 @@ func (centos CentOS) runs() (commands []string) {
 	}
 
 	cmdf("sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/* || true")
+	cmdf("sed -i 's/name/enabled=0\\nname/' /etc/yum.repos.d/* || true")
 
 	for _, repo := range repos {
 		cmdf("echo -e '%s' >> /etc/yum.repos.d/oot.repo\n", repo)
