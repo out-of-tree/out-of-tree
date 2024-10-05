@@ -155,6 +155,8 @@ func Build(flog zerolog.Logger, tmp string, ka Artifact,
 			log.Fatal().Err(err).Msg("container creation failure")
 		}
 
+		c.Args = append(c.Args, "--network", "none")
+
 		output, err = c.Run(outdir, []string{
 			buildCommand + " && chmod -R 777 /work",
 		})
