@@ -1,4 +1,4 @@
-// Copyright 2018 Mikhail Klementev. All rights reserved.
+// Copyright 2024 Mikhail Klementev. All rights reserved.
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
@@ -22,8 +22,11 @@ import (
 )
 
 type DebugCmd struct {
-	Kernel string `help:"regexp (first match)" required:""`
-	Gdb    string `help:"gdb listen address" default:"tcp::1234"`
+	KernelRegex   string `required:"" help:"set kernel regex"`
+	DistroID      string `required:"" help:"set distribution"`
+	DistroRelease string `required:"" help:"set distribution release"`
+
+	Gdb string `help:"gdb listen address" default:"tcp::1234"`
 
 	SshAddr string `help:"ssh address to listen" default:"127.0.0.1"`
 	SshPort int    `help:"ssh port to listen" default:"50022"`
@@ -63,7 +66,17 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 		ka.SourcePath = g.WorkDir
 	}
 
-	ki, err := firstSupported(kcfg, ka, cmd.Kernel)
+	var km artifact.Target
+	km.Distro.ID, err = distro.NewID(cmd.DistroID)
+	if err != nil {
+		return
+	}
+	km.Distro.Release = cmd.DistroRelease
+	km.Kernel.Regex = cmd.KernelRegex
+
+	ka.Targets = []artifact.Target{km}
+
+	ki, err := firstSupported(kcfg, ka)
 	if err != nil {
 		return
 	}
@@ -223,15 +236,7 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 	return
 }
 
-func firstSupported(kcfg config.KernelConfig, ka artifact.Artifact,
-	kernel string) (ki distro.KernelInfo, err error) {
-
-	km, err := kernelMask(kernel)
-	if err != nil {
-		return
-	}
-
-	ka.Targets = []artifact.Target{km}
+func firstSupported(kcfg config.KernelConfig, ka artifact.Artifact) (ki distro.KernelInfo, err error) {
 
 	for _, ki = range kcfg.Kernels {
 		var supported bool

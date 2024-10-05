@@ -1,4 +1,4 @@
-// Copyright 2023 Mikhail Klementev. All rights reserved.
+// Copyright 2024 Mikhail Klementev. All rights reserved.
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
@@ -64,7 +64,6 @@ func successRate(state runstate) float64 {
 type PewCmd struct {
 	Max     int64         `help:"test no more than X kernels" default:"100500"`
 	Runs    int64         `help:"runs per each kernel" default:"1"`
-	Kernel  string        `help:"override kernel regex"`
 	RootFS  string        `help:"override rootfs image" type:"existingfile"`
 	Guess   bool          `help:"try all defined kernels"`
 	Shuffle bool          `help:"randomize kernels test order"`
@@ -74,6 +73,10 @@ type PewCmd struct {
 	Threads int           `help:"threads" default:"1"`
 	Tag     string        `help:"log tagging"`
 	Timeout time.Duration `help:"timeout after tool will not spawn new tests"`
+
+	KernelRegex   string `help:"set kernel regex"`
+	DistroID      string `help:"set distribution"`
+	DistroRelease string `help:"set distribution release"`
 
 	ArtifactConfig string `help:"path to artifact config" type:"path"`
 
@@ -220,14 +223,47 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 		ka.SourcePath = g.WorkDir
 	}
 
-	if cmd.Kernel != "" {
+	if cmd.KernelRegex != "" {
 		var km artifact.Target
-		km, err = kernelMask(cmd.Kernel)
+		km.Kernel.Regex = cmd.KernelRegex
+
+		if cmd.DistroID == "" {
+			err = errors.New("--distro-id is required")
+			return
+		}
+
+		var dt distro.ID
+		dt, err = distro.NewID(cmd.DistroID)
 		if err != nil {
 			return
 		}
 
+		km.Distro.ID = dt
+
+		if cmd.DistroRelease != "" {
+			km.Distro.Release = cmd.DistroRelease
+		}
+
 		ka.Targets = []artifact.Target{km}
+	} else if cmd.DistroID != "" {
+		var km artifact.Target
+
+		var dt distro.ID
+		dt, err = distro.NewID(cmd.DistroID)
+		if err != nil {
+			return
+		}
+
+		km.Distro.ID = dt
+
+		if cmd.DistroRelease != "" {
+			km.Distro.Release = cmd.DistroRelease
+		}
+
+		ka.Targets = []artifact.Target{km}
+	} else if cmd.DistroRelease != "" {
+		err = errors.New("--distro-release has no use on its own")
+		return
 	}
 
 	if ka.Qemu.Timeout.Duration == 0 {
@@ -492,25 +528,6 @@ func (cmd PewCmd) performCI(ka artifact.Artifact) (err error) {
 		err = errors.New("no supported kernels found")
 	}
 
-	return
-}
-
-func kernelMask(kernel string) (km artifact.Target, err error) {
-	parts := strings.Split(kernel, ":")
-	if len(parts) != 2 {
-		err = errors.New("kernel is not 'distroType:regex'")
-		return
-	}
-
-	dt, err := distro.NewID(parts[0])
-	if err != nil {
-		return
-	}
-
-	km = artifact.Target{
-		Distro: distro.Distro{ID: dt},
-		Kernel: artifact.Kernel{Regex: parts[1]},
-	}
 	return
 }
 
