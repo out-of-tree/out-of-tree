@@ -79,32 +79,41 @@ func (centos CentOS) runs() (commands []string) {
 	// TODO refactor
 	switch centos.release {
 	case "6":
-		repofmt := "[6.%d-%s]\\nbaseurl=https://vault.centos.org/6.%d/%s/$basearch/\\ngpgcheck=0"
+		repofmt := "[6.%d-%s]\\n" +
+			"name=CentOS-6.%d - %s\\n" +
+			"baseurl=https://vault.centos.org/6.%d/%s/$basearch/\\n" +
+			"gpgcheck=0"
 		for i := 0; i <= 10; i++ {
-			repos = append(repos, fmt.Sprintf(repofmt, i, "os", i, "os"))
-			repos = append(repos, fmt.Sprintf(repofmt, i, "updates", i, "updates"))
+			repos = append(repos, fmt.Sprintf(repofmt, i, "os", i, "os", i, "os"))
+			repos = append(repos, fmt.Sprintf(repofmt, i, "updates", i, "updates", i, "updates"))
 		}
 		cmdf("rm /etc/yum.repos.d/*")
 	case "7":
-		repofmt := "[%s-%s]\\nbaseurl=https://vault.centos.org/%s/%s/$basearch/\\ngpgcheck=0"
+		repofmt := "[%s-%s]\\n" +
+			"name=CentOS-%s - %s\\n" +
+			"baseurl=https://vault.centos.org/%s/%s/$basearch/\\n" +
+			"gpgcheck=0"
 		for _, ver := range []string{
 			"7.0.1406", "7.1.1503", "7.2.1511",
 			"7.3.1611", "7.4.1708", "7.5.1804",
 			"7.6.1810", "7.7.1908", "7.8.2003",
 			"7.9.2009",
 		} {
-			repos = append(repos, fmt.Sprintf(repofmt, ver, "os", ver, "os"))
-			repos = append(repos, fmt.Sprintf(repofmt, ver, "updates", ver, "updates"))
+			repos = append(repos, fmt.Sprintf(repofmt, ver, "os", ver, "os", ver, "os"))
+			repos = append(repos, fmt.Sprintf(repofmt, ver, "updates", ver, "updates", ver, "updates"))
 		}
 	case "8":
-		repofmt := "[%s-%s]\\nbaseurl=https://vault.centos.org/%s/%s/$basearch/os/\\ngpgcheck=0"
+		repofmt := "[%s-%s]\\n" +
+			"name=CentOS-%s - %s\\n" +
+			"baseurl=https://vault.centos.org/%s/%s/$basearch/os/\\n" +
+			"gpgcheck=0"
 
 		for _, ver := range []string{
 			"8.0.1905", "8.1.1911", "8.2.2004",
 			"8.3.2011", "8.4.2105", "8.5.2111",
 		} {
-			repos = append(repos, fmt.Sprintf(repofmt, ver, "baseos", ver, "BaseOS"))
-			repos = append(repos, fmt.Sprintf(repofmt, ver, "appstream", ver, "AppStream"))
+			repos = append(repos, fmt.Sprintf(repofmt, ver, "baseos", ver, "baseos", ver, "BaseOS"))
+			repos = append(repos, fmt.Sprintf(repofmt, ver, "appstream", ver, "appstream", ver, "AppStream"))
 		}
 	default:
 		log.Fatal().Msgf("no support for centos %s", centos.release)
