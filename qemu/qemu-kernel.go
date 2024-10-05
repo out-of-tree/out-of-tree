@@ -342,6 +342,7 @@ func (q *System) Start() (err error) {
 
 	if q.Timeout != 0 {
 		go func() {
+			q.Log.Debug().Msgf("qemu wait for %s before kill", q.Timeout)
 			time.Sleep(q.Timeout)
 			q.KilledByTimeout = true
 			q.Stop()

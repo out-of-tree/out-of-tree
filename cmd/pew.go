@@ -230,9 +230,13 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 		ka.Targets = []artifact.Target{km}
 	}
 
-	// TODO there was a lib for merge structures
-	ka.Qemu.Timeout.Duration = g.Config.Qemu.Timeout.Duration
-	ka.Docker.Timeout.Duration = g.Config.Docker.Timeout.Duration
+	if ka.Qemu.Timeout.Duration == 0 {
+		ka.Qemu.Timeout.Duration = g.Config.Qemu.Timeout.Duration
+	}
+
+	if ka.Docker.Timeout.Duration == 0 {
+		ka.Docker.Timeout.Duration = g.Config.Docker.Timeout.Duration
+	}
 
 	if cmd.QemuTimeout != 0 {
 		log.Info().Msgf("Set qemu timeout to %s", cmd.QemuTimeout)
