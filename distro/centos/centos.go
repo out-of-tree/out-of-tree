@@ -91,15 +91,11 @@ func (centos CentOS) runs() (commands []string) {
 			"7.0.1406", "7.1.1503", "7.2.1511",
 			"7.3.1611", "7.4.1708", "7.5.1804",
 			"7.6.1810", "7.7.1908", "7.8.2003",
+			"7.9.2009",
 		} {
 			repos = append(repos, fmt.Sprintf(repofmt, ver, "os", ver, "os"))
 			repos = append(repos, fmt.Sprintf(repofmt, ver, "updates", ver, "updates"))
 		}
-
-		// FIXME http/gpgcheck=0
-		repofmt = "[%s-%s]\\nbaseurl=http://mirror.centos.org/centos-7/%s/%s/$basearch/\\ngpgcheck=0"
-		repos = append(repos, fmt.Sprintf(repofmt, "7.9.2009", "os", "7.9.2009", "os"))
-		repos = append(repos, fmt.Sprintf(repofmt, "7.9.2009", "updates", "7.9.2009", "updates"))
 	case "8":
 		repofmt := "[%s-%s]\\nbaseurl=https://vault.centos.org/%s/%s/$basearch/os/\\ngpgcheck=0"
 
