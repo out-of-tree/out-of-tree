@@ -97,13 +97,23 @@ func Load(localpath string, name string) (err error) {
 		return
 	}
 
-	cmd = exec.Command(Runtime, "tag", "localhost/"+name, name)
-	log.Debug().Msgf("%v", cmd)
+	if strings.Contains(Runtime, "docker") {
+		var err2 error
+		cmd = exec.Command(Runtime, "tag", "localhost/"+name, name)
+		log.Debug().Msgf("%v", cmd)
 
-	raw, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Debug().Err(err).Msg(string(raw))
-		return
+		raw, err2 = cmd.CombinedOutput()
+		if err2 != nil {
+			log.Debug().Err(err2).Msg(string(raw))
+		}
+
+		cmd = exec.Command(Runtime, "rmi", "localhost/"+name)
+		log.Debug().Msgf("%v", cmd)
+
+		raw, err2 = cmd.CombinedOutput()
+		if err2 != nil {
+			log.Debug().Err(err2).Msg(string(raw))
+		}
 	}
 
 	return
