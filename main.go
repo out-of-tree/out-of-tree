@@ -35,13 +35,13 @@ type CLI struct {
 	cmd.Globals
 
 	Pew       cmd.PewCmd       `cmd:"" help:"build, run, and test module/exploit"`
-	Kernel    cmd.KernelCmd    `cmd:"" help:"manipulate kernels"`
+	Kernel    cmd.KernelCmd    `cmd:"" aliases:"kernels" help:"manipulate kernels"`
 	Debug     cmd.DebugCmd     `cmd:"" help:"debug environment"`
 	Log       cmd.LogCmd       `cmd:"" help:"query logs"`
 	Pack      cmd.PackCmd      `cmd:"" help:"exploit pack test"`
 	Gen       cmd.GenCmd       `cmd:"" help:"generate .out-of-tree.toml skeleton"`
-	Image     cmd.ImageCmd     `cmd:"" help:"manage images"`
-	Container cmd.ContainerCmd `cmd:"" help:"manage containers"`
+	Image     cmd.ImageCmd     `cmd:"" aliases:"images" help:"manage images"`
+	Container cmd.ContainerCmd `cmd:"" aliases:"containers" help:"manage containers"`
 	Distro    cmd.DistroCmd    `cmd:"" help:"distro-related helpers"`
 
 	Daemon cmd.DaemonCmd `cmd:"" help:"run daemon"`
