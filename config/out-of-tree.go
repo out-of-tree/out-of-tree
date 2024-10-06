@@ -35,9 +35,12 @@ type OutOfTree struct {
 		Timeout  artifact.Duration
 		Registry string
 
-		// Commands that will be executed before
-		// the base layer of Dockerfile
-		Commands []distro.Command
+		// Commands that are executed before (prepend) and after (append) the
+		// base layer of the Dockerfile.
+		Commands struct {
+			Prepend []distro.Command
+			Append  []distro.Command
+		}
 	}
 }
 

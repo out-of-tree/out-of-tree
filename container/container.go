@@ -32,7 +32,12 @@ var Registry = ""
 
 var Timeout time.Duration
 
-var Commands []distro.Command
+// Commands that are executed before (prepend) and after (append) the
+// base layer of the Dockerfile.
+var Commands struct {
+	Prepend []distro.Command
+	Append  []distro.Command
+}
 
 var UseCache = true
 
@@ -296,9 +301,15 @@ func (c Container) Build(image string, envs, runs []string) (err error) {
 	}
 	cf += image + "\n"
 
-	for _, c := range Commands {
-		// TODO check for distro type
-		cf += "RUN " + c.Command + "\n"
+	for _, cmd := range Commands.Prepend {
+		if cmd.Distro.ID != distro.None && cmd.Distro.ID != c.dist.ID {
+			continue
+		}
+		if cmd.Distro.Release != "" && cmd.Distro.Release != c.dist.Release {
+			continue
+		}
+
+		cf += "RUN " + cmd.Command + "\n"
 	}
 
 	for _, e := range envs {
@@ -307,6 +318,17 @@ func (c Container) Build(image string, envs, runs []string) (err error) {
 
 	for _, c := range runs {
 		cf += "RUN " + c + "\n"
+	}
+
+	for _, cmd := range Commands.Append {
+		if cmd.Distro.ID != distro.None && cmd.Distro.ID != c.dist.ID {
+			continue
+		}
+		if cmd.Distro.Release != "" && cmd.Distro.Release != c.dist.Release {
+			continue
+		}
+
+		cf += "RUN " + cmd.Command + "\n"
 	}
 
 	buf, err := os.ReadFile(cfile)
