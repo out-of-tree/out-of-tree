@@ -1,22 +1,24 @@
-// Copyright 2023 Mikhail Klementev. All rights reserved.
+// Copyright 2024 Mikhail Klementev. All rights reserved.
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/container"
+	"code.dumpstack.io/tools/out-of-tree/distro"
 )
 
 type ContainerCmd struct {
-	Filter string `help:"filter by name"`
+	DistroID      string `help:"filter by distribution"`
+	DistroRelease string `help:"filter by distribution release"`
 
 	List    ContainerListCmd    `cmd:"" help:"list containers"`
 	Update  ContainerUpdateCmd  `cmd:"" help:"update containers"`
@@ -24,17 +26,40 @@ type ContainerCmd struct {
 	Cleanup ContainerCleanupCmd `cmd:"" help:"cleanup containers"`
 }
 
-func (cmd ContainerCmd) Containers() (names []string) {
+func (cmd ContainerCmd) Containers() (diis []container.Image, err error) {
 	images, err := container.Images()
 	if err != nil {
-		log.Fatal().Err(err).Msg("")
+		return
+	}
+
+	var dt distro.Distro
+	if cmd.DistroID != "" {
+		dt.ID, err = distro.NewID(cmd.DistroID)
+		if err != nil {
+			return
+		}
+
+		if cmd.DistroRelease != "" {
+			dt.Release = cmd.DistroRelease
+		}
+	} else if cmd.DistroRelease != "" {
+		err = errors.New("--distro-release has no use on its own")
+		return
 	}
 
 	for _, img := range images {
-		if cmd.Filter != "" && !strings.Contains(img.Name, cmd.Filter) {
+		if dt.ID != distro.None && dt.ID != img.Distro.ID {
+			log.Debug().Msgf("skip %s", img.Name)
 			continue
 		}
-		names = append(names, img.Name)
+
+		if dt.Release != "" && dt.Release != img.Distro.Release {
+			log.Debug().Msgf("skip %s", img.Name)
+			continue
+		}
+
+		log.Debug().Msgf("append %s", img.Name)
+		diis = append(diis, img)
 	}
 	return
 }
@@ -42,8 +67,13 @@ func (cmd ContainerCmd) Containers() (names []string) {
 type ContainerListCmd struct{}
 
 func (cmd ContainerListCmd) Run(containerCmd *ContainerCmd) (err error) {
-	for _, name := range containerCmd.Containers() {
-		fmt.Println(name)
+	images, err := containerCmd.Containers()
+	if err != nil {
+		return
+	}
+
+	for _, img := range images {
+		fmt.Printf("%s\n", img.Distro.String())
 	}
 	return
 }
@@ -51,7 +81,7 @@ func (cmd ContainerListCmd) Run(containerCmd *ContainerCmd) (err error) {
 type ContainerUpdateCmd struct{}
 
 func (cmd ContainerUpdateCmd) Run(g *Globals, containerCmd *ContainerCmd) (err error) {
-	images, err := container.Images()
+	images, err := containerCmd.Containers()
 	if err != nil {
 		return
 	}
@@ -65,13 +95,6 @@ func (cmd ContainerUpdateCmd) Run(g *Globals, containerCmd *ContainerCmd) (err e
 	container.Timeout = g.Config.Docker.Timeout.Duration
 
 	for _, img := range images {
-		if containerCmd.Filter != "" {
-			if !strings.Contains(img.Name, containerCmd.Filter) {
-				log.Debug().Msgf("skip %s", img.Name)
-				continue
-			}
-		}
-
 		_, err = img.Distro.Packages()
 		if err != nil {
 			return
@@ -86,13 +109,18 @@ type ContainerSaveCmd struct {
 }
 
 func (cmd ContainerSaveCmd) Run(containerCmd *ContainerCmd) (err error) {
-	for _, name := range containerCmd.Containers() {
-		nlog := log.With().Str("name", name).Logger()
+	images, err := containerCmd.Containers()
+	if err != nil {
+		return
+	}
 
-		output := filepath.Join(cmd.OutDir, name+".tar")
+	for _, img := range images {
+		nlog := log.With().Str("name", img.Name).Logger()
+
+		output := filepath.Join(cmd.OutDir, img.Name+".tar")
 		nlog.Info().Msgf("saving to %v", output)
 
-		err = container.Save(name, output)
+		err = container.Save(img.Name, output)
 		if err != nil {
 			return
 		}
@@ -115,9 +143,14 @@ func (cmd ContainerSaveCmd) Run(containerCmd *ContainerCmd) (err error) {
 type ContainerCleanupCmd struct{}
 
 func (cmd ContainerCleanupCmd) Run(containerCmd *ContainerCmd) (err error) {
+	images, err := containerCmd.Containers()
+	if err != nil {
+		return
+	}
+
 	var output []byte
-	for _, name := range containerCmd.Containers() {
-		output, err = exec.Command(container.Runtime, "image", "rm", name).
+	for _, img := range images {
+		output, err = exec.Command(container.Runtime, "image", "rm", img.Name).
 			CombinedOutput()
 		if err != nil {
 			log.Error().Err(err).Str("output", string(output)).Msg("")
