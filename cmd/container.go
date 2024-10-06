@@ -19,6 +19,7 @@ type ContainerCmd struct {
 	Filter string `help:"filter by name"`
 
 	List    ContainerListCmd    `cmd:"" help:"list containers"`
+	Update  ContainerUpdateCmd  `cmd:"" help:"update containers"`
 	Save    ContainerSaveCmd    `cmd:"" help:"save containers"`
 	Cleanup ContainerCleanupCmd `cmd:"" help:"cleanup containers"`
 }
@@ -44,6 +45,39 @@ func (cmd ContainerListCmd) Run(containerCmd *ContainerCmd) (err error) {
 	for _, name := range containerCmd.Containers() {
 		fmt.Println(name)
 	}
+	return
+}
+
+type ContainerUpdateCmd struct{}
+
+func (cmd ContainerUpdateCmd) Run(g *Globals, containerCmd *ContainerCmd) (err error) {
+	images, err := container.Images()
+	if err != nil {
+		return
+	}
+
+	container.UseCache = false
+	container.UsePrebuilt = false
+
+	// TODO move from all commands to main command line handler
+	container.Commands = g.Config.Docker.Commands
+	container.Registry = g.Config.Docker.Registry
+	container.Timeout = g.Config.Docker.Timeout.Duration
+
+	for _, img := range images {
+		if containerCmd.Filter != "" {
+			if !strings.Contains(img.Name, containerCmd.Filter) {
+				log.Debug().Msgf("skip %s", img.Name)
+				continue
+			}
+		}
+
+		_, err = img.Distro.Packages()
+		if err != nil {
+			return
+		}
+	}
+
 	return
 }
 
