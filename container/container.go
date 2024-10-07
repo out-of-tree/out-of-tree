@@ -488,9 +488,7 @@ func (c Container) Run(workdir string, cmds []string) (out string, err error) {
 
 	err = cmd.Wait()
 	if err != nil {
-		e := fmt.Sprintf("error `%v` for cmd `%v` with output `%v`",
-			err, cmds, out)
-		err = errors.New(e)
+		flog.Error().Msg(out)
 		return
 	}
 
