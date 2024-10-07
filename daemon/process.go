@@ -131,7 +131,7 @@ func (pj *jobProcessor) Process(res *Resources) (err error) {
 	var result *artifact.Result
 	var dq *qemu.System
 
-	pj.job.Artifact.Process(pj.log, pj.job.Target, false, "", "", 0,
+	pj.job.Artifact.Process(pj.log, pj.job.Target, false, false, "", "", 0,
 		func(q *qemu.System, ka artifact.Artifact, ki distro.KernelInfo,
 			res *artifact.Result) {
 

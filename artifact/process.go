@@ -281,7 +281,7 @@ func CopyFile(sourcePath, destinationPath string) (err error) {
 }
 
 func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka Artifact,
-	res *Result, remoteTest string) (err error) {
+	res *Result, remoteTest string, outputOnSuccess bool) (err error) {
 
 	// Copy all test files to the remote machine
 	for _, f := range ka.TestFiles {
@@ -346,7 +346,11 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka Artifact,
 		return
 	}
 
-	slog.Info().Msgf("test success\n%v\n", res.Test.Output)
+	if outputOnSuccess {
+		slog.Info().Msgf("test success\n%v\n", res.Test.Output)
+	} else {
+		slog.Info().Msg("test success")
+	}
 
 	_, err = q.Command("root", "echo")
 	if err != nil {

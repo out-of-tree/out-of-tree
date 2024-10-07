@@ -87,6 +87,8 @@ type PewCmd struct {
 	Threshold             float64 `help:"reliablity threshold for exit code" default:"1.00"`
 	IncludeInternalErrors bool    `help:"count internal errors as part of the success rate"`
 
+	OutputOnSuccess bool `help:"show output on success"`
+
 	Endless        bool          `help:"endless tests"`
 	EndlessTimeout time.Duration `help:"timeout between tests" default:"1m"`
 	EndlessStress  string        `help:"endless stress script" type:"existingfile"`
@@ -445,7 +447,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		Str("kernel", ki.KernelRelease).
 		Logger()
 
-	ka.Process(slog, ki,
+	ka.Process(slog, ki, cmd.OutputOnSuccess,
 		cmd.Endless, cmd.Binary, cmd.EndlessStress, cmd.EndlessTimeout,
 		func(q *qemu.System, ka artifact.Artifact, ki distro.KernelInfo, result *artifact.Result) {
 			dumpResult(q, ka, ki, result, cmd.Dist, cmd.Tag, cmd.Binary, cmd.DB)

@@ -241,7 +241,7 @@ func (ka Artifact) Supported(ki distro.KernelInfo) (supported bool, err error) {
 }
 
 func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
-	endless bool, cBinary,
+	outputOnSuccess, endless bool, cBinary,
 	cEndlessStress string, cEndlessTimeout time.Duration,
 	dump func(q *qemu.System, ka Artifact, ki distro.KernelInfo,
 		result *Result)) {
@@ -340,7 +340,11 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 			slog.Error().Err(err).Msgf("build failure\n%v\n", result.Build.Output)
 			return
 		} else {
-			slog.Info().Msgf("build success\n%v\n", result.Build.Output)
+			if outputOnSuccess {
+				slog.Info().Msgf("build success\n%v\n", result.Build.Output)
+			} else {
+				slog.Info().Msg("build success")
+			}
 		}
 		result.Build.Ok = true
 	} else {
@@ -404,14 +408,14 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 	})
 
 	start := time.Now()
-	copyArtifactAndTest(slog, q, ka, &result, remoteTest)
+	copyArtifactAndTest(slog, q, ka, &result, remoteTest, outputOnSuccess)
 	slog.Debug().Str("duration", time.Since(start).String()).
 		Msgf("test completed (success: %v)", result.Test.Ok)
 
 	if result.Build.Ok {
 		if !result.Run.Ok || !result.Test.Ok {
 			slog.Error().Msgf("qemu output\n%v\n", qemuTestOutput)
-		} else {
+		} else if outputOnSuccess {
 			slog.Info().Msgf("qemu output\n%v\n", qemuTestOutput)
 		}
 	}
