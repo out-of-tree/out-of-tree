@@ -265,8 +265,8 @@ func (cmd *KernelListCmd) Run(g *Globals) (err error) {
 }
 
 type KernelListRemoteCmd struct {
-	Distro string `required:"" help:"distribution"`
-	Ver    string `help:"distro version"`
+	DistroID      string `required:"" help:"distribution"`
+	DistroRelease string `help:"distro version"`
 }
 
 func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
@@ -279,13 +279,13 @@ func (cmd *KernelListRemoteCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error
 
 	container.UsePrebuilt = kernelCmd.PrebuiltContainers
 
-	distroType, err := distro.NewID(cmd.Distro)
+	distroType, err := distro.NewID(cmd.DistroID)
 	if err != nil {
 		return
 	}
 
 	km := artifact.Target{
-		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
+		Distro: distro.Distro{ID: distroType, Release: cmd.DistroRelease},
 		Kernel: artifact.Kernel{Regex: ".*"},
 	}
 
@@ -336,12 +336,12 @@ func (cmd *KernelAutogenCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 }
 
 type KernelGenallCmd struct {
-	Distro string `help:"distribution"`
-	Ver    string `help:"distro version"`
+	DistroID      string `help:"distribution"`
+	DistroRelease string `help:"distro version"`
 }
 
 func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
-	distroType, err := distro.NewID(cmd.Distro)
+	distroType, err := distro.NewID(cmd.DistroID)
 	if err != nil {
 		return
 	}
@@ -357,7 +357,7 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 			continue
 		}
 
-		if cmd.Ver != "" && dist.Release != cmd.Ver {
+		if cmd.DistroRelease != "" && dist.Release != cmd.DistroRelease {
 			continue
 		}
 
@@ -376,13 +376,13 @@ func (cmd *KernelGenallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 }
 
 type KernelInstallCmd struct {
-	Distro string `required:"" help:"distribution"`
-	Ver    string `required:"" help:"distro version"`
-	Kernel string `required:"" help:"kernel release mask"`
+	DistroID      string `required:"" help:"distribution"`
+	DistroRelease string `required:"" help:"distro version"`
+	KernelRegex   string `required:"" help:"kernel release mask"`
 }
 
 func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
-	distroType, err := distro.NewID(cmd.Distro)
+	distroType, err := distro.NewID(cmd.DistroID)
 	if err != nil {
 		return
 	}
@@ -390,8 +390,8 @@ func (cmd *KernelInstallCmd) Run(kernelCmd *KernelCmd, g *Globals) (err error) {
 	kernel.SetSigintHandler(&kernelCmd.shutdown)
 
 	km := artifact.Target{
-		Distro: distro.Distro{ID: distroType, Release: cmd.Ver},
-		Kernel: artifact.Kernel{Regex: cmd.Kernel},
+		Distro: distro.Distro{ID: distroType, Release: cmd.DistroRelease},
+		Kernel: artifact.Kernel{Regex: cmd.KernelRegex},
 	}
 	err = kernelCmd.Generate(g, km)
 	if err != nil {
