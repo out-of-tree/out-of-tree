@@ -12,7 +12,6 @@ import (
 
 	"github.com/naoina/toml"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 
 	"code.dumpstack.io/tools/out-of-tree/config/dotfiles"
 	"code.dumpstack.io/tools/out-of-tree/distro"
@@ -338,8 +337,10 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 		slog.Debug().Str("duration", time.Since(start).String()).
 			Msg("build done")
 		if err != nil {
-			log.Error().Err(err).Msg("build")
+			slog.Error().Err(err).Msg("build")
 			return
+		} else {
+			slog.Info().Err(err).Msg("build success")
 		}
 		result.Build.Ok = true
 	} else {

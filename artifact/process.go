@@ -313,8 +313,7 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka Artifact,
 
 		res.Test.Output, err = testKernelModule(q, ka, remoteTest)
 		if err != nil {
-			slog.Error().Err(err).Msg(res.Test.Output)
-			return
+			break
 		}
 		res.Test.Ok = true
 	case KernelExploit:
@@ -327,16 +326,14 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka Artifact,
 		res.Test.Output, err = testKernelExploit(q, ka, remoteTest,
 			remoteExploit)
 		if err != nil {
-			slog.Error().Err(err).Msg(res.Test.Output)
-			return
+			break
 		}
 		res.Run.Ok = true // does not really used
 		res.Test.Ok = true
 	case Script:
 		res.Test.Output, err = runScript(q, remoteTest)
 		if err != nil {
-			slog.Error().Err(err).Msg(res.Test.Output)
-			return
+			break
 		}
 		res.Run.Ok = true
 		res.Test.Ok = true
@@ -344,7 +341,12 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka Artifact,
 		slog.Fatal().Msg("Unsupported artifact type")
 	}
 
-	slog.Info().Msgf("\n%v\n", res.Test.Output)
+	if err != nil || !res.Test.Ok {
+		slog.Error().Err(err).Msgf("test error\n%v\n", res.Test.Output)
+		return
+	}
+
+	slog.Info().Msgf("test success\n%v\n", res.Test.Output)
 
 	_, err = q.Command("root", "echo")
 	if err != nil {
