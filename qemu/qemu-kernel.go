@@ -101,7 +101,12 @@ type System struct {
 
 	Stdout, Stderr string
 
-	output struct {
+	qemuOutput struct {
+		listener chan string
+		mu       sync.Mutex
+	}
+
+	commandsOutput struct {
 		listener chan string
 		mu       sync.Mutex
 	}
@@ -143,38 +148,77 @@ func NewSystem(arch arch, kernel Kernel, drivePath string) (q *System, err error
 	return
 }
 
-// q.SetOutputHandler(func(s string) { fmt.Println(s) })
-// defer q.CloseOutputHandler()
-func (q *System) SetOutputHandler(handler func(s string)) {
-	q.output.mu.Lock()
-	defer q.output.mu.Unlock()
+// q.SetQemuOutputHandler(func(s string) { fmt.Println(s) })
+// defer q.CloseQemuOutputHandler()
+func (q *System) SetQemuOutputHandler(handler func(s string)) {
+	q.qemuOutput.mu.Lock()
+	defer q.qemuOutput.mu.Unlock()
 
-	q.output.listener = make(chan string)
+	q.qemuOutput.listener = make(chan string)
 
 	go func(l chan string) {
 		for m := range l {
-			handler(m)
+			if m != "" {
+				handler(m)
+			}
 		}
-	}(q.output.listener)
+	}(q.qemuOutput.listener)
 }
 
-func (q *System) CloseOutputHandler() {
-	q.output.mu.Lock()
-	defer q.output.mu.Unlock()
+func (q *System) CloseQemuOutputHandler() {
+	q.qemuOutput.mu.Lock()
+	defer q.qemuOutput.mu.Unlock()
 
-	close(q.output.listener)
-	q.output.listener = nil
+	close(q.qemuOutput.listener)
+	q.qemuOutput.listener = nil
 }
 
-func (q *System) handleOutput(m string) {
-	if q.output.listener == nil {
+func (q *System) handleQemuOutput(m string) {
+	if q.qemuOutput.listener == nil {
 		return
 	}
-	q.output.mu.Lock()
-	defer q.output.mu.Unlock()
+	q.qemuOutput.mu.Lock()
+	defer q.qemuOutput.mu.Unlock()
 
-	if q.output.listener != nil {
-		q.output.listener <- m
+	if q.qemuOutput.listener != nil {
+		q.qemuOutput.listener <- m
+	}
+}
+
+// q.SetCommandsOutputHandler(func(s string) { fmt.Println(s) })
+// defer q.CloseCommandsOutputHandler()
+func (q *System) SetCommandsOutputHandler(handler func(s string)) {
+	q.commandsOutput.mu.Lock()
+	defer q.commandsOutput.mu.Unlock()
+
+	q.commandsOutput.listener = make(chan string)
+
+	go func(l chan string) {
+		for m := range l {
+			if m != "" {
+				handler(m)
+			}
+		}
+	}(q.commandsOutput.listener)
+}
+
+func (q *System) CloseCommandsOutputHandler() {
+	q.commandsOutput.mu.Lock()
+	defer q.commandsOutput.mu.Unlock()
+
+	close(q.commandsOutput.listener)
+	q.commandsOutput.listener = nil
+}
+
+func (q *System) handleCommandsOutput(m string) {
+	if q.commandsOutput.listener == nil {
+		return
+	}
+	q.commandsOutput.mu.Lock()
+	defer q.commandsOutput.mu.Unlock()
+
+	if q.commandsOutput.listener != nil {
+		q.commandsOutput.listener <- m
 	}
 }
 
@@ -353,7 +397,7 @@ func (q *System) Start() (err error) {
 		scanner := bufio.NewScanner(q.pipe.stdout)
 		for scanner.Scan() {
 			m := scanner.Text()
-			q.handleOutput(m)
+			q.handleQemuOutput(m)
 			q.Stdout += m + "\n"
 			q.Log.Trace().Str("stdout", m).Msg("qemu")
 			go q.checkOopsPanic(m)
@@ -364,7 +408,7 @@ func (q *System) Start() (err error) {
 		scanner := bufio.NewScanner(q.pipe.stderr)
 		for scanner.Scan() {
 			m := scanner.Text()
-			q.handleOutput(m)
+			q.handleQemuOutput(m)
 			q.Stderr += m + "\n"
 			q.Log.Trace().Str("stderr", m).Msg("qemu")
 		}
@@ -517,6 +561,7 @@ func (q System) Command(user, cmd string) (output string, err error) {
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
 			m := scanner.Text()
+			q.handleCommandsOutput(m)
 			output += m + "\n"
 			flog.Trace().Str("stdout", m).Msg("qemu command")
 		}
@@ -530,6 +575,7 @@ func (q System) Command(user, cmd string) (output string, err error) {
 		scanner := bufio.NewScanner(stderr)
 		for scanner.Scan() {
 			m := scanner.Text()
+			q.handleCommandsOutput(m)
 			output += m + "\n"
 			// Note: it prints stderr as stdout
 			flog.Trace().Str("stdout", m).Msg("qemu command")

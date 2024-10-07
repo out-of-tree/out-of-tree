@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cavaliergopher/grab/v3"
@@ -44,6 +45,8 @@ var UseCache = true
 var UsePrebuilt = true
 
 var Prune = true
+
+var Stdout = false
 
 type Image struct {
 	Name   string
@@ -176,6 +179,11 @@ type Container struct {
 	Args []string
 
 	Log zerolog.Logger
+
+	commandsOutput struct {
+		listener chan string
+		mu       sync.Mutex
+	}
 }
 
 func New(dist distro.Distro) (c Container, err error) {
@@ -232,6 +240,43 @@ func NewFromKernelInfo(ki distro.KernelInfo) (
 	})
 
 	return
+}
+
+// c.SetCommandsOutputHandler(func(s string) { fmt.Println(s) })
+// defer c.CloseCommandsOutputHandler()
+func (c *Container) SetCommandsOutputHandler(handler func(s string)) {
+	c.commandsOutput.mu.Lock()
+	defer c.commandsOutput.mu.Unlock()
+
+	c.commandsOutput.listener = make(chan string)
+
+	go func(l chan string) {
+		for m := range l {
+			if m != "" {
+				handler(m)
+			}
+		}
+	}(c.commandsOutput.listener)
+}
+
+func (c *Container) CloseCommandsOutputHandler() {
+	c.commandsOutput.mu.Lock()
+	defer c.commandsOutput.mu.Unlock()
+
+	close(c.commandsOutput.listener)
+	c.commandsOutput.listener = nil
+}
+
+func (c *Container) handleCommandsOutput(m string) {
+	if c.commandsOutput.listener == nil {
+		return
+	}
+	c.commandsOutput.mu.Lock()
+	defer c.commandsOutput.mu.Unlock()
+
+	if c.commandsOutput.listener != nil {
+		c.commandsOutput.listener <- m
+	}
 }
 
 func (c Container) Name() string {
@@ -408,6 +453,10 @@ func (c Container) build(imagePath string) (output string, err error) {
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
 			m := scanner.Text()
+			if Stdout {
+				fmt.Println(m)
+			}
+			c.handleCommandsOutput(m)
 			output += m + "\n"
 			flog.Trace().Str("stdout", m).Msg("")
 		}
@@ -481,6 +530,10 @@ func (c Container) Run(workdir string, cmds []string) (out string, err error) {
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
 			m := scanner.Text()
+			if Stdout {
+				fmt.Println(m)
+			}
+			c.handleCommandsOutput(m)
 			out += m + "\n"
 			flog.Trace().Str("stdout", m).Msg("")
 		}

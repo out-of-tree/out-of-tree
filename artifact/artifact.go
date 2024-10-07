@@ -240,8 +240,9 @@ func (ka Artifact) Supported(ki distro.KernelInfo) (supported bool, err error) {
 	return
 }
 
+// TODO too many parameters
 func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
-	outputOnSuccess, endless bool, cBinary,
+	outputOnSuccess, realtimeOutput, endless bool, cBinary,
 	cEndlessStress string, cEndlessTimeout time.Duration,
 	dump func(q *qemu.System, ka Artifact, ki distro.KernelInfo,
 		result *Result)) {
@@ -333,14 +334,14 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 		// TODO: build should return structure
 		start := time.Now()
 		result.BuildDir, result.BuildArtifact, result.Build.Output, err =
-			Build(slog, tmp, ka, ki, ka.Docker.Timeout.Duration)
+			Build(slog, tmp, ka, ki, ka.Docker.Timeout.Duration, realtimeOutput)
 		slog.Debug().Str("duration", time.Since(start).String()).
 			Msg("build done")
 		if err != nil {
 			slog.Error().Err(err).Msgf("build failure\n%v\n", result.Build.Output)
 			return
 		} else {
-			if outputOnSuccess {
+			if outputOnSuccess && !realtimeOutput {
 				slog.Info().Msgf("build success\n%v\n", result.Build.Output)
 			} else {
 				slog.Info().Msg("build success")
@@ -403,24 +404,37 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 	}
 
 	var qemuTestOutput string
-	q.SetOutputHandler(func(s string) {
-		qemuTestOutput += s + "\n"
+	q.SetQemuOutputHandler(func(s string) {
+		if realtimeOutput {
+			fmt.Printf("kmsg: %s\n", s)
+		} else {
+			qemuTestOutput += s + "\n"
+		}
 	})
 
+	if realtimeOutput {
+		q.SetCommandsOutputHandler(func(s string) {
+			fmt.Printf("test: %s\n", s)
+		})
+	}
+
 	start := time.Now()
-	copyArtifactAndTest(slog, q, ka, &result, remoteTest, outputOnSuccess)
+	copyArtifactAndTest(slog, q, ka, &result, remoteTest, outputOnSuccess, realtimeOutput)
 	slog.Debug().Str("duration", time.Since(start).String()).
 		Msgf("test completed (success: %v)", result.Test.Ok)
 
 	if result.Build.Ok {
 		if !result.Run.Ok || !result.Test.Ok {
 			slog.Error().Msgf("qemu output\n%v\n", qemuTestOutput)
-		} else if outputOnSuccess {
+		} else if outputOnSuccess && !realtimeOutput {
 			slog.Info().Msgf("qemu output\n%v\n", qemuTestOutput)
 		}
 	}
 
-	q.CloseOutputHandler()
+	if realtimeOutput {
+		q.CloseCommandsOutputHandler()
+	}
+	q.CloseQemuOutputHandler()
 
 	if !endless {
 		return

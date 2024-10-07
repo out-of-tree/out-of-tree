@@ -39,6 +39,8 @@ type KernelCmd struct {
 
 	ContainerTimeout time.Duration `help:"container timeout"`
 
+	RealtimeOutput RealtimeContainerOutputFlag `help:"show realtime output"`
+
 	List        KernelListCmd        `cmd:"" help:"list kernels"`
 	ListRemote  KernelListRemoteCmd  `cmd:"" help:"list remote kernels"`
 	Autogen     KernelAutogenCmd     `cmd:"" help:"generate kernels based on the current config"`

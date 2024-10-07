@@ -193,7 +193,8 @@ func (cmd *DebugCmd) Run(g *Globals) (err error) {
 			return
 		}
 	} else {
-		buildDir, outFile, output, err = artifact.Build(log.Logger, tmp, ka, ki, g.Config.Docker.Timeout.Duration)
+		buildDir, outFile, output, err = artifact.Build(
+			log.Logger, tmp, ka, ki, g.Config.Docker.Timeout.Duration, false)
 		if err != nil {
 			log.Error().Err(err).Msg(output)
 			return

@@ -24,6 +24,15 @@ type ContainerCmd struct {
 	Update  ContainerUpdateCmd  `cmd:"" help:"update containers"`
 	Save    ContainerSaveCmd    `cmd:"" help:"save containers"`
 	Cleanup ContainerCleanupCmd `cmd:"" help:"cleanup containers"`
+
+	RealtimeOutput RealtimeContainerOutputFlag `help:"show realtime output"`
+}
+
+type RealtimeContainerOutputFlag bool
+
+func (f RealtimeContainerOutputFlag) AfterApply() (err error) {
+	container.Stdout = bool(f)
+	return
 }
 
 func (cmd ContainerCmd) Containers() (diis []container.Image, err error) {

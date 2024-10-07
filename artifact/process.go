@@ -103,7 +103,7 @@ func applyPatches(src string, ka Artifact) (err error) {
 }
 
 func Build(flog zerolog.Logger, tmp string, ka Artifact,
-	ki distro.KernelInfo, dockerTimeout time.Duration) (
+	ki distro.KernelInfo, dockerTimeout time.Duration, realtimeOutput bool) (
 	outdir, outpath, output string, err error) {
 
 	target := strings.Replace(ka.Name, " ", "_", -1)
@@ -157,9 +157,19 @@ func Build(flog zerolog.Logger, tmp string, ka Artifact,
 
 		c.Args = append(c.Args, "--network", "none")
 
+		if realtimeOutput {
+			c.SetCommandsOutputHandler(func(s string) {
+				fmt.Printf("%s\n", s)
+			})
+		}
+
 		output, err = c.Run(outdir, []string{
 			buildCommand + " && chmod -R 777 /work",
 		})
+
+		if realtimeOutput {
+			c.CloseCommandsOutputHandler()
+		}
 	} else {
 		cmd := exec.Command("bash", "-c", "cd "+outdir+" && "+
 			buildCommand)
@@ -281,7 +291,7 @@ func CopyFile(sourcePath, destinationPath string) (err error) {
 }
 
 func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka Artifact,
-	res *Result, remoteTest string, outputOnSuccess bool) (err error) {
+	res *Result, remoteTest string, outputOnSuccess, realtimeOutput bool) (err error) {
 
 	// Copy all test files to the remote machine
 	for _, f := range ka.TestFiles {
@@ -346,7 +356,7 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka Artifact,
 		return
 	}
 
-	if outputOnSuccess {
+	if outputOnSuccess && !realtimeOutput {
 		slog.Info().Msgf("test success\n%v\n", res.Test.Output)
 	} else {
 		slog.Info().Msg("test success")

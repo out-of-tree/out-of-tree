@@ -88,6 +88,7 @@ type PewCmd struct {
 	IncludeInternalErrors bool    `help:"count internal errors as part of the success rate"`
 
 	OutputOnSuccess bool `help:"show output on success"`
+	RealtimeOutput  bool `help:"show realtime output"`
 
 	Endless        bool          `help:"endless tests"`
 	EndlessTimeout time.Duration `help:"timeout between tests" default:"1m"`
@@ -447,7 +448,7 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		Str("kernel", ki.KernelRelease).
 		Logger()
 
-	ka.Process(slog, ki, cmd.OutputOnSuccess,
+	ka.Process(slog, ki, cmd.OutputOnSuccess, cmd.RealtimeOutput,
 		cmd.Endless, cmd.Binary, cmd.EndlessStress, cmd.EndlessTimeout,
 		func(q *qemu.System, ka artifact.Artifact, ki distro.KernelInfo, result *artifact.Result) {
 			dumpResult(q, ka, ki, result, cmd.Dist, cmd.Tag, cmd.Binary, cmd.DB)
