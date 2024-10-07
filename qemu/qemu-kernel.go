@@ -101,6 +101,11 @@ type System struct {
 
 	Stdout, Stderr string
 
+	output struct {
+		listener chan string
+		mu       sync.Mutex
+	}
+
 	// accessible after qemu is closed
 	exitErr error
 
@@ -136,6 +141,41 @@ func NewSystem(arch arch, kernel Kernel, drivePath string) (q *System, err error
 	q.SSH.RetryTimeout = DefaultSSHRetryTimeout
 
 	return
+}
+
+// q.SetOutputHandler(func(s string) { fmt.Println(s) })
+// defer q.CloseOutputHandler()
+func (q *System) SetOutputHandler(handler func(s string)) {
+	q.output.mu.Lock()
+	defer q.output.mu.Unlock()
+
+	q.output.listener = make(chan string)
+
+	go func(l chan string) {
+		for m := range l {
+			handler(m)
+		}
+	}(q.output.listener)
+}
+
+func (q *System) CloseOutputHandler() {
+	q.output.mu.Lock()
+	defer q.output.mu.Unlock()
+
+	close(q.output.listener)
+	q.output.listener = nil
+}
+
+func (q *System) handleOutput(m string) {
+	if q.output.listener == nil {
+		return
+	}
+	q.output.mu.Lock()
+	defer q.output.mu.Unlock()
+
+	if q.output.listener != nil {
+		q.output.listener <- m
+	}
 }
 
 func (q *System) SetSSHAddrPort(addr string, port int) (err error) {
@@ -313,6 +353,7 @@ func (q *System) Start() (err error) {
 		scanner := bufio.NewScanner(q.pipe.stdout)
 		for scanner.Scan() {
 			m := scanner.Text()
+			q.handleOutput(m)
 			q.Stdout += m + "\n"
 			q.Log.Trace().Str("stdout", m).Msg("qemu")
 			go q.checkOopsPanic(m)
@@ -323,6 +364,7 @@ func (q *System) Start() (err error) {
 		scanner := bufio.NewScanner(q.pipe.stderr)
 		for scanner.Scan() {
 			m := scanner.Text()
+			q.handleOutput(m)
 			q.Stderr += m + "\n"
 			q.Log.Trace().Str("stderr", m).Msg("qemu")
 		}

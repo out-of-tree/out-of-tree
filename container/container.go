@@ -488,7 +488,6 @@ func (c Container) Run(workdir string, cmds []string) (out string, err error) {
 
 	err = cmd.Wait()
 	if err != nil {
-		flog.Error().Msg(out)
 		return
 	}
 

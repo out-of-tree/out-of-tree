@@ -337,10 +337,10 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 		slog.Debug().Str("duration", time.Since(start).String()).
 			Msg("build done")
 		if err != nil {
-			slog.Error().Err(err).Msg("build")
+			slog.Error().Err(err).Msgf("build failure\n%v\n", result.Build.Output)
 			return
 		} else {
-			slog.Info().Err(err).Msg("build success")
+			slog.Info().Msgf("build success\n%v\n", result.Build.Output)
 		}
 		result.Build.Ok = true
 	} else {
@@ -398,10 +398,25 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 		return
 	}
 
+	var qemuTestOutput string
+	q.SetOutputHandler(func(s string) {
+		qemuTestOutput += s + "\n"
+	})
+
 	start := time.Now()
 	copyArtifactAndTest(slog, q, ka, &result, remoteTest)
 	slog.Debug().Str("duration", time.Since(start).String()).
 		Msgf("test completed (success: %v)", result.Test.Ok)
+
+	if result.Build.Ok {
+		if !result.Run.Ok || !result.Test.Ok {
+			slog.Error().Msgf("qemu output\n%v\n", qemuTestOutput)
+		} else {
+			slog.Info().Msgf("qemu output\n%v\n", qemuTestOutput)
+		}
+	}
+
+	q.CloseOutputHandler()
 
 	if !endless {
 		return
