@@ -125,7 +125,7 @@ jobs:
         echo 'distro = { id = "${{ matrix.os.distro }}", release = "${{ matrix.os.release }}" }' >> examples/kernel-module/.out-of-tree.toml
         echo 'kernel = { regex = ".*" }' >> examples/kernel-module/.out-of-tree.toml
         echo '[qemu]' >> examples/kernel-module/.out-of-tree.toml
-        echo 'timeout = "10m"' >> examples/kernel-module/.out-of-tree.toml
+        echo 'timeout = "3m"' >> examples/kernel-module/.out-of-tree.toml
         echo 'after_start_timeout = "10s"' >> examples/kernel-module/.out-of-tree.toml
 
         echo 'modprobe uio || modprobe 9p || modprobe xfs' >> examples/kernel-module/test.sh
@@ -142,7 +142,7 @@ jobs:
         echo 'WorkingDirectory=/root/test' >> test.service
         echo 'TimeoutStopSec=1' >> test.service
         echo 'ExecStart=/usr/local/bin/out-of-tree kernel --no-prebuilt-containers autogen --threads=8 --max=64 --shuffle' >> test.service
-        echo 'ExecStart=/usr/local/bin/out-of-tree pew --qemu-timeout=10m --threads=4 --include-internal-errors' >> test.service
+        echo 'ExecStart=/usr/local/bin/out-of-tree pew --threads=4 --include-internal-errors' >> test.service
 
         scp test.service root@$IP:/etc/systemd/system/test.service
 
