@@ -40,9 +40,9 @@ Read [documentation](https://out-of-tree.readthedocs.io) for further info.
 
 ## Examples
 
-Generate all Ubuntu 22.04 kernels:
+Download all Ubuntu 24.04 kernels:
 
-    $ out-of-tree kernel genall --distro=Ubuntu --ver=22.04
+    $ out-of-tree kernel genall --distro-id=Ubuntu --distro-release=24.04
 
 Run tests based on .out-of-tree.toml definitions:
 
@@ -50,8 +50,8 @@ Run tests based on .out-of-tree.toml definitions:
 
 Test with a specific kernel:
 
-    $ out-of-tree pew --kernel='Ubuntu:5.4.0-29-generic'
+    $ out-of-tree pew --realtime-output  --distro-id=ubuntu --kernel-regex=6.8.0-41-generic
 
 Run debug environment:
 
-    $ out-of-tree debug --kernel='Ubuntu:5.4.0-29-generic'
+    $ out-of-tree debug --distro-id=ubuntu --distro-release=24.04 --kernel-regex=6.8.0-41-generic
