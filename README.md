@@ -8,8 +8,6 @@
 
 *out-of-tree* was created to reduce the complexity of the environment for developing, testing and debugging Linux kernel exploits and out-of-tree kernel modules (hence the name "out-of-tree").
 
-![Screenshot](https://cloudflare-ipfs.com/ipfs/Qmb88fgdDjbWkxz91sWsgmoZZNfVThnCtj37u3mF2s3T3T)
-
 ## Installation
 
 ### GNU/Linux (with [Nix](https://nixos.org/nix/))
