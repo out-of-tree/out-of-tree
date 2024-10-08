@@ -466,7 +466,7 @@ func (c Container) build(imagePath string) (output string, err error) {
 	return
 }
 
-func (c Container) Run(workdir string, cmds []string) (out string, err error) {
+func (c *Container) Run(workdir string, cmds []string) (out string, err error) {
 	flog := c.Log.With().
 		Str("workdir", workdir).
 		Str("command", fmt.Sprintf("%v", cmds)).
@@ -535,7 +535,7 @@ func (c Container) Run(workdir string, cmds []string) (out string, err error) {
 			}
 			c.handleCommandsOutput(m)
 			out += m + "\n"
-			flog.Trace().Str("stdout", m).Msg("")
+			flog.Trace().Str("container stdout", m).Msg("")
 		}
 	}()
 
