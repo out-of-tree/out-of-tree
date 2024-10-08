@@ -396,7 +396,7 @@ func (q *System) Start() (err error) {
 	go func() {
 		scanner := bufio.NewScanner(q.pipe.stdout)
 		for scanner.Scan() {
-			m := scanner.Text()
+			m := strings.TrimSpace(scanner.Text())
 			q.handleQemuOutput(m)
 			q.Stdout += m + "\n"
 			q.Log.Trace().Str("stdout", m).Msg("qemu")
@@ -407,7 +407,7 @@ func (q *System) Start() (err error) {
 	go func() {
 		scanner := bufio.NewScanner(q.pipe.stderr)
 		for scanner.Scan() {
-			m := scanner.Text()
+			m := strings.TrimSpace(scanner.Text())
 			q.handleQemuOutput(m)
 			q.Stderr += m + "\n"
 			q.Log.Trace().Str("stderr", m).Msg("qemu")
@@ -560,7 +560,7 @@ func (q System) Command(user, cmd string) (output string, err error) {
 
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
-			m := scanner.Text()
+			m := strings.TrimSpace(scanner.Text())
 			q.handleCommandsOutput(m)
 			output += m + "\n"
 			flog.Trace().Str("stdout", m).Msg("qemu command")
@@ -574,7 +574,7 @@ func (q System) Command(user, cmd string) (output string, err error) {
 
 		scanner := bufio.NewScanner(stderr)
 		for scanner.Scan() {
-			m := scanner.Text()
+			m := strings.TrimSpace(scanner.Text())
 			q.handleCommandsOutput(m)
 			output += m + "\n"
 			// Note: it prints stderr as stdout
