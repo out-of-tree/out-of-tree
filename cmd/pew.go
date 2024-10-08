@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -89,6 +90,8 @@ type PewCmd struct {
 
 	OutputOnSuccess bool `help:"show output on success"`
 	RealtimeOutput  bool `help:"show realtime output"`
+
+	LogDir string `help:"write logs to directory"`
 
 	Endless        bool          `help:"endless tests"`
 	EndlessTimeout time.Duration `help:"timeout between tests" default:"1m"`
@@ -403,39 +406,54 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 
 	defer swg.Done()
 
-	logdir := "logs/" + cmd.Tag
-	err := os.MkdirAll(logdir, os.ModePerm)
-	if err != nil {
-		log.Error().Err(err).Msgf("mkdir %s", logdir)
-		return
-	}
+	var logDirWriter *zerolog.ConsoleWriter
+	if cmd.LogDir != "" {
+		logdir := filepath.Join(cmd.LogDir, cmd.Tag)
+		err := os.MkdirAll(logdir, os.ModePerm)
+		if err != nil {
+			log.Error().Err(err).Msgf("mkdir %s", logdir)
+			return
+		}
 
-	logfile := fmt.Sprintf("logs/%s/%s-%s-%s.log",
-		cmd.Tag,
-		ki.Distro.ID.String(),
-		ki.Distro.Release,
-		ki.KernelRelease,
-	)
-	f, err := os.Create(logfile)
-	if err != nil {
-		log.Error().Err(err).Msgf("create %s", logfile)
-		return
-	}
-	defer f.Close()
+		logfile := fmt.Sprintf("logs/%s/%s-%s-%s.log",
+			cmd.Tag,
+			ki.Distro.ID.String(),
+			ki.Distro.Release,
+			ki.KernelRelease,
+		)
+		f, err := os.Create(logfile)
+		if err != nil {
+			log.Error().Err(err).Msgf("create %s", logfile)
+			return
+		}
+		defer f.Close()
 
-	slog := zerolog.New(zerolog.MultiLevelWriter(
-		&ConsoleWriter,
-		&FileWriter,
-		&zerolog.ConsoleWriter{
+		logDirWriter = &zerolog.ConsoleWriter{
 			Out: f,
 			FieldsExclude: []string{
 				"distro_release",
 				"distro_type",
 				"kernel",
+				"command",
+				"workdir",
 			},
 			NoColor: true,
-		},
-	))
+		}
+	}
+
+	var slog zerolog.Logger
+	if logDirWriter != nil {
+		slog = zerolog.New(zerolog.MultiLevelWriter(
+			&ConsoleWriter,
+			&FileWriter,
+			logDirWriter,
+		))
+	} else {
+		slog = zerolog.New(zerolog.MultiLevelWriter(
+			&ConsoleWriter,
+			&FileWriter,
+		))
+	}
 
 	switch LogLevel {
 	case zerolog.TraceLevel, zerolog.DebugLevel:
