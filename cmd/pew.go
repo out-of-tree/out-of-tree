@@ -87,6 +87,7 @@ type PewCmd struct {
 
 	Threshold             float64 `help:"reliablity threshold for exit code" default:"1.00"`
 	IncludeInternalErrors bool    `help:"count internal errors as part of the success rate"`
+	InternalErrorsRetries int     `help:"amount of retries on internal errors" default:"3"`
 
 	OutputOnSuccess bool `help:"show output on success"`
 	RealtimeOutput  bool `help:"show realtime output"`
@@ -466,12 +467,33 @@ func (cmd PewCmd) testArtifact(swg *sizedwaitgroup.SizedWaitGroup,
 		Str("kernel", ki.KernelRelease).
 		Logger()
 
-	ka.Process(slog, ki, cmd.OutputOnSuccess, cmd.RealtimeOutput,
-		cmd.Endless, cmd.Binary, cmd.EndlessStress, cmd.EndlessTimeout,
-		func(q *qemu.System, ka artifact.Artifact, ki distro.KernelInfo, result *artifact.Result) {
-			dumpResult(q, ka, ki, result, cmd.Dist, cmd.Tag, cmd.Binary, cmd.DB)
-		},
-	)
+	retriesLeft := cmd.InternalErrorsRetries
+	var stop bool
+	for !stop {
+		ka.Process(slog, ki, cmd.OutputOnSuccess, cmd.RealtimeOutput,
+			cmd.Endless, cmd.Binary, cmd.EndlessStress, cmd.EndlessTimeout,
+			func(q *qemu.System, ka artifact.Artifact, ki distro.KernelInfo, res *artifact.Result) {
+				if res.InternalError == nil {
+					cmd.dumpResult(q, ka, ki, res)
+					stop = true
+					return
+				}
+
+				q.Log.Warn().Err(res.InternalError).
+					Str("panic", fmt.Sprintf("%v", q.KernelPanic)).
+					Str("timeout", fmt.Sprintf("%v", q.KilledByTimeout)).
+					Int("retries_left", retriesLeft).
+					Msg("internal")
+
+				if retriesLeft == 0 {
+					state.InternalErrors += 1
+					stop = true
+					return
+				}
+				retriesLeft -= 1
+			},
+		)
+	}
 }
 
 func shuffleKernels(a []distro.KernelInfo) []distro.KernelInfo {
@@ -567,76 +589,70 @@ func genOkFail(name string, ok bool) (aurv aurora.Value) {
 	return
 }
 
-func dumpResult(q *qemu.System, ka artifact.Artifact, ki distro.KernelInfo,
-	res *artifact.Result, dist, tag, binary string, db *sql.DB) {
+func (cmd PewCmd) dumpResult(q *qemu.System, ka artifact.Artifact, ki distro.KernelInfo, res *artifact.Result) {
+	state.Overall += 1
 
-	// TODO refactor
+	if res.Test.Ok {
+		state.Success += 1
+	}
 
-	if res.InternalError != nil {
-		q.Log.Warn().Err(res.InternalError).
-			Str("panic", fmt.Sprintf("%v", q.KernelPanic)).
-			Str("timeout", fmt.Sprintf("%v", q.KilledByTimeout)).
-			Msg("internal")
-		res.InternalErrorString = res.InternalError.Error()
-		state.InternalErrors += 1
+	colored := ""
+	switch ka.Type {
+	case artifact.KernelExploit:
+		colored = aurora.Sprintf("%s %s",
+			genOkFail("BUILD", res.Build.Ok),
+			genOkFail("LPE", res.Test.Ok))
+	case artifact.KernelModule:
+		colored = aurora.Sprintf("%s %s %s",
+			genOkFail("BUILD", res.Build.Ok),
+			genOkFail("INSMOD", res.Run.Ok),
+			genOkFail("TEST", res.Test.Ok))
+	case artifact.Script:
+		colored = aurora.Sprintf("%s",
+			genOkFail("", res.Test.Ok))
+	}
+
+	additional := ""
+	if q.KernelPanic {
+		additional = "(panic)"
+	} else if q.KilledByTimeout {
+		additional = "(timeout)"
+	}
+
+	if additional != "" {
+		q.Log.Info().Msgf("%v %v", colored, additional)
 	} else {
-		colored := ""
-
-		state.Overall += 1
-
-		if res.Test.Ok {
-			state.Success += 1
-		}
-
-		switch ka.Type {
-		case artifact.KernelExploit:
-			colored = aurora.Sprintf("%s %s",
-				genOkFail("BUILD", res.Build.Ok),
-				genOkFail("LPE", res.Test.Ok))
-		case artifact.KernelModule:
-			colored = aurora.Sprintf("%s %s %s",
-				genOkFail("BUILD", res.Build.Ok),
-				genOkFail("INSMOD", res.Run.Ok),
-				genOkFail("TEST", res.Test.Ok))
-		case artifact.Script:
-			colored = aurora.Sprintf("%s",
-				genOkFail("", res.Test.Ok))
-		}
-
-		additional := ""
-		if q.KernelPanic {
-			additional = "(panic)"
-		} else if q.KilledByTimeout {
-			additional = "(timeout)"
-		}
-
-		if additional != "" {
-			q.Log.Info().Msgf("%v %v", colored, additional)
-		} else {
-			q.Log.Info().Msgf("%v", colored)
-		}
+		q.Log.Info().Msgf("%v", colored)
 	}
 
-	err := addToLog(db, q, ka, ki, res, tag)
+	err := addToLog(cmd.DB, q, ka, ki, res, cmd.Tag)
 	if err != nil {
-		q.Log.Warn().Err(err).Msgf("[db] addToLog (%v)", ka)
+		q.Log.Error().Err(err).Msgf("[db] addToLog (%v)", ka)
 	}
 
-	if binary == "" && dist != pathDevNull {
-		err = os.MkdirAll(dist, os.ModePerm)
-		if err != nil {
-			log.Warn().Err(err).Msgf("os.MkdirAll (%v)", ka)
-		}
+	if cmd.Binary != "" {
+		return
+	}
 
-		path := fmt.Sprintf("%s/%s-%s-%s", dist, ki.Distro.ID,
-			ki.Distro.Release, ki.KernelRelease)
-		if ka.Type != artifact.KernelExploit {
-			path += ".ko"
-		}
+	if cmd.Dist == pathDevNull { // why?
+		return
+	}
 
-		err = artifact.CopyFile(res.BuildArtifact, path)
-		if err != nil {
-			log.Warn().Err(err).Msgf("copy file (%v)", ka)
-		}
+	err = os.MkdirAll(cmd.Dist, os.ModePerm)
+	if err != nil {
+		log.Error().Err(err).Msgf("os.MkdirAll (%v)", ka)
+		return
+	}
+
+	path := fmt.Sprintf("%s/%s-%s-%s", cmd.Dist, ki.Distro.ID,
+		ki.Distro.Release, ki.KernelRelease)
+	if ka.Type != artifact.KernelExploit {
+		path += ".ko"
+	}
+
+	err = artifact.CopyFile(res.BuildArtifact, path)
+	if err != nil {
+		log.Error().Err(err).Msgf("copy file (%v)", ka)
+		return
 	}
 }
