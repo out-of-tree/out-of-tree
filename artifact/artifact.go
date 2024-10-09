@@ -371,6 +371,8 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 		ka.Qemu.Timeout.Duration = time.Minute
 	}
 
+	slog.Info().Msg("wait for vm initialisation")
+
 	err = q.WaitForSSH(ka.Qemu.Timeout.Duration)
 	if err != nil {
 		result.InternalError = err
@@ -423,6 +425,7 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 	}
 
 	start := time.Now()
+	slog.Info().Msg("copy artifact and run test")
 	copyArtifactAndTest(slog, q, ka, &result, remoteTest, outputOnSuccess, realtimeOutput)
 	slog.Debug().Str("duration", time.Since(start).String()).
 		Msgf("test completed (success: %v)", result.Test.Ok)
