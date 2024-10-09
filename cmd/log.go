@@ -1,4 +1,4 @@
-// Copyright 2023 Mikhail Klementev. All rights reserved.
+// Copyright 2024 Mikhail Klementev. All rights reserved.
 // Use of this source code is governed by a AGPLv3 license
 // (or later) that can be found in the LICENSE file.
 
@@ -212,7 +212,12 @@ func center(s string, w int) string {
 }
 
 func genOkFailCentered(name string, ok bool) (aurv aurora.Value) {
-	name = center(name, 10)
+	if ok {
+		name += " OK"
+	} else {
+		name += " FAIL"
+	}
+	name = center(name, 14)
 	if ok {
 		aurv = aurora.BgGreen(aurora.Black(name))
 	} else {
@@ -225,7 +230,7 @@ func logLogEntry(l logEntry) {
 	distroInfo := fmt.Sprintf("%s-%s {%s}", l.Distro.ID,
 		l.Distro.Release, l.KernelRelease)
 
-	artifactInfo := fmt.Sprintf("{[%s] %s}", l.Type, l.Name)
+	artifactInfo := fmt.Sprintf("%s", l.Name)
 
 	timestamp := l.Timestamp.Format("2006-01-02 15:04")
 
@@ -257,7 +262,10 @@ func logLogEntry(l logEntry) {
 		additional = "(timeout)"
 	}
 
-	colored := aurora.Sprintf("[%4d %4s] [%s] %s    %-70s: %s %s",
+	if len(distroInfo) > 40 {
+		distroInfo = distroInfo[:40]
+	}
+	colored := aurora.Sprintf("[%4d %4s] [%s] %s    %-40s: %s %s",
 		l.ID, l.Tag, timestamp, artifactInfo, distroInfo, status,
 		additional)
 
