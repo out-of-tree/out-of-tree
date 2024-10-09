@@ -338,7 +338,11 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 		slog.Debug().Str("duration", time.Since(start).String()).
 			Msg("build done")
 		if err != nil {
-			slog.Error().Err(err).Msgf("build failure\n%v\n", result.Build.Output)
+			if !realtimeOutput {
+				slog.Error().Err(err).Msgf("build failure\n%v\n", result.Build.Output)
+			} else {
+				slog.Error().Err(err).Msg("build failure")
+			}
 			return
 		} else {
 			if outputOnSuccess && !realtimeOutput {
@@ -423,10 +427,10 @@ func (ka Artifact) Process(slog zerolog.Logger, ki distro.KernelInfo,
 	slog.Debug().Str("duration", time.Since(start).String()).
 		Msgf("test completed (success: %v)", result.Test.Ok)
 
-	if result.Build.Ok {
+	if result.Build.Ok && !realtimeOutput {
 		if !result.Run.Ok || !result.Test.Ok {
 			slog.Error().Msgf("qemu output\n%v\n", qemuTestOutput)
-		} else if outputOnSuccess && !realtimeOutput {
+		} else if outputOnSuccess {
 			slog.Info().Msgf("qemu output\n%v\n", qemuTestOutput)
 		}
 	}

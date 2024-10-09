@@ -352,7 +352,11 @@ func copyArtifactAndTest(slog zerolog.Logger, q *qemu.System, ka Artifact,
 	}
 
 	if err != nil || !res.Test.Ok {
-		slog.Error().Err(err).Msgf("test error\n%v\n", res.Test.Output)
+		if !realtimeOutput {
+			slog.Error().Err(err).Msgf("test failure\n%v\n", res.Test.Output)
+		} else {
+			slog.Error().Err(err).Msg("test failure")
+		}
 		return
 	}
 
