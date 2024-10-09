@@ -168,6 +168,11 @@ func (cmd *PewCmd) Run(g *Globals) (err error) {
 	cmd.useRemote = g.Remote
 	cmd.remoteAddr = g.RemoteAddr
 
+	if cmd.RealtimeOutput && cmd.Threads != 1 {
+		log.Warn().Msg("realtime output disables multithreading")
+		cmd.Threads = 1
+	}
+
 	if cmd.useRemote {
 		c := client.Client{RemoteAddr: cmd.remoteAddr}
 		cmd.Kcfg.Kernels, err = c.Kernels()
