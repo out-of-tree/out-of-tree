@@ -40,8 +40,7 @@ jobs:
           sleep 1s
         done
 
-        sleep 5m
-        ssh root@$IP pkill apt-get || true
+        ssh root@$IP "cloud-init status --wait | grep done"
 
         ssh root@$IP apt-get update
         ssh root@$IP apt-get install -y git podman s3cmd
