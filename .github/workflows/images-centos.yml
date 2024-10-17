@@ -1,0 +1,80 @@
+name: CentOS images
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/qemu-centos-img/**'
+      - '.github/workflows/images-centos.yml'
+
+concurrency:
+  group: ${{ github.workflow_ref }}
+  cancel-in-progress: true
+
+jobs:
+  images-centos:
+    name: Qemu Images
+    runs-on: ubuntu-latest
+    steps:
+    - uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+    - uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: create droplet
+      run: doctl compute droplet create --ssh-keys='b4:4c:66:7d:be:19:25:43:1c:e0:02:61:9f:49:12:94,37:46:77:a8:4a:96:3b:20:16:46:35:04:95:ca:0c:5c' --tag-name=github-actions ga-out-of-tree-images-centos-$GITHUB_SHA --size s-1vcpu-1gb --image ubuntu-22-04-x64 --wait
+
+      # TODO Move to common script
+    - name: generate images
+      shell: bash
+      run: |
+        sleep 1m
+
+        IP=$(doctl compute droplet list --tag-name=github-actions --format "Name,Public IPv4" | grep -v ID | grep ga-out-of-tree-images-centos-$GITHUB_SHA | awk '{print $2}')
+
+        while ! ssh -o StrictHostKeyChecking=accept-new root@$IP echo
+        do
+          sleep 1s
+        done
+
+        ssh root@$IP "cloud-init status --wait | grep done"
+
+        ssh root@$IP apt-get update
+        ssh root@$IP apt-get install -y git podman s3cmd
+        ssh root@$IP git clone https://github.com/out-of-tree/out-of-tree
+        ssh root@$IP "cd out-of-tree && git checkout $GITHUB_SHA"
+
+        ssh root@$IP "echo -e '[Unit]\nDescription=CentOS image generator and uploader\n[Service]\nRemainAfterExit=yes\nStandardError=append:/var/log/images-centos.log\nStandardOutput=append:/var/log/images-centos.log\nType=oneshot' >> /etc/systemd/system/images-centos.service"
+
+        ssh root@$IP "echo Environment=HOST=fra1.digitaloceanspaces.com >> /etc/systemd/system/images-centos.service"
+        ssh root@$IP "echo Environment=HOST_BUCKET=out-of-tree.fra1.digitaloceanspaces.com >> /etc/systemd/system/images-centos.service"
+        ssh root@$IP "echo Environment=ACCESS_KEY=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }} >> /etc/systemd/system/images-centos.service"
+        ssh root@$IP "echo Environment=SECRET_KEY=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }} >> /etc/systemd/system/images-centos.service"
+
+        ssh root@$IP "echo 'ExecStart=/root/out-of-tree/tools/qemu-centos-img/6/generate.sh' >> /etc/systemd/system/images-centos.service"
+        ssh root@$IP "echo 'ExecStart=/root/out-of-tree/tools/qemu-centos-img/7/generate.sh' >> /etc/systemd/system/images-centos.service"
+        ssh root@$IP "echo 'ExecStart=/root/out-of-tree/tools/qemu-centos-img/8/generate.sh' >> /etc/systemd/system/images-centos.service"
+
+        ssh root@$IP 'echo ExecStart=/bin/sh -c \"s3cmd put --acl-public /root/out-of-tree/tools/qemu-centos-img/*/*.tar.gz s3://out-of-tree/3.0.0/ --host=\$HOST --host-bucket=\$HOST_BUCKET --access_key=\$ACCESS_KEY --secret_key=\$SECRET_KEY\" >> /etc/systemd/system/images-centos.service'
+
+        ssh root@$IP "echo TimeoutStopSec=1 >> /etc/systemd/system/images-centos.service"
+
+        ssh root@$IP systemctl daemon-reload
+
+        ssh root@$IP systemctl start images-centos --no-block
+
+        while ! ssh root@$IP systemctl show images-centos -p SubState --value | grep -E '(failed|exited)'
+        do
+          sleep 3m
+        done
+
+        scp root@$IP:/var/log/images-centos.log .
+
+        ssh root@$IP systemctl is-active images-centos
+
+    - name: delete droplet
+      if: always()
+      run: doctl compute droplet delete -f ga-out-of-tree-images-centos-$GITHUB_SHA
