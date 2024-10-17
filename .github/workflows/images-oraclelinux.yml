@@ -73,6 +73,13 @@ jobs:
 
         ssh root@$IP systemctl is-active images-oraclelinux
 
+    - name: Archive logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: images-oraclelinux-log
+        path: images-oraclelinux.log
+
     - name: delete droplet
       if: always()
       run: doctl compute droplet delete -f ga-out-of-tree-images-oraclelinux-$GITHUB_SHA
