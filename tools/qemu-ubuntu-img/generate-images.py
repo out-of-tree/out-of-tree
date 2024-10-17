@@ -20,9 +20,9 @@ template = '''
 FROM ubuntu:{version}
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update
-RUN apt install -y debootstrap qemu-utils
-RUN apt install -y linux-image-generic
+RUN apt-get update
+RUN apt-get install -y debootstrap qemu-utils
+RUN apt-get install -y linux-image-generic
 
 ENV TMPDIR=/tmp/ubuntu
 ENV IMAGEDIR=/tmp/image
