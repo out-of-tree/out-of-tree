@@ -19,6 +19,8 @@ releases = [
 template = '''
 FROM ubuntu:{version}
 
+RUN sed -i 's;http://archive.ubuntu.com/ubuntu;{repository};' /etc/apt/sources.list
+
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 RUN apt-get install -y debootstrap qemu-utils
