@@ -178,6 +178,9 @@ type Container struct {
 	// Additional arguments
 	Args []string
 
+	// Base of container is local-only
+	LocalBase bool
+
 	Log zerolog.Logger
 
 	commandsOutput struct {
@@ -428,7 +431,10 @@ func (c Container) build(imagePath string) (output string, err error) {
 
 	args := []string{"build"}
 	if !UseCache {
-		args = append(args, "--pull", "--no-cache")
+		if !c.LocalBase {
+			args = append(args, "--pull")
+		}
+		args = append(args, "--no-cache")
 	}
 	args = append(args, "-t", c.name, imagePath)
 

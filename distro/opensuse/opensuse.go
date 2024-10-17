@@ -57,6 +57,8 @@ func (suse OpenSUSE) Packages() (pkgs []string, err error) {
 		if err != nil {
 			return
 		}
+		c.LocalBase = true
+
 	} else if strings.HasPrefix(suse.release, "13") {
 		name = "opensuse:13"
 		cnturl := cache.ContainerURL("openSUSE-13.2")
@@ -64,6 +66,8 @@ func (suse OpenSUSE) Packages() (pkgs []string, err error) {
 		if err != nil {
 			return
 		}
+		c.LocalBase = true
+
 	} else if strings.HasPrefix(suse.release, "42") {
 		name = "opensuse/leap:42"
 	} else if strings.HasPrefix(suse.release, "15") {
