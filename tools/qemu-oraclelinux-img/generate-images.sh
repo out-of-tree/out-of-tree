@@ -11,9 +11,11 @@ for version in 6 7 8 9; do
 
     if [[ $version -eq 6 ]]; then
 	sed -i 's/baseos_latest/u10_base/' $version/Dockerfile
+	sed -i '/appstream/d' $version/Dockerfile
     fi
     if [[ $version -eq 7 ]]; then
 	sed -i 's/baseos_latest/u9_base/' $version/Dockerfile
+	sed -i '/appstream/d' $version/Dockerfile
     fi
 
     podman build -t gen-oraclelinux${version}-image $version

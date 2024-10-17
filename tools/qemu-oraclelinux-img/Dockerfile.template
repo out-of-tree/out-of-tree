@@ -13,6 +13,7 @@ RUN yum --installroot=$TMPDIR \
         --releasever=_VERSION_ \
         --disablerepo='*' \
         --enablerepo=ol_VERSION__baseos_latest \
+        --enablerepo=ol_VERSION__appstream \
         -y groupinstall Base
 
 RUN cp /etc/yum.repos.d/* $TMPDIR/etc/yum.repos.d/
@@ -21,6 +22,7 @@ RUN yum --installroot=$TMPDIR \
         --releasever=_VERSION_ \
         --disablerepo='*' \
         --enablerepo=ol_VERSION__baseos_latest \
+        --enablerepo=ol_VERSION__appstream \
         -y install openssh-server openssh-clients dhclient yum
 
 RUN chroot $TMPDIR /bin/sh -c 'useradd -m user'
