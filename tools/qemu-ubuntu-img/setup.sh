@@ -11,6 +11,8 @@ sed -i '/PermitEmptyPasswords/d' $TMPDIR/etc/ssh/sshd_config
 echo PermitEmptyPasswords yes >> $TMPDIR/etc/ssh/sshd_config
 sed -i '/PermitRootLogin/d' $TMPDIR/etc/ssh/sshd_config
 echo PermitRootLogin yes >> $TMPDIR/etc/ssh/sshd_config
+sed -i '/UseDNS/d' $TMPDIR/etc/ssh/sshd_config
+echo UseDNS no >> $TMPDIR/etc/ssh/sshd_config
 
 echo '#!/bin/sh' > $TMPDIR/etc/rc.local
 echo 'dhclient || dhcpcd' >> $TMPDIR/etc/rc.local

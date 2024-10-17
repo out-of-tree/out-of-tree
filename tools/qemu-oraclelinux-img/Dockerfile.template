@@ -30,6 +30,8 @@ RUN sed -i '/PermitEmptyPasswords/d' $TMPDIR/etc/ssh/sshd_config
 RUN echo PermitEmptyPasswords yes >> $TMPDIR/etc/ssh/sshd_config
 RUN sed -i '/PermitRootLogin/d' $TMPDIR/etc/ssh/sshd_config
 RUN echo PermitRootLogin yes >> $TMPDIR/etc/ssh/sshd_config
+RUN sed -i '/UseDNS/d' $TMPDIR/etc/ssh/sshd_config
+RUN echo UseDNS no >> $TMPDIR/etc/ssh/sshd_config
 
 # network workaround
 RUN chmod +x $TMPDIR/etc/rc.local
