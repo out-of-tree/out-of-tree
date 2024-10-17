@@ -56,7 +56,7 @@ jobs:
 
         ssh root@$IP "echo 'ExecStart=/root/out-of-tree/tools/qemu-debian-img/generate-images.sh' >> /etc/systemd/system/images-debian.service"
 
-        ssh root@$IP 'echo ExecStart=/bin/sh -c \"s3cmd put --acl-public /root/out-of-tree/tools/qemu-debian-img/*.tar.gz s3://out-of-tree/1.0.0/ --host=\$HOST --host-bucket=\$HOST_BUCKET --access_key=\$ACCESS_KEY --secret_key=\$SECRET_KEY\" >> /etc/systemd/system/images-debian.service'
+        ssh root@$IP 'echo ExecStart=/bin/sh -c \"s3cmd put --acl-public /root/out-of-tree/tools/qemu-debian-img/*.tar.gz s3://out-of-tree/3.0.0/ --host=\$HOST --host-bucket=\$HOST_BUCKET --access_key=\$ACCESS_KEY --secret_key=\$SECRET_KEY\" >> /etc/systemd/system/images-debian.service'
 
         ssh root@$IP "echo TimeoutStopSec=1 >> /etc/systemd/system/images-debian.service"
 
