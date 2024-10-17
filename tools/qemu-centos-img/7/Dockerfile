@@ -13,6 +13,11 @@
 #
 FROM centos:7
 
+RUN sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/* || true
+RUN sed -i 's/name/enabled=0\nname/' /etc/yum.repos.d/* || true
+RUN echo -e '[7.9.2009-os]\nbaseurl=https://vault.centos.org/7.9.2009/os/$basearch/\ngpgcheck=0' >> /etc/yum.repos.d/oot.repo
+RUN echo -e '[7.9.2009-updates]\nbaseurl=https://vault.centos.org/7.9.2009/updates/$basearch/\ngpgcheck=0' >> /etc/yum.repos.d/oot.repo
+
 RUN yum -y update
 RUN yum -y groupinstall "Development Tools"
 RUN yum -y install qemu-img e2fsprogs
@@ -21,13 +26,13 @@ ENV TMPDIR=/tmp/centos
 
 RUN yum --installroot=$TMPDIR \
         --releasever=7 \
-        --disablerepo='*' \
-        --enablerepo=base \
         -y groupinstall Base
+
+RUN rm $TMPDIR/etc/yum.repos.d/*
+RUN cp /etc/yum.repos.d/* $TMPDIR/etc/yum.repos.d/
+
 RUN yum --installroot=$TMPDIR \
         --releasever=7 \
-        --disablerepo='*' \
-        --enablerepo=base \
         -y install openssh-server openssh-clients
 
 RUN chroot $TMPDIR /bin/sh -c 'useradd -m user'
