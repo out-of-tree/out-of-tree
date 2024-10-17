@@ -1,4 +1,4 @@
-name: Debian
+name: Debian images
 
 on:
   workflow_dispatch:

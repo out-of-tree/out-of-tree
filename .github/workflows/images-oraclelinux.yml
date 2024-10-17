@@ -1,4 +1,4 @@
-name: Oracle Linux
+name: Oracle Linux images
 
 on:
   workflow_dispatch:
