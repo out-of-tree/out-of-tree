@@ -87,7 +87,32 @@ func (suse OpenSUSE) Packages() (pkgs []string, err error) {
 		return
 	}
 
-	pkgs = append(pkgs, strings.Fields(output)...)
+	// TODO Find a way for non-interactive installation of
+	// retracted kernels
+	retracted := []string{
+		"5.14.21-150400.24.49.3",
+		"5.14.21-150400.24.84.1",
+		"5.14.21-150500.55.22.1",
+		"5.3.18-150300.59.81.1",
+		"5.3.18-59.30.1",
+		"5.3.18-lp152.98.1",
+	}
+
+	for _, k := range strings.Fields(output) {
+		skip := false
+		for _, rk := range retracted {
+			if rk == k {
+				skip = true
+				break
+			}
+		}
+		if skip {
+			continue
+		}
+
+		pkgs = append(pkgs, k)
+	}
+
 	return
 }
 
